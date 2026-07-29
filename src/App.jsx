@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, Heart, Eye, KeyRound, ShieldCheck, Truck, Gem, Medal } from 'lucide-react';
 
 // ─── Product Data ────────────────────────────────────────────────────────────
-const PRODUCTS = {
+const FALLBACK_PRODUCTS = {
   figurines: [
     {
       id: 1,
@@ -145,6 +145,55 @@ const PRODUCTS = {
   ],
 };
 
+function normalizeProduct(rawProduct, fallbackIndex = 0) {
+  const category = String(rawProduct?.category || '').trim().toLowerCase();
+  const title = String(rawProduct?.title || rawProduct?.name || 'Unnamed product').trim();
+  const subtitle = String(rawProduct?.subtitle || rawProduct?.description || '').trim();
+  const price = Number(rawProduct?.price) || 0;
+  const rating = Number(rawProduct?.rating) || 4.5;
+  const reviews = Number(rawProduct?.reviews) || 0;
+  const badge = String(rawProduct?.badge || (Number(rawProduct?.stock) <= 0 ? 'Sold Out' : 'In Stock')).trim();
+  const badgeColor = String(rawProduct?.badgeColor || '#a31a1a').trim();
+  const image = String(rawProduct?.image || '/products/placeholder.png').trim();
+
+  return {
+    id: Number(rawProduct?.id) || fallbackIndex + 1,
+    title,
+    subtitle,
+    price,
+    rating,
+    reviews,
+    badge,
+    badgeColor,
+    image,
+    stock: Number(rawProduct?.stock) || 0,
+    category,
+  };
+}
+
+function buildProductsByCategory(rawProducts = []) {
+  const grouped = {
+    figurines: [],
+    combos: [],
+    mystery: [],
+    keychains: [],
+  };
+
+  rawProducts.forEach((product, index) => {
+    const normalized = normalizeProduct(product, index);
+    if (grouped[normalized.category]) {
+      grouped[normalized.category].push(normalized);
+    }
+  });
+
+  return {
+    figurines: grouped.figurines.length ? grouped.figurines : FALLBACK_PRODUCTS.figurines,
+    combos: grouped.combos.length ? grouped.combos : FALLBACK_PRODUCTS.combos,
+    mystery: grouped.mystery.length ? grouped.mystery : FALLBACK_PRODUCTS.mystery,
+    keychains: grouped.keychains.length ? grouped.keychains : FALLBACK_PRODUCTS.keychains,
+  };
+}
+
 // ─── Cart Sidebar ─────────────────────────────────────────────────────────────
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -201,7 +250,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
 function Stars({ rating }) {
   return (
     <div className="stars">
-      {[1,2,3,4,5].map(i => (
+      {[1, 2, 3, 4, 5].map(i => (
         <Star key={i} size={12} fill={i <= Math.round(rating) ? '#f59e0b' : 'none'} stroke="#f59e0b" />
       ))}
       <span>{rating}</span>
@@ -354,11 +403,55 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [inventoryProducts, setInventoryProducts] = useState(FALLBACK_PRODUCTS);
+  const [inventoryStatus, setInventoryStatus] = useState('');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const sheetsApiUrl = import.meta.env.VITE_SHEETS_API_URL?.trim();
+
+    if (!sheetsApiUrl) {
+      setInventoryProducts(FALLBACK_PRODUCTS);
+      setInventoryStatus('Using the built-in demo inventory. Add VITE_SHEETS_API_URL to connect Google Sheets.');
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadInventory = async () => {
+      setInventoryStatus('Loading inventory from Google Sheets...');
+
+      try {
+        const response = await fetch(sheetsApiUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+
+        const payload = await response.json();
+        const products = Array.isArray(payload?.products) ? payload.products : [];
+        const loadedProducts = buildProductsByCategory(products);
+
+        if (isMounted) {
+          setInventoryProducts(loadedProducts);
+          setInventoryStatus(`Inventory synced from Google Sheets (${products.length} items).`);
+        }
+      } catch (error) {
+        console.error('Failed to load inventory from Google Sheets:', error);
+        if (isMounted) {
+          setInventoryProducts(FALLBACK_PRODUCTS);
+          setInventoryStatus('Google Sheets sync failed. Showing the built-in catalog instead.');
+        }
+      }
+    };
+
+    loadInventory();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleAdd = (product) => {
@@ -432,6 +525,11 @@ export default function App() {
             Discover highly detailed figurines, curated combo boxes, and rare mystery gacha balls.
             Premium merchandise crafted for true enthusiasts.
           </p>
+          {inventoryStatus && (
+            <p style={{ marginTop: '0.7rem', color: '#ffd6a5', fontSize: '0.95rem', maxWidth: '34rem' }}>
+              {inventoryStatus}
+            </p>
+          )}
           <div className="hero-actions">
             <button className="btn-primary" onClick={() => scrollTo('figurines')}>
               <Zap size={16} /> Shop Now
@@ -459,7 +557,7 @@ export default function App() {
           icon={<Star size={22} />}
           title="Premium Figurines"
           accent="#800000"
-          products={PRODUCTS.figurines}
+          products={inventoryProducts.figurines}
           onAdd={handleAdd}
         />
         <Section
@@ -467,7 +565,7 @@ export default function App() {
           icon={<Package size={22} />}
           title="Exclusive Combos"
           accent="#a31a1a"
-          products={PRODUCTS.combos}
+          products={inventoryProducts.combos}
           onAdd={handleAdd}
         />
         <Section
@@ -475,7 +573,7 @@ export default function App() {
           icon={<Sparkles size={22} />}
           title="Mystery Gacha Balls"
           accent="#4d0000"
-          products={PRODUCTS.mystery}
+          products={inventoryProducts.mystery}
           onAdd={handleAdd}
         />
         <Section
@@ -483,7 +581,7 @@ export default function App() {
           icon={<KeyRound size={22} />}
           title="Anime Key Chains"
           accent="#660000"
-          products={PRODUCTS.keychains}
+          products={inventoryProducts.keychains}
           onAdd={handleAdd}
         />
       </main>
