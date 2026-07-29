@@ -13,7 +13,7 @@ const PRODUCTS = {
       reviews: 312,
       badge: 'New',
       badgeColor: '#a31a1a',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/figurine_1_1783577809499.png',
+      image: '/products/figurine_1.png',
     },
     {
       id: 2,
@@ -24,7 +24,7 @@ const PRODUCTS = {
       reviews: 205,
       badge: 'Bestseller',
       badgeColor: '#800000',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/anime_hero_banner_1783577788688.png',
+      image: '/products/figurine_2.png',
     },
     {
       id: 3,
@@ -35,7 +35,7 @@ const PRODUCTS = {
       reviews: 87,
       badge: 'Rare',
       badgeColor: '#4d0000',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/combo_pack_1783577819410.png',
+      image: '/products/figurine_3.png',
     },
   ],
   combos: [
@@ -48,7 +48,7 @@ const PRODUCTS = {
       reviews: 156,
       badge: 'Best Value',
       badgeColor: '#a31a1a',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/combo_pack_1783577819410.png',
+      image: '/products/combo_1.png',
     },
     {
       id: 5,
@@ -59,7 +59,7 @@ const PRODUCTS = {
       reviews: 98,
       badge: 'Bundle',
       badgeColor: '#660000',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/figurine_1_1783577809499.png',
+      image: '/products/combo_2.png',
     },
   ],
   mystery: [
@@ -72,7 +72,7 @@ const PRODUCTS = {
       reviews: 432,
       badge: 'Rare Drop',
       badgeColor: '#800000',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/mystery_ball_1783577798270.png',
+      image: '/products/mystery_1.png',
     },
     {
       id: 7,
@@ -83,7 +83,7 @@ const PRODUCTS = {
       reviews: 278,
       badge: 'Legendary',
       badgeColor: '#a31a1a',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/mystery_ball_1783577798270.png',
+      image: '/products/mystery_2.png',
     },
     {
       id: 8,
@@ -94,7 +94,7 @@ const PRODUCTS = {
       reviews: 561,
       badge: 'Popular',
       badgeColor: '#4d0000',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/mystery_ball_1783577798270.png',
+      image: '/products/mystery_3.png',
     },
   ],
   keychains: [
@@ -107,7 +107,7 @@ const PRODUCTS = {
       reviews: 874,
       badge: 'Trending',
       badgeColor: '#800000',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/2263698e-1c51-432e-a7ea-67405a3387fc/anime_keychains_1784442377627.png',
+      image: '/products/keychain_1.png',
     },
     {
       id: 10,
@@ -118,7 +118,7 @@ const PRODUCTS = {
       reviews: 543,
       badge: 'Bestseller',
       badgeColor: '#4d0000',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/2263698e-1c51-432e-a7ea-67405a3387fc/anime_keychains_1784442377627.png',
+      image: '/products/keychain_2.png',
     },
     {
       id: 11,
@@ -129,7 +129,7 @@ const PRODUCTS = {
       reviews: 321,
       badge: 'New',
       badgeColor: '#a31a1a',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/2263698e-1c51-432e-a7ea-67405a3387fc/anime_keychains_1784442377627.png',
+      image: '/products/keychain_3.png',
     },
     {
       id: 12,
@@ -140,7 +140,7 @@ const PRODUCTS = {
       reviews: 1204,
       badge: '♥ Fan Fav',
       badgeColor: '#660000',
-      image: 'file:///C:/Users/yoshi/.gemini/antigravity/brain/2263698e-1c51-432e-a7ea-67405a3387fc/anime_keychains_1784442377627.png',
+      image: '/products/keychain_4.png',
     },
   ],
 };

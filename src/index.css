@@ -200,7 +200,7 @@ body {
 /* Desktop: landscape poster */
 .hero-bg {
   position:absolute; inset:0;
-  background-image:url('file:///C:/Users/yoshi/Desktop/animecurio/Website_landscape_old.png');
+  background-image:url('/Website_landscape_old.png');
   background-size:cover;
   background-position:center center;
   background-repeat:no-repeat;
@@ -224,7 +224,7 @@ body {
 /* Mobile: portrait poster */
 @media (max-width:768px) {
   .hero-bg {
-    background-image:url('file:///C:/Users/yoshi/Desktop/animecurio/Phone_portrait.png');
+    background-image:url('/Phone_portrait.png');
     background-position:center top;
   }
 }
