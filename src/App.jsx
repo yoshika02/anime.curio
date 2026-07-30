@@ -527,12 +527,7 @@ export default function App() {
 
       {/* Hero */}
       <section className="hero">
-        <div
-          className="hero-bg"
-          style={{
-            backgroundImage: `url('file:///C:/Users/yoshi/.gemini/antigravity/brain/f103db67-39c4-4ffe-9824-d140ca94324a/anime_hero_banner_1783577788688.png')`
-          }}
-        />
+        <div className="hero-bg" />
         <div className="hero-glow glow-pink" />
         <div className="hero-glow glow-cyan" />
         <div className="hero-content">
