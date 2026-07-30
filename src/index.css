@@ -1041,6 +1041,37 @@ body {
   margin-bottom: 1.8rem;
 }
 
+.pill-nav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pill {
+  border-radius: 999px;
+  padding: 0.65rem 1.15rem;
+  background: transparent;
+  border: 1px solid rgba(163, 26, 26, 0.18);
+  color: var(--maroon-dark);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+  transition: all 0.18s ease;
+}
+
+.pill:hover {
+  transform: translateY(-2px);
+}
+
+.pill.active {
+  background: linear-gradient(90deg, #ff7a00 0%, #ff4d00 100%);
+  color: #2b0600;
+  box-shadow: 0 10px 30px rgba(255, 90, 10, 0.18);
+  border-color: transparent;
+}
+
 .collection-all-header h3 {
   font-family: 'Outfit', sans-serif;
   font-size: clamp(1.6rem, 3vw, 2rem);
