@@ -161,20 +161,16 @@ body {
 }
 
 .header-scrolled .logo {
-  background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-light) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--maroon);
 }
 
 .logo {
   font-family: 'Outfit', sans-serif;
   font-weight: 900;
-  font-size: 1.7rem;
+  font-size: 1.85rem;
   letter-spacing: 2px;
   text-transform: uppercase;
-  background: linear-gradient(135deg, #ffffff 0%, var(--maroon-pale) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--maroon);
   cursor: pointer;
   user-select: none;
 }
@@ -914,9 +910,9 @@ body {
 
 .collection-page-header {
   display: grid;
-  grid-template-columns: minmax(260px, 360px) 1fr;
-  gap: 2rem;
-  align-items: center;
+  grid-template-columns: 1fr;
+  gap: 1.8rem;
+  align-items: start;
   margin-bottom: 3rem;
 }
 
@@ -925,11 +921,13 @@ body {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   border: 1px solid var(--maroon-pale);
   color: var(--maroon-dark);
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.1rem;
   border-radius: 999px;
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
 }
 
@@ -944,7 +942,7 @@ body {
 
 .collection-title {
   font-family: 'Outfit', sans-serif;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2.3rem, 4vw, 3.3rem);
   line-height: 1.05;
   margin-bottom: 1rem;
   color: var(--text);

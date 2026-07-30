@@ -23,7 +23,6 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack 
                     <button type="button" className="collection-back" onClick={onBack}>
                         ← Back to Home
                     </button>
-                    <p className="collection-label">Premium Figures</p>
                     <h2 className="collection-title">Top Collectibles</h2>
                     <p className="collection-copy">
                         Browse the latest premium figures front and center, then explore every product in the collection.
