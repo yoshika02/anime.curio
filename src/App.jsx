@@ -413,13 +413,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const sheetsApiUrl = import.meta.env.VITE_SHEETS_API_URL?.trim();
-
-    if (!sheetsApiUrl) {
-      setInventoryProducts(FALLBACK_PRODUCTS);
-      setInventoryStatus('Using the built-in demo inventory. Add VITE_SHEETS_API_URL to connect Google Sheets.');
-      return;
-    }
+    const sheetsApiUrl = 'https://script.google.com/macros/s/AKfycbxSszfotie0uH3GFOxBGwbo_x12VUE94OfEb9B70WWz8g1d4SX85MSJeh8xoGFw_XiWhg/exec';
 
     let isMounted = true;
 
