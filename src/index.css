@@ -958,19 +958,6 @@ body {
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
 }
 
-.carousel-card:nth-child(2) {
-  transform: scale(1.05);
-}
-
-.carousel-card:nth-child(2) .carousel-image {
-  object-position: center center;
-}
-
-.carousel-card:nth-child(3) .carousel-image {
-  aspect-ratio: 1 / 1;
-  height: auto;
-}
-
 .collection-title {
   font-family: 'Outfit', sans-serif;
   font-size: clamp(2.3rem, 4vw, 3.3rem);
