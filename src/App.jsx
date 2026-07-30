@@ -420,7 +420,6 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [inventoryProducts, setInventoryProducts] = useState(FALLBACK_PRODUCTS);
-  const [inventoryStatus, setInventoryStatus] = useState('');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -434,8 +433,6 @@ export default function App() {
     let isMounted = true;
 
     const loadInventory = async () => {
-      setInventoryStatus('Loading inventory from Google Sheets...');
-
       try {
         const response = await fetch(sheetsApiUrl, {
           cache: 'no-store',
@@ -461,13 +458,11 @@ export default function App() {
 
         if (isMounted) {
           setInventoryProducts(loadedProducts);
-          setInventoryStatus(`✓ Inventory synced from Google Sheets (${products.length} items).`);
         }
       } catch (error) {
         console.error('Failed to load inventory from Google Sheets:', error);
         if (isMounted) {
           setInventoryProducts(FALLBACK_PRODUCTS);
-          setInventoryStatus(`⚠ Google Sheets sync failed (${error.message}). Showing the built-in catalog instead.`);
         }
       }
     };
@@ -550,11 +545,6 @@ export default function App() {
             Discover highly detailed figurines, curated combo boxes, and rare mystery gacha balls.
             Premium merchandise crafted for true enthusiasts.
           </p>
-          {inventoryStatus && (
-            <p style={{ marginTop: '0.7rem', color: '#ffd6a5', fontSize: '0.95rem', maxWidth: '34rem' }}>
-              {inventoryStatus}
-            </p>
-          )}
           <div className="hero-actions">
             <button className="btn-primary" onClick={() => scrollTo('figurines')}>
               <Zap size={16} /> Shop Now
