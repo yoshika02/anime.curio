@@ -3,11 +3,21 @@ import ProductCard from './ProductCard';
 
 export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack }) {
     const scrollRef = useRef(null);
-    const convertDriveUrl = (url) => {
-        if (!url) return '/products/placeholder.png';
-        const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    const convertDriveUrl = (rawValue) => {
+        if (!rawValue && rawValue !== 0) return '/products/placeholder.png';
+        let image = typeof rawValue === 'string' ? rawValue.trim() : rawValue?.url || rawValue?.src || '';
+        if (typeof image !== 'string') image = String(image);
+        image = image.trim();
+
+        const imageFormula = image.match(/IMAGE\("([^"]+)"\)/i);
+        if (imageFormula) image = imageFormula[1];
+
+        const hyperlinkFormula = image.match(/HYPERLINK\("([^"]+)"\s*,?/i);
+        if (hyperlinkFormula) image = hyperlinkFormula[1];
+
+        const driveMatch = image.match(/\/d\/([a-zA-Z0-9_-]+)/) || image.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (driveMatch) return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
-        return url;
+        return image || '/products/placeholder.png';
     };
     const featured = inventoryProducts.figurines.slice(0, 4);
     const [activeCategory, setActiveCategory] = useState('all');

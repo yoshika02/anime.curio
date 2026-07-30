@@ -11,6 +11,34 @@ const EMPTY_PRODUCTS = {
   keychains: [],
 };
 
+const resolveImageUrl = (rawValue) => {
+  if (!rawValue && rawValue !== 0) return '';
+  let image = typeof rawValue === 'string' ? rawValue.trim() : rawValue?.url || rawValue?.src || '';
+  if (typeof image !== 'string') image = String(image);
+  image = image.trim();
+
+  // Remove Google Sheets IMAGE formula wrappers.
+  const imageFormula = image.match(/IMAGE\("([^"]+)"\)/i);
+  if (imageFormula) image = imageFormula[1];
+
+  const hyperlinkFormula = image.match(/HYPERLINK\("([^"]+)"\s*,?/i);
+  if (hyperlinkFormula) image = hyperlinkFormula[1];
+
+  // Handle common Google Drive link patterns.
+  const driveMatch = image.match(/\/d\/([a-zA-Z0-9_-]+)/) || image.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (driveMatch) return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+
+  return image;
+};
+
+const getImageField = (rawProduct) => {
+  if (!rawProduct || typeof rawProduct !== 'object') return '';
+  const explicit = rawProduct.image || rawProduct.Image || rawProduct.image_url || rawProduct.img || rawProduct.thumbnail || rawProduct['image link'];
+  if (explicit) return explicit;
+  const key = Object.keys(rawProduct).find(k => /image|img|thumbnail/i.test(k));
+  return key ? rawProduct[key] : '';
+};
+
 function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const title = String(rawProduct?.title || rawProduct?.name || 'Unnamed product').trim();
   const subtitle = String(rawProduct?.subtitle || rawProduct?.description || '').trim();
@@ -27,7 +55,7 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     ? 'Rare Available'
     : String(rawProduct?.badge || (inStock ? 'In Stock' : 'Sold Out')).trim();
   const badgeColor = String(rawProduct?.badgeColor || (stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : inStock ? '#a31a1a' : '#666666')).trim();
-  const image = String(rawProduct?.image || '').trim();
+  const image = resolveImageUrl(getImageField(rawProduct));
   const features = Array.isArray(rawProduct?.features)
     ? rawProduct.features.map(String)
     : typeof rawProduct?.features === 'string'
