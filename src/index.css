@@ -933,14 +933,16 @@ body {
 
 .collection-carousel-wrap {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .collection-carousel {
   display: flex;
   gap: 1rem;
+  width: 100%;
   overflow-x: auto;
   padding-bottom: 0.5rem;
   scroll-snap-type: x mandatory;
