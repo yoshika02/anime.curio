@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Heart, Eye, Star } from 'lucide-react';
 
 function Stars({ rating }) {
@@ -18,8 +18,8 @@ function Stars({ rating }) {
 }
 
 export default function ProductCard({ product, onAdd, currentQty = 0 }) {
+    const fallbackImage = '/placeholder.svg';
     const resolveImage = (rawValue) => {
-        const fallbackImage = '/Phone_portrait_old.png';
         if (!rawValue && rawValue !== 0) return fallbackImage;
         let image = typeof rawValue === 'string' ? rawValue.trim() : rawValue?.url || rawValue?.src || rawValue?.value || rawValue?.text || '';
         if (typeof image !== 'string') image = String(image);
@@ -38,10 +38,15 @@ export default function ProductCard({ product, onAdd, currentQty = 0 }) {
     };
     const [added, setAdded] = useState(false);
     const [liked, setLiked] = useState(false);
+    const [imgSrc, setImgSrc] = useState(() => resolveImage(product.image));
     const cardRef = useRef(null);
     const available = product.stockQuantity ?? product.stock ?? 0;
     const inStock = product.inStock !== undefined ? product.inStock : available > 0;
     const maxReached = currentQty >= available;
+
+    useEffect(() => {
+        setImgSrc(resolveImage(product.image));
+    }, [product.image]);
 
     const handleAdd = () => {
         if (!inStock || maxReached) return;
@@ -78,7 +83,7 @@ export default function ProductCard({ product, onAdd, currentQty = 0 }) {
                 <Heart size={16} fill={liked ? '#800000' : 'none'} stroke={liked ? '#800000' : '#800000'} />
             </button>
             <div className="product-img-wrap">
-                <img src={resolveImage(product.image)} alt={product.title} className="product-img" />
+                <img src={imgSrc} alt={product.title} className="product-img" onError={() => setImgSrc(fallbackImage)} />
                 <div className="product-overlay">
                     <Eye size={18} /> Quick View
                 </div>

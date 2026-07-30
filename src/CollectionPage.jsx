@@ -62,7 +62,14 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack 
                     <div className="collection-carousel" ref={scrollRef}>
                         {featured.map((item) => (
                             <div key={item.id} className="carousel-card">
-                                <img src={convertDriveUrl(item.image)} alt={item.title} className="carousel-image" />
+                                <img
+                                    src={convertDriveUrl(item.image)}
+                                    alt={item.title}
+                                    className="carousel-image"
+                                    onError={(e) => {
+                                        e.currentTarget.src = '/placeholder.svg';
+                                    }}
+                                />
                                 <div className="carousel-meta">
                                     <span className="carousel-name">{item.title}</span>
                                     <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
