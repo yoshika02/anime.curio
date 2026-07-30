@@ -4,147 +4,11 @@ import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 
 // ─── Product Data ────────────────────────────────────────────────────────────
-const FALLBACK_PRODUCTS = {
-  figurines: [
-    {
-      id: 1,
-      title: 'Shadow Swordsman 1/7 Scale',
-      subtitle: 'Demon Slayer Series',
-      price: 10999,
-      rating: 4.9,
-      reviews: 312,
-      badge: 'New',
-      badgeColor: '#a31a1a',
-      image: '/products/figurine_1.png',
-    },
-    {
-      id: 2,
-      title: 'Luminous Guardian Deluxe',
-      subtitle: 'Dragon Arc Limited',
-      price: 15999,
-      rating: 4.8,
-      reviews: 205,
-      badge: 'Bestseller',
-      badgeColor: '#800000',
-      image: '/products/figurine_2.png',
-    },
-    {
-      id: 3,
-      title: 'Crystal Empress Statue',
-      subtitle: 'Celestial Edition',
-      price: 18499,
-      rating: 5.0,
-      reviews: 87,
-      badge: 'Rare',
-      badgeColor: '#4d0000',
-      image: '/products/figurine_3.png',
-    },
-  ],
-  combos: [
-    {
-      id: 4,
-      title: "The Ultimate Collector's Box",
-      subtitle: '3 Figurines + Poster + Art Book',
-      price: 7499,
-      rating: 4.7,
-      reviews: 156,
-      badge: 'Best Value',
-      badgeColor: '#a31a1a',
-      image: '/products/combo_1.png',
-    },
-    {
-      id: 5,
-      title: 'Starter Anime Bundle',
-      subtitle: '2 Figurines + Mystery Ball',
-      price: 4999,
-      rating: 4.6,
-      reviews: 98,
-      badge: 'Bundle',
-      badgeColor: '#660000',
-      image: '/products/combo_2.png',
-    },
-  ],
-  mystery: [
-    {
-      id: 6,
-      title: 'Neon SSR Mystery Capsule',
-      subtitle: 'Chance for Ultra-Rare Drops',
-      price: 1999,
-      rating: 4.5,
-      reviews: 432,
-      badge: 'Rare Drop',
-      badgeColor: '#800000',
-      image: '/products/mystery_1.png',
-    },
-    {
-      id: 7,
-      title: 'Golden Gacha Ball',
-      subtitle: 'Legendary Series — 1% SSR',
-      price: 2799,
-      rating: 4.4,
-      reviews: 278,
-      badge: 'Legendary',
-      badgeColor: '#a31a1a',
-      image: '/products/mystery_2.png',
-    },
-    {
-      id: 8,
-      title: 'Rainbow Prism Capsule',
-      subtitle: 'All Series Mix — Surprise!',
-      price: 1599,
-      rating: 4.3,
-      reviews: 561,
-      badge: 'Popular',
-      badgeColor: '#4d0000',
-      image: '/products/mystery_3.png',
-    },
-  ],
-  keychains: [
-    {
-      id: 9,
-      title: 'Chibi Demon Slayer Acrylic Set',
-      subtitle: 'Set of 4 — Acrylic Keychain',
-      price: 699,
-      rating: 4.8,
-      reviews: 874,
-      badge: 'Trending',
-      badgeColor: '#800000',
-      image: '/products/keychain_1.png',
-    },
-    {
-      id: 10,
-      title: 'Metal Enamel Hero Keychain',
-      subtitle: 'My Hero Academia — Premium',
-      price: 999,
-      rating: 4.7,
-      reviews: 543,
-      badge: 'Bestseller',
-      badgeColor: '#4d0000',
-      image: '/products/keychain_2.png',
-    },
-    {
-      id: 11,
-      title: 'Glow-in-Dark Naruto Kunai',
-      subtitle: 'Naruto Shippuden — Glow Edition',
-      price: 849,
-      rating: 4.6,
-      reviews: 321,
-      badge: 'New',
-      badgeColor: '#a31a1a',
-      image: '/products/keychain_3.png',
-    },
-    {
-      id: 12,
-      title: 'Epoxy Crystal Waifu Charm',
-      subtitle: 'Re:Zero — Limited Series',
-      price: 599,
-      rating: 4.9,
-      reviews: 1204,
-      badge: '♥ Fan Fav',
-      badgeColor: '#660000',
-      image: '/products/keychain_4.png',
-    },
-  ],
+const EMPTY_PRODUCTS = {
+  figurines: [],
+  combos: [],
+  mystery: [],
+  keychains: [],
 };
 
 function normalizeProduct(rawProduct, fallbackIndex = 0) {
@@ -163,7 +27,7 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     ? 'Rare Available'
     : String(rawProduct?.badge || (inStock ? 'In Stock' : 'Sold Out')).trim();
   const badgeColor = String(rawProduct?.badgeColor || (stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : inStock ? '#a31a1a' : '#666666')).trim();
-  const image = String(rawProduct?.image || '/products/placeholder.png').trim();
+  const image = String(rawProduct?.image || '').trim();
   const features = Array.isArray(rawProduct?.features)
     ? rawProduct.features.map(String)
     : typeof rawProduct?.features === 'string'
@@ -215,16 +79,6 @@ function buildProductsByCategory(rawProducts = []) {
     keychains: [],
   };
 
-  const normalizeFallbackProduct = (product) => ({
-    ...product,
-    name: product.name || product.title,
-    scale: product.scale || 'Standard',
-    stockQuantity: product.stockQuantity ?? product.stock ?? 10,
-    inStock: product.inStock !== false,
-    features: product.features || [],
-    review: product.review ?? product.reviews,
-  });
-
   rawProducts.forEach((product, index) => {
     const normalized = normalizeProduct(product, index);
     if (normalized.inStock && grouped[normalized.category]) {
@@ -232,13 +86,9 @@ function buildProductsByCategory(rawProducts = []) {
     }
   });
 
-  return {
-    figurines: grouped.figurines.length ? grouped.figurines : FALLBACK_PRODUCTS.figurines.map(normalizeFallbackProduct),
-    combos: grouped.combos.length ? grouped.combos : FALLBACK_PRODUCTS.combos.map(normalizeFallbackProduct),
-    mystery: grouped.mystery.length ? grouped.mystery : FALLBACK_PRODUCTS.mystery.map(normalizeFallbackProduct),
-    keychains: grouped.keychains.length ? grouped.keychains : FALLBACK_PRODUCTS.keychains.map(normalizeFallbackProduct),
-  };
+  return grouped;
 }
+
 
 // ─── Cart Sidebar ─────────────────────────────────────────────────────────────
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
@@ -315,7 +165,9 @@ function Section({ id, icon, title, accent, products, onAdd, cart }) {
         <div className="section-line" style={{ background: `linear-gradient(90deg, ${accent}, transparent)` }} />
       </div>
       <div className="product-grid">
-        {products.map((p, i) => (
+        {products.length === 0 ? (
+          <div className="empty-state">No products available yet.</div>
+        ) : products.map((p, i) => (
           <div key={p.id} className="card-animate" style={{ animationDelay: `${i * 0.12}s` }}>
             <div className="card-glow-wrap">
               <ProductCard product={p} currentQty={cart.find(item => item.id === p.id)?.qty || 0} onAdd={onAdd} />
@@ -380,7 +232,7 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [page, setPage] = useState(window.location.hash === '#collection' ? 'collection' : 'home');
   const [scrolled, setScrolled] = useState(false);
-  const [inventoryProducts, setInventoryProducts] = useState(FALLBACK_PRODUCTS);
+  const [inventoryProducts, setInventoryProducts] = useState(EMPTY_PRODUCTS);
 
   const navigate = (target) => {
     if (target === 'collection') {
@@ -441,7 +293,7 @@ export default function App() {
       } catch (error) {
         console.error('Failed to load inventory from Google Sheets:', error);
         if (isMounted) {
-          setInventoryProducts(FALLBACK_PRODUCTS);
+          setInventoryProducts(EMPTY_PRODUCTS);
         }
       }
     };

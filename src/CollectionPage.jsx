@@ -82,7 +82,9 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack 
                     <h3>All Products</h3>
                 </div>
                 <div className="product-grid collection-products-grid">
-                    {visibleProducts.map((product, index) => (
+                    {visibleProducts.length === 0 ? (
+                        <div className="empty-state">No products available yet.</div>
+                    ) : visibleProducts.map((product, index) => (
                         <div key={`${product.id}-${index}`} className="card-animate" style={{ animationDelay: `${index * 0.08}s` }}>
                             <div className="card-glow-wrap">
                                 <ProductCard product={product} currentQty={cart.find((item) => item.id === product.id)?.qty || 0} onAdd={onAdd} />

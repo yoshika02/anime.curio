@@ -903,6 +903,16 @@ body {
   gap: 1.8rem;
 }
 
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px dashed rgba(163, 26, 26, 0.25);
+  border-radius: 24px;
+}
+
 .collection-page {
   padding: 3rem 5%;
   background: var(--bg);
