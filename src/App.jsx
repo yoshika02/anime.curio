@@ -146,7 +146,6 @@ const FALLBACK_PRODUCTS = {
 };
 
 function normalizeProduct(rawProduct, fallbackIndex = 0) {
-  const category = String(rawProduct?.category || '').trim().toLowerCase();
   const title = String(rawProduct?.title || rawProduct?.name || 'Unnamed product').trim();
   const subtitle = String(rawProduct?.subtitle || rawProduct?.description || '').trim();
   const price = Number(rawProduct?.price) || 0;
@@ -155,6 +154,22 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const badge = String(rawProduct?.badge || (Number(rawProduct?.stock) <= 0 ? 'Sold Out' : 'In Stock')).trim();
   const badgeColor = String(rawProduct?.badgeColor || '#a31a1a').trim();
   const image = String(rawProduct?.image || '/products/placeholder.png').trim();
+
+  const categoryId = Number(rawProduct?.category || rawProduct?.category_id || rawProduct?.categoryId || 0);
+  const categoryKey = {
+    1: 'figurines',
+    2: 'keychains',
+    3: 'figurines',
+    4: 'combos',
+    5: 'mystery',
+    6: 'figurines',
+    7: 'figurines',
+    8: 'figurines',
+    9: 'figurines',
+    10: 'combos',
+    11: 'figurines',
+    12: 'figurines',
+  }[categoryId] || 'figurines';
 
   return {
     id: Number(rawProduct?.id) || fallbackIndex + 1,
@@ -167,7 +182,8 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     badgeColor,
     image,
     stock: Number(rawProduct?.stock) || 0,
-    category,
+    category: categoryKey,
+    categoryId,
   };
 }
 
