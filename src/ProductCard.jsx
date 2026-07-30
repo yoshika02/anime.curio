@@ -18,6 +18,12 @@ function Stars({ rating }) {
 }
 
 export default function ProductCard({ product, onAdd, currentQty = 0 }) {
+    const resolveImage = (url) => {
+        if (!url) return '/products/placeholder.png';
+        const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (driveMatch) return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+        return url;
+    };
     const [added, setAdded] = useState(false);
     const [liked, setLiked] = useState(false);
     const cardRef = useRef(null);
@@ -60,7 +66,7 @@ export default function ProductCard({ product, onAdd, currentQty = 0 }) {
                 <Heart size={16} fill={liked ? '#800000' : 'none'} stroke={liked ? '#800000' : '#800000'} />
             </button>
             <div className="product-img-wrap">
-                <img src={product.image} alt={product.title} className="product-img" />
+                <img src={resolveImage(product.image)} alt={product.title} className="product-img" />
                 <div className="product-overlay">
                     <Eye size={18} /> Quick View
                 </div>

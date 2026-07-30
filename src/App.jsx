@@ -491,7 +491,7 @@ export default function App() {
     <div className="app">
       {/* Header */}
       <header className={`site-header ${scrolled ? 'header-scrolled' : ''}`}>
-        <div className="logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        <div className="logo" onClick={() => navigate('home')}>
           AnimeCurio
         </div>
         <nav className="site-nav">

@@ -3,6 +3,12 @@ import ProductCard from './ProductCard';
 
 export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack }) {
     const scrollRef = useRef(null);
+    const convertDriveUrl = (url) => {
+        if (!url) return '/products/placeholder.png';
+        const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (driveMatch) return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+        return url;
+    };
     const featured = inventoryProducts.figurines.slice(0, 4);
     const allProducts = [
         ...inventoryProducts.figurines,
@@ -20,9 +26,6 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack 
         <main className="collection-page">
             <div className="collection-page-header">
                 <div>
-                    <button type="button" className="collection-back" onClick={onBack}>
-                        ← Back to Home
-                    </button>
                     <h2 className="collection-title">Top Collectibles</h2>
                     <p className="collection-copy">
                         Browse the latest premium figures front and center, then explore every product in the collection.
@@ -35,7 +38,7 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack 
                     <div className="collection-carousel" ref={scrollRef}>
                         {featured.map((item) => (
                             <div key={item.id} className="carousel-card">
-                                <img src={item.image} alt={item.title} className="carousel-image" />
+                                <img src={convertDriveUrl(item.image)} alt={item.title} className="carousel-image" />
                                 <div className="carousel-meta">
                                     <span className="carousel-name">{item.title}</span>
                                     <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
