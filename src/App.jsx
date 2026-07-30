@@ -421,22 +421,37 @@ export default function App() {
       setInventoryStatus('Loading inventory from Google Sheets...');
 
       try {
-        const response = await fetch(sheetsApiUrl, { cache: 'no-store' });
+        const response = await fetch(sheetsApiUrl, {
+          cache: 'no-store',
+          mode: 'cors',
+          headers: { 'Accept': 'application/json' }
+        });
+
         if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error(`Expected JSON, but got ${contentType || 'unknown'} — check that the Apps Script is deployed correctly`);
+        }
 
         const payload = await response.json();
         const products = Array.isArray(payload?.products) ? payload.products : [];
+
+        if (products.length === 0) {
+          throw new Error('No products found in Google Sheets. Check your sheet has data in the Inventory tab.');
+        }
+
         const loadedProducts = buildProductsByCategory(products);
 
         if (isMounted) {
           setInventoryProducts(loadedProducts);
-          setInventoryStatus(`Inventory synced from Google Sheets (${products.length} items).`);
+          setInventoryStatus(`✓ Inventory synced from Google Sheets (${products.length} items).`);
         }
       } catch (error) {
         console.error('Failed to load inventory from Google Sheets:', error);
         if (isMounted) {
           setInventoryProducts(FALLBACK_PRODUCTS);
-          setInventoryStatus('Google Sheets sync failed. Showing the built-in catalog instead.');
+          setInventoryStatus(`⚠ Google Sheets sync failed (${error.message}). Showing the built-in catalog instead.`);
         }
       }
     };
