@@ -429,7 +429,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const sheetsApiUrl = 'https://script.google.com/macros/s/AKfycbxSszfotie0uH3GFOxBGwbo_x12VUE94OfEb9B70WWz8g1d4SX85MSJeh8xoGFw_XiWhg/exec';
+    const sheetsApiUrl = 'https://script.google.com/macros/s/AKfycbxjh2XHXRmN51lCyEkE72ei6Vgnfc4TwZC4mobv7bxC37ZH-S-D_UCVnSyYknt8oCh7mg/exec';
 
     let isMounted = true;
 
