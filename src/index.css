@@ -246,7 +246,8 @@ body {
   z-index: 1001;
 }
 
-.collection-dropdown:hover .collection-menu {
+.collection-dropdown:hover .collection-menu,
+.collection-dropdown.open .collection-menu {
   display: block;
 }
 

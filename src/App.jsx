@@ -464,14 +464,27 @@ function FeaturesSection() {
 export default function App() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [collectionOpen, setCollectionOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [inventoryProducts, setInventoryProducts] = useState(FALLBACK_PRODUCTS);
+  const collectionRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event) => {
+      if (collectionOpen && collectionRef.current && !collectionRef.current.contains(event.target)) {
+        setCollectionOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, [collectionOpen]);
 
   useEffect(() => {
     const sheetsApiUrl = 'https://script.google.com/macros/s/AKfycbxjh2XHXRmN51lCyEkE72ei6Vgnfc4TwZC4mobv7bxC37ZH-S-D_UCVnSyYknt8oCh7mg/exec';
@@ -563,13 +576,59 @@ export default function App() {
         </div>
         <nav className="site-nav">
           <button className="nav-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Home</button>
-          <div className="collection-dropdown">
-            <button className="nav-link collection-toggle">Collection ▾</button>
+          <div className={`collection-dropdown ${collectionOpen ? 'open' : ''}`} ref={collectionRef}>
+            <button
+              className="nav-link collection-toggle"
+              onClick={() => setCollectionOpen((open) => !open)}
+            >
+              Collection ▾
+            </button>
             <div className="collection-menu">
-              <button className="nav-link" onClick={() => scrollTo('figurines')}>Figurines</button>
-              <button className="nav-link" onClick={() => scrollTo('combos')}>Combos</button>
-              <button className="nav-link" onClick={() => scrollTo('mystery')}>Mystery Balls</button>
-              <button className="nav-link" onClick={() => scrollTo('keychains')}>Key Chains</button>
+              <button
+                className="nav-link"
+                onClick={() => {
+                  setCollectionOpen(false);
+                  scrollTo('shop');
+                }}
+              >
+                All Products
+              </button>
+              <button
+                className="nav-link"
+                onClick={() => {
+                  setCollectionOpen(false);
+                  scrollTo('figurines');
+                }}
+              >
+                1. Anime Figurines
+              </button>
+              <button
+                className="nav-link"
+                onClick={() => {
+                  setCollectionOpen(false);
+                  scrollTo('combos');
+                }}
+              >
+                2. Exclusive Combos
+              </button>
+              <button
+                className="nav-link"
+                onClick={() => {
+                  setCollectionOpen(false);
+                  scrollTo('mystery');
+                }}
+              >
+                3. Mystery Gacha Balls
+              </button>
+              <button
+                className="nav-link"
+                onClick={() => {
+                  setCollectionOpen(false);
+                  scrollTo('keychains');
+                }}
+              >
+                4. Anime Key Chains
+              </button>
             </div>
           </div>
         </nav>
