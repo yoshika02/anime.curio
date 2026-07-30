@@ -21,7 +21,7 @@
 function doGet(e) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName('Inventory') || ss.getSheets()[0];
+    const sheet = ss.getSheetByName('anime inventory') || ss.getSheetByName('Inventory') || ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
 
     if (data.length < 2) {
@@ -37,8 +37,8 @@ function doGet(e) {
         headers.forEach((header, i) => {
           const val = row[i];
           // Auto-cast numeric fields
-          if (['id', 'price', 'rating', 'reviews', 'stock'].includes(header)) {
-            obj[header] = Number(val) || 0;
+          if (['id', 'price', 'rating', 'reviews', 'stock', 'category', 'category_id', 'categoryId'].includes(header)) {
+            obj[header] = Number(val) || (header === 'category' || header === 'category_id' || header === 'categoryId' ? val : 0);
           } else {
             obj[header] = String(val).trim();
           }
