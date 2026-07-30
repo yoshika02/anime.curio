@@ -596,9 +596,7 @@ export default function App() {
         <div className="hero-glow glow-cyan" />
         <div className="hero-content">
           <h1 className="hero-title">
-            <span className="hero-label">NEW 2026 COLLECTION</span>
-            Elevate Your<br />
-            <span className="hero-accent">Anime Collection</span>
+            Elevate Your <span className="hero-accent">Anime Collection</span>
           </h1>
           <p className="hero-desc">
             Discover highly detailed figurines, curated combo boxes, and rare mystery gacha balls.
