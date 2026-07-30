@@ -150,10 +150,23 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const subtitle = String(rawProduct?.subtitle || rawProduct?.description || '').trim();
   const price = Number(rawProduct?.price) || 0;
   const rating = Number(rawProduct?.rating) || 4.5;
-  const reviews = Number(rawProduct?.reviews) || 0;
-  const badge = String(rawProduct?.badge || (Number(rawProduct?.stock) <= 0 ? 'Sold Out' : 'In Stock')).trim();
-  const badgeColor = String(rawProduct?.badgeColor || '#a31a1a').trim();
+  const reviews = Number(rawProduct?.reviews || rawProduct?.review) || 0;
+  const scale = String(rawProduct?.scale || rawProduct?.size || 'Standard').trim();
+  const stockQuantity = Number(rawProduct?.stockQuantity ?? rawProduct?.stock ?? 0);
+  const inStock = rawProduct?.inStock !== undefined
+    ? String(rawProduct?.inStock).toLowerCase() === 'yes' || rawProduct?.inStock === true
+    : stockQuantity > 0;
+
+  const badge = stockQuantity > 0 && stockQuantity < 5
+    ? 'Rare Available'
+    : String(rawProduct?.badge || (inStock ? 'In Stock' : 'Sold Out')).trim();
+  const badgeColor = String(rawProduct?.badgeColor || (stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : inStock ? '#a31a1a' : '#666666')).trim();
   const image = String(rawProduct?.image || '/products/placeholder.png').trim();
+  const features = Array.isArray(rawProduct?.features)
+    ? rawProduct.features.map(String)
+    : typeof rawProduct?.features === 'string'
+      ? rawProduct.features.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
 
   const categoryId = Number(rawProduct?.category || rawProduct?.category_id || rawProduct?.categoryId || 0);
   const categoryKey = {
@@ -173,15 +186,20 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
 
   return {
     id: Number(rawProduct?.id) || fallbackIndex + 1,
+    name: title,
     title,
     subtitle,
+    scale,
     price,
     rating,
     reviews,
+    review: reviews,
     badge,
     badgeColor,
     image,
-    stock: Number(rawProduct?.stock) || 0,
+    stockQuantity,
+    inStock,
+    features,
     category: categoryKey,
     categoryId,
   };
@@ -195,18 +213,28 @@ function buildProductsByCategory(rawProducts = []) {
     keychains: [],
   };
 
+  const normalizeFallbackProduct = (product) => ({
+    ...product,
+    name: product.name || product.title,
+    scale: product.scale || 'Standard',
+    stockQuantity: product.stockQuantity ?? product.stock ?? 10,
+    inStock: product.inStock !== false,
+    features: product.features || [],
+    review: product.review ?? product.reviews,
+  });
+
   rawProducts.forEach((product, index) => {
     const normalized = normalizeProduct(product, index);
-    if (grouped[normalized.category]) {
+    if (normalized.inStock && grouped[normalized.category]) {
       grouped[normalized.category].push(normalized);
     }
   });
 
   return {
-    figurines: grouped.figurines.length ? grouped.figurines : FALLBACK_PRODUCTS.figurines,
-    combos: grouped.combos.length ? grouped.combos : FALLBACK_PRODUCTS.combos,
-    mystery: grouped.mystery.length ? grouped.mystery : FALLBACK_PRODUCTS.mystery,
-    keychains: grouped.keychains.length ? grouped.keychains : FALLBACK_PRODUCTS.keychains,
+    figurines: grouped.figurines.length ? grouped.figurines : FALLBACK_PRODUCTS.figurines.map(normalizeFallbackProduct),
+    combos: grouped.combos.length ? grouped.combos : FALLBACK_PRODUCTS.combos.map(normalizeFallbackProduct),
+    mystery: grouped.mystery.length ? grouped.mystery : FALLBACK_PRODUCTS.mystery.map(normalizeFallbackProduct),
+    keychains: grouped.keychains.length ? grouped.keychains : FALLBACK_PRODUCTS.keychains.map(normalizeFallbackProduct),
   };
 }
 
@@ -241,7 +269,11 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
                     <div className="cart-item-controls">
                       <button onClick={() => onUpdateQty(item.id, -1)}>−</button>
                       <span>{item.qty}</span>
-                      <button onClick={() => onUpdateQty(item.id, 1)}>+</button>
+                      <button
+                        onClick={() => onUpdateQty(item.id, 1)}
+                        disabled={item.qty >= (item.stockQuantity ?? item.stock ?? 10)}
+                      >+
+                      </button>
                     </div>
                   </div>
                   <button className="cart-item-remove" onClick={() => onRemove(item.id)}><X size={14} /></button>
@@ -275,12 +307,16 @@ function Stars({ rating }) {
 }
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
-function ProductCard({ product, onAdd }) {
+function ProductCard({ product, onAdd, currentQty = 0 }) {
   const [added, setAdded] = useState(false);
   const [liked, setLiked] = useState(false);
   const cardRef = useRef(null);
+  const available = product.stockQuantity ?? product.stock ?? 0;
+  const inStock = product.inStock !== undefined ? product.inStock : available > 0;
+  const maxReached = currentQty >= available;
 
   const handleAdd = () => {
+    if (!inStock || maxReached) return;
     onAdd(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
@@ -320,15 +356,25 @@ function ProductCard({ product, onAdd }) {
       <div className="product-info">
         <p className="product-subtitle">{product.subtitle}</p>
         <h3 className="product-title">{product.title}</h3>
+        {product.scale && <p className="product-scale">Scale: {product.scale}</p>}
         <Stars rating={product.rating} />
         <p className="product-reviews">{product.reviews} reviews</p>
+        {product.features?.length > 0 && (
+          <div className="product-features">
+            {product.features.slice(0, 3).map((feature, index) => (
+              <span key={index} className="product-feature">{feature}</span>
+            ))}
+          </div>
+        )}
         <div className="product-footer">
           <span className="product-price">₹{product.price.toLocaleString('en-IN')}</span>
           <button
+            type="button"
             className={`btn-add ${added ? 'added' : ''}`}
             onClick={handleAdd}
+            disabled={!inStock || maxReached}
           >
-            {added ? '✓ Added' : 'Add to Cart'}
+            {!inStock ? 'Sold Out' : maxReached ? 'Max Added' : added ? '✓ Added' : 'Add to Cart'}
           </button>
         </div>
       </div>
@@ -337,7 +383,7 @@ function ProductCard({ product, onAdd }) {
 }
 
 // ─── Section ──────────────────────────────────────────────────────────────────
-function Section({ id, icon, title, accent, products, onAdd }) {
+function Section({ id, icon, title, accent, products, onAdd, cart }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
 
@@ -358,7 +404,7 @@ function Section({ id, icon, title, accent, products, onAdd }) {
         {products.map((p, i) => (
           <div key={p.id} className="card-animate" style={{ animationDelay: `${i * 0.12}s` }}>
             <div className="card-glow-wrap">
-              <ProductCard product={p} onAdd={onAdd} />
+              <ProductCard product={p} currentQty={cart.find(item => item.id === p.id)?.qty || 0} onAdd={onAdd} />
             </div>
           </div>
         ))}
@@ -475,9 +521,16 @@ export default function App() {
   }, []);
 
   const handleAdd = (product) => {
+    const maxAvailable = product.stockQuantity ?? product.stock ?? 10;
+
     setCart(prev => {
       const existing = prev.find(i => i.id === product.id);
-      if (existing) return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+      if (existing) {
+        if (existing.qty >= maxAvailable) return prev;
+        return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+      }
+
+      if (maxAvailable <= 0) return prev;
       return [...prev, { ...product, qty: 1 }];
     });
   };
@@ -486,7 +539,11 @@ export default function App() {
 
   const handleUpdateQty = (id, delta) => {
     setCart(prev => prev
-      .map(i => i.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i)
+      .map(i => {
+        if (i.id !== id) return i;
+        const maxAvailable = i.stockQuantity ?? i.stock ?? 10;
+        return { ...i, qty: Math.max(0, Math.min(i.qty + delta, maxAvailable)) };
+      })
       .filter(i => i.qty > 0)
     );
   };
@@ -505,9 +562,16 @@ export default function App() {
           AnimeCurio
         </div>
         <nav className="site-nav">
-          {[['figurines', 'Figurines'], ['combos', 'Combos'], ['mystery', 'Mystery Balls'], ['keychains', 'Key Chains']].map(([id, label]) => (
-            <button key={id} className="nav-link" onClick={() => scrollTo(id)}>{label}</button>
-          ))}
+          <button className="nav-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Home</button>
+          <div className="collection-dropdown">
+            <button className="nav-link collection-toggle">Collection ▾</button>
+            <div className="collection-menu">
+              <button className="nav-link" onClick={() => scrollTo('figurines')}>Figurines</button>
+              <button className="nav-link" onClick={() => scrollTo('combos')}>Combos</button>
+              <button className="nav-link" onClick={() => scrollTo('mystery')}>Mystery Balls</button>
+              <button className="nav-link" onClick={() => scrollTo('keychains')}>Key Chains</button>
+            </div>
+          </div>
         </nav>
         <button className={`cart-toggle ${cartTotal > 0 ? 'cart-has-items' : ''}`} onClick={() => setCartOpen(true)}>
           <ShoppingCart size={18} />
@@ -531,8 +595,8 @@ export default function App() {
         <div className="hero-glow glow-pink" />
         <div className="hero-glow glow-cyan" />
         <div className="hero-content">
-          <div className="hero-tag"><Sparkles size={14} /> New 2026 Collection</div>
           <h1 className="hero-title">
+            <span className="hero-label">NEW 2026 COLLECTION</span>
             Elevate Your<br />
             <span className="hero-accent">Anime Collection</span>
           </h1>
@@ -542,7 +606,7 @@ export default function App() {
           </p>
           <div className="hero-actions">
             <button className="btn-primary" onClick={() => scrollTo('figurines')}>
-              <Zap size={16} /> Shop Now
+              <Zap size={16} /> Start Collecting
             </button>
             <button className="btn-secondary" onClick={() => scrollTo('mystery')}>
               <Package size={16} /> Mystery Balls
@@ -569,6 +633,7 @@ export default function App() {
           accent="#800000"
           products={inventoryProducts.figurines}
           onAdd={handleAdd}
+          cart={cart}
         />
         <Section
           id="combos"
@@ -577,6 +642,7 @@ export default function App() {
           accent="#a31a1a"
           products={inventoryProducts.combos}
           onAdd={handleAdd}
+          cart={cart}
         />
         <Section
           id="mystery"
@@ -585,6 +651,7 @@ export default function App() {
           accent="#4d0000"
           products={inventoryProducts.mystery}
           onAdd={handleAdd}
+          cart={cart}
         />
         <Section
           id="keychains"
@@ -593,6 +660,7 @@ export default function App() {
           accent="#660000"
           products={inventoryProducts.keychains}
           onAdd={handleAdd}
+          cart={cart}
         />
       </main>
 

@@ -217,6 +217,46 @@ body {
   width: 100%;
 }
 
+/* Collection dropdown */
+.collection-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.collection-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.collection-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: rgba(7, 7, 10, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.5rem;
+  border-radius: 8px;
+  display: none;
+  min-width: 180px;
+  z-index: 1001;
+}
+
+.collection-dropdown:hover .collection-menu {
+  display: block;
+}
+
+.collection-menu .nav-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+}
+
+.collection-menu .nav-link:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .cart-toggle {
   position: relative;
   background: var(--maroon);
@@ -564,21 +604,15 @@ body {
   /* Shift up slightly due to the white fade at bottom */
 }
 
-.hero-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #ffffff;
+.hero-label {
+  display: inline-block;
+  margin-bottom: 0.85rem;
+  color: #ffd6a5;
   font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
   text-transform: uppercase;
-  padding: 0.4rem 1rem;
-  border-radius: 30px;
-  margin-bottom: 1.5rem;
-  backdrop-filter: blur(4px);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
 }
 
 .hero-title {
@@ -1022,6 +1056,29 @@ body {
   margin-bottom: 1rem;
 }
 
+.product-scale {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0.35rem 0 0.85rem;
+}
+
+.product-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.product-feature {
+  display: inline-flex;
+  padding: 0.35rem 0.65rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
 .product-footer {
   display: flex;
   align-items: center;
@@ -1051,6 +1108,13 @@ body {
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 3px 12px rgba(128, 0, 0, 0.2);
+}
+
+.btn-add:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+  background: linear-gradient(135deg, #777 0%, #444 100%);
 }
 
 .btn-add:hover {
