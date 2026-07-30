@@ -907,6 +907,163 @@ body {
   gap: 1.8rem;
 }
 
+.collection-page {
+  padding: 3rem 5%;
+  background: var(--bg);
+}
+
+.collection-page-header {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) 1fr;
+  gap: 2rem;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.collection-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--maroon-pale);
+  color: var(--maroon-dark);
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.collection-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--maroon);
+  margin-bottom: 0.75rem;
+}
+
+.collection-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.collection-copy {
+  max-width: 560px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+.collection-carousel-wrap {
+  position: relative;
+}
+
+.collection-carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 1fr);
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scroll-snap-type: x mandatory;
+}
+
+.collection-carousel::-webkit-scrollbar {
+  height: 8px;
+}
+
+.collection-carousel::-webkit-scrollbar-thumb {
+  background: rgba(125, 94, 201, 0.25);
+  border-radius: 999px;
+}
+
+.carousel-card {
+  scroll-snap-align: start;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+}
+
+.carousel-image {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-meta {
+  padding: 1rem 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.carousel-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.carousel-price {
+  color: var(--maroon);
+  font-weight: 700;
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--maroon-dark);
+  font-size: 1.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.carousel-arrow.left {
+  left: -24px;
+}
+
+.carousel-arrow.right {
+  right: -24px;
+}
+
+.collection-all-products {
+  margin-top: 3rem;
+}
+
+.collection-all-header {
+  margin-bottom: 1.8rem;
+}
+
+.collection-all-header h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  margin-bottom: 0.6rem;
+  color: var(--text);
+}
+
+.collection-all-header p {
+  color: var(--text-muted);
+  max-width: 720px;
+  line-height: 1.8;
+}
+
+.collection-products-grid {
+  gap: 1.4rem;
+}
+
 /* ── Card Glow Wrapper — Lavender sweep ─────────────────────────── */
 .card-animate {
   animation: cardIn 0.5s ease both;

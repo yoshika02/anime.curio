@@ -413,6 +413,74 @@ function Section({ id, icon, title, accent, products, onAdd, cart }) {
   );
 }
 
+function CollectionPage({ inventoryProducts, onAdd, cart, onBack }) {
+  const scrollRef = useRef(null);
+  const featured = inventoryProducts.figurines.slice(0, 4);
+  const allProducts = [
+    ...inventoryProducts.figurines,
+    ...inventoryProducts.combos,
+    ...inventoryProducts.mystery,
+    ...inventoryProducts.keychains,
+  ];
+
+  const scrollCarousel = (direction) => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: direction * 300, behavior: 'smooth' });
+  };
+
+  return (
+    <main className="collection-page">
+      <div className="collection-page-header">
+        <div>
+          <button type="button" className="collection-back" onClick={onBack}>
+            ← Back to Home
+          </button>
+          <p className="collection-label">Premium Figures</p>
+          <h2 className="collection-title">Top Collectibles</h2>
+          <p className="collection-copy">
+            Browse the latest premium figures front and center, then explore every product in the collection.
+          </p>
+        </div>
+        <div className="collection-carousel-wrap">
+          <button type="button" className="carousel-arrow left" onClick={() => scrollCarousel(-1)}>
+            ‹
+          </button>
+          <div className="collection-carousel" ref={scrollRef}>
+            {featured.map((item) => (
+              <div key={item.id} className="carousel-card">
+                <img src={item.image} alt={item.title} className="carousel-image" />
+                <div className="carousel-meta">
+                  <span className="carousel-name">{item.title}</span>
+                  <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button type="button" className="carousel-arrow right" onClick={() => scrollCarousel(1)}>
+            ›
+          </button>
+        </div>
+      </div>
+
+      <section className="collection-all-products">
+        <div className="collection-all-header">
+          <h3>All Products</h3>
+          <p>All collectibles from figurines, combos, mystery balls, and key chains are available here.</p>
+        </div>
+        <div className="product-grid collection-products-grid">
+          {allProducts.map((product, index) => (
+            <div key={`${product.id}-${index}`} className="card-animate" style={{ animationDelay: `${index * 0.08}s` }}>
+              <div className="card-glow-wrap">
+                <ProductCard product={product} currentQty={cart.find(item => item.id === product.id)?.qty || 0} onAdd={onAdd} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
 // ─── Stats Bar ────────────────────────────────────────────────────────────────
 function StatsBar() {
   const stats = [
@@ -464,27 +532,20 @@ function FeaturesSection() {
 export default function App() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [collectionOpen, setCollectionOpen] = useState(false);
+  const [page, setPage] = useState('home');
   const [scrolled, setScrolled] = useState(false);
   const [inventoryProducts, setInventoryProducts] = useState(FALLBACK_PRODUCTS);
-  const collectionRef = useRef(null);
+
+  const navigate = (target) => {
+    setPage(target);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  useEffect(() => {
-    const closeOnOutsideClick = (event) => {
-      if (collectionOpen && collectionRef.current && !collectionRef.current.contains(event.target)) {
-        setCollectionOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', closeOnOutsideClick);
-    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
-  }, [collectionOpen]);
 
   useEffect(() => {
     const sheetsApiUrl = 'https://script.google.com/macros/s/AKfycbxjh2XHXRmN51lCyEkE72ei6Vgnfc4TwZC4mobv7bxC37ZH-S-D_UCVnSyYknt8oCh7mg/exec';
@@ -575,57 +636,42 @@ export default function App() {
           AnimeCurio
         </div>
         <nav className="site-nav">
-          <button className="nav-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Home</button>
-          <div className={`collection-dropdown ${collectionOpen ? 'open' : ''}`} ref={collectionRef}>
+          <button className="nav-link" onClick={() => navigate('home')}>Home</button>
+          <div className="collection-dropdown">
             <button
               className="nav-link collection-toggle"
-              onClick={() => setCollectionOpen((open) => !open)}
+              onClick={() => navigate('collection')}
             >
               Collection ▾
             </button>
             <div className="collection-menu">
               <button
                 className="nav-link"
-                onClick={() => {
-                  setCollectionOpen(false);
-                  scrollTo('shop');
-                }}
+                onClick={() => navigate('collection')}
               >
                 All Products
               </button>
               <button
                 className="nav-link"
-                onClick={() => {
-                  setCollectionOpen(false);
-                  scrollTo('figurines');
-                }}
+                onClick={() => navigate('collection')}
               >
                 1. Anime Figurines
               </button>
               <button
                 className="nav-link"
-                onClick={() => {
-                  setCollectionOpen(false);
-                  scrollTo('combos');
-                }}
+                onClick={() => navigate('collection')}
               >
                 2. Exclusive Combos
               </button>
               <button
                 className="nav-link"
-                onClick={() => {
-                  setCollectionOpen(false);
-                  scrollTo('mystery');
-                }}
+                onClick={() => navigate('collection')}
               >
                 3. Mystery Gacha Balls
               </button>
               <button
                 className="nav-link"
-                onClick={() => {
-                  setCollectionOpen(false);
-                  scrollTo('keychains');
-                }}
+                onClick={() => navigate('collection')}
               >
                 4. Anime Key Chains
               </button>
@@ -675,51 +721,62 @@ export default function App() {
         </button>
       </section>
 
-      {/* Stats */}
-      <StatsBar />
+      {/* Stats or Collection Page */}
+      {page === 'home' ? (
+        <>
+          <StatsBar />
 
-      {/* Features */}
-      <FeaturesSection />
+          {/* Features */}
+          <FeaturesSection />
 
-      {/* Shop Sections */}
-      <main id="shop" className="shop-main">
-        <Section
-          id="figurines"
-          icon={<Star size={22} />}
-          title="Premium Figurines"
-          accent="#800000"
-          products={inventoryProducts.figurines}
+          {/* Shop Sections */}
+          <main id="shop" className="shop-main">
+            <Section
+              id="figurines"
+              icon={<Star size={22} />}
+              title="Premium Figurines"
+              accent="#800000"
+              products={inventoryProducts.figurines}
+              onAdd={handleAdd}
+              cart={cart}
+            />
+            <Section
+              id="combos"
+              icon={<Package size={22} />}
+              title="Exclusive Combos"
+              accent="#a31a1a"
+              products={inventoryProducts.combos}
+              onAdd={handleAdd}
+              cart={cart}
+            />
+            <Section
+              id="mystery"
+              icon={<Sparkles size={22} />}
+              title="Mystery Gacha Balls"
+              accent="#4d0000"
+              products={inventoryProducts.mystery}
+              onAdd={handleAdd}
+              cart={cart}
+            />
+            <Section
+              id="keychains"
+              icon={<KeyRound size={22} />}
+              title="Anime Key Chains"
+              accent="#660000"
+              products={inventoryProducts.keychains}
+              onAdd={handleAdd}
+              cart={cart}
+            />
+          </main>
+        </>
+      ) : (
+        <CollectionPage
+          inventoryProducts={inventoryProducts}
           onAdd={handleAdd}
           cart={cart}
+          onBack={() => navigate('home')}
         />
-        <Section
-          id="combos"
-          icon={<Package size={22} />}
-          title="Exclusive Combos"
-          accent="#a31a1a"
-          products={inventoryProducts.combos}
-          onAdd={handleAdd}
-          cart={cart}
-        />
-        <Section
-          id="mystery"
-          icon={<Sparkles size={22} />}
-          title="Mystery Gacha Balls"
-          accent="#4d0000"
-          products={inventoryProducts.mystery}
-          onAdd={handleAdd}
-          cart={cart}
-        />
-        <Section
-          id="keychains"
-          icon={<KeyRound size={22} />}
-          title="Anime Key Chains"
-          accent="#660000"
-          products={inventoryProducts.keychains}
-          onAdd={handleAdd}
-          cart={cart}
-        />
-      </main>
+      )}
 
       {/* Footer */}
       <footer className="site-footer">
