@@ -20,18 +20,19 @@ function Stars({ rating }) {
 export default function ProductCard({ product, onAdd, currentQty = 0 }) {
     const resolveImage = (rawValue) => {
         if (!rawValue && rawValue !== 0) return '/products/placeholder.png';
-        let image = typeof rawValue === 'string' ? rawValue.trim() : rawValue?.url || rawValue?.src || '';
+        let image = typeof rawValue === 'string' ? rawValue.trim() : rawValue?.url || rawValue?.src || rawValue?.value || rawValue?.text || '';
         if (typeof image !== 'string') image = String(image);
         image = image.trim();
 
-        const imageFormula = image.match(/IMAGE\("([^"]+)"\)/i);
+        const imageFormula = image.match(/(?:^=)?IMAGE\(['"]([^'"]+)['"]/i);
         if (imageFormula) image = imageFormula[1];
 
-        const hyperlinkFormula = image.match(/HYPERLINK\("([^"]+)"\s*,?/i);
+        const hyperlinkFormula = image.match(/(?:^=)?HYPERLINK\(['"]([^'"]+)['"]\s*,?/i);
         if (hyperlinkFormula) image = hyperlinkFormula[1];
 
-        const driveMatch = image.match(/\/d\/([a-zA-Z0-9_-]+)/) || image.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        const driveMatch = image.match(/(?:https?:\/\/)?drive\.google\.com\/.*(?:\/d\/|id=)([a-zA-Z0-9_-]+)/i);
         if (driveMatch) return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+
         return image || '/products/placeholder.png';
     };
     const [added, setAdded] = useState(false);
