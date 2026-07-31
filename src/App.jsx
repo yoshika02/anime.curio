@@ -261,6 +261,8 @@ export default function App() {
   const [page, setPage] = useState(window.location.hash === '#collection' ? 'collection' : 'home');
   const [scrolled, setScrolled] = useState(false);
   const [inventoryProducts, setInventoryProducts] = useState(EMPTY_PRODUCTS);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const collectionScrollRef = useRef(null);
 
   const navigate = (target) => {
     if (target === 'collection') {
@@ -467,45 +469,71 @@ export default function App() {
           {/* Features */}
           <FeaturesSection />
 
-          {/* Shop Sections */}
-          <main id="shop" className="shop-main">
-            <Section
-              id="figurines"
-              icon={<Star size={22} />}
-              title="Premium Figurines"
-              accent="#800000"
-              products={inventoryProducts.figurines}
-              onAdd={handleAdd}
-              cart={cart}
-            />
-            <Section
-              id="combos"
-              icon={<Package size={22} />}
-              title="Exclusive Combos"
-              accent="#a31a1a"
-              products={inventoryProducts.combos}
-              onAdd={handleAdd}
-              cart={cart}
-            />
-            <Section
-              id="mystery"
-              icon={<Sparkles size={22} />}
-              title="Mystery Gacha Balls"
-              accent="#4d0000"
-              products={inventoryProducts.mystery}
-              onAdd={handleAdd}
-              cart={cart}
-            />
-            <Section
-              id="keychains"
-              icon={<KeyRound size={22} />}
-              title="Anime Key Chains"
-              accent="#660000"
-              products={inventoryProducts.keychains}
-              onAdd={handleAdd}
-              cart={cart}
-            />
-          </main>
+          {/* Collection preview (carousel + pills) on Home */}
+          <div className="collection-page">
+            <div className="collection-page-header">
+              <div>
+                <h2 className="collection-title">Top Collectibles</h2>
+                <p className="collection-copy">Browse the latest premium figures front and center, then explore every product in the collection.</p>
+              </div>
+              <div className="collection-carousel-wrap">
+                <button type="button" className="carousel-arrow left" onClick={() => collectionScrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</button>
+                <div className="collection-carousel" ref={collectionScrollRef}>
+                  {(inventoryProducts.figurines || []).slice(0, 4).map((item) => (
+                    <div key={item.id} className="carousel-card">
+                      <img
+                        src={(function (raw) {
+                          if (!raw) return '/placeholder.svg';
+                          const m = String(raw).match(/(?:https?:\/\/)?drive\.google\.com\/.*(?:\/d\/|id=)([a-zA-Z0-9_-]+)/i);
+                          if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+                          const f = String(raw).match(/(?:^=)?IMAGE\(['"]([^'"\)]+)['"]/i);
+                          if (f) return f[1];
+                          return String(raw);
+                        })(item.image)}
+                        alt={item.title}
+                        className="carousel-image"
+                        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                      />
+                      <div className="carousel-meta">
+                        <span className="carousel-name">{item.title}</span>
+                        <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" className="carousel-arrow right" onClick={() => collectionScrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>›</button>
+              </div>
+            </div>
+
+            <section className="collection-all-products">
+              <div className="collection-all-header">
+                <div className="pill-nav">
+                  {[{ key: 'all', label: 'All Products' }, { key: 'figurines', label: '1. Anime Figurines' }, { key: 'combos', label: '2. Combo Packs' }, { key: 'mystery', label: '3. Mystery Balls' }, { key: 'keychains', label: '4. Key Chains' }].map(cat => (
+                    <button key={cat.key} className={`pill ${activeCategory === cat.key ? 'active' : ''}`} onClick={() => setActiveCategory(cat.key)}>{cat.label}</button>
+                  ))}
+                </div>
+                <h3>All Products</h3>
+              </div>
+              <div className="product-grid collection-products-grid">
+                {((activeCategory === 'all'
+                  ? [...(inventoryProducts.figurines || []), ...(inventoryProducts.combos || []), ...(inventoryProducts.mystery || []), ...(inventoryProducts.keychains || [])]
+                  : (inventoryProducts[activeCategory] || []))).length === 0 ? (
+                  <div className="empty-state">No products available yet.</div>
+                ) : (
+                  (activeCategory === 'all'
+                    ? [...(inventoryProducts.figurines || []), ...(inventoryProducts.combos || []), ...(inventoryProducts.mystery || []), ...(inventoryProducts.keychains || [])]
+                    : (inventoryProducts[activeCategory] || [])).map((product, index) => (
+                      <div key={`${product.id}-${index}`} className="card-animate" style={{ animationDelay: `${index * 0.08}s` }}>
+                        <div className="card-glow-wrap">
+                          <ProductCard product={product} currentQty={cart.find((item) => item.id === product.id)?.qty || 0} onAdd={handleAdd} />
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            </section>
+          </div>
+          {/* Products removed from home (collection has separate page) */}
         </>
       ) : (
         <CollectionPage
