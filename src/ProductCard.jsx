@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Heart, Eye, Star } from 'lucide-react';
+import { Heart, Eye, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import ImageWithFallback from './imageUtils';
 
 function Stars({ rating }) {
@@ -55,6 +55,16 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
         cardRef.current.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateY(0)';
     };
 
+    const prevImage = (event) => {
+        event.stopPropagation();
+        setActiveView((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
+    };
+
+    const nextImage = (event) => {
+        event.stopPropagation();
+        setActiveView((prev) => (prev + 1) % galleryItems.length);
+    };
+
     return (
         <div
             ref={cardRef}
@@ -74,18 +84,26 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
             <div className="product-img-wrap">
                 <ImageWithFallback src={activeImage} alt={`${product.title} ${galleryItems[activeView]?.label || ''}`} className="product-img" fallbackImage={fallbackImage} />
                 {galleryItems.length > 1 && (
-                    <div className="product-view-switcher" onClick={(event) => event.stopPropagation()}>
-                        {galleryItems.map((item, index) => (
-                            <button
-                                key={`${item.label}-${index}`}
-                                type="button"
-                                className={`product-view-btn ${index === activeView ? 'active' : ''}`}
-                                onClick={() => setActiveView(index)}
-                            >
-                                {item.label}
-                            </button>
-                        ))}
-                    </div>
+                    <>
+                        <button type="button" className="product-nav product-nav-left" onClick={prevImage} onMouseDown={(e) => e.stopPropagation()}>
+                            <ChevronLeft size={20} />
+                        </button>
+                        <button type="button" className="product-nav product-nav-right" onClick={nextImage} onMouseDown={(e) => e.stopPropagation()}>
+                            <ChevronRight size={20} />
+                        </button>
+                        <div className="product-view-switcher" onClick={(event) => event.stopPropagation()}>
+                            {galleryItems.map((item, index) => (
+                                <button
+                                    key={`${item.label}-${index}`}
+                                    type="button"
+                                    className={`product-view-btn ${index === activeView ? 'active' : ''}`}
+                                    onClick={() => setActiveView(index)}
+                                >
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                    </>
                 )}
                 <div className="product-overlay">
                     <Eye size={18} /> Quick View

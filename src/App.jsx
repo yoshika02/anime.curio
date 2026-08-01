@@ -54,10 +54,6 @@ const collectProductGallery = (rawProduct) => {
     ['frontImage', 'Front'],
     ['front_image', 'Front'],
     ['frontView', 'Front'],
-    ['image', 'Main'],
-    ['image_url', 'Main'],
-    ['img', 'Main'],
-    ['thumbnail', 'Main'],
     ['side', 'Side'],
     ['sideImage', 'Side'],
     ['side_image', 'Side'],
@@ -70,6 +66,11 @@ const collectProductGallery = (rawProduct) => {
     ['topImage', 'Top'],
     ['top_image', 'Top'],
     ['topView', 'Top'],
+    ['image', 'Main'],
+    ['image_url', 'Main'],
+    ['img', 'Main'],
+    ['thumbnail', 'Main'],
+    ['photo', 'Main'],
     ['image1', '1'],
     ['image2', '2'],
     ['image3', '3'],
@@ -77,6 +78,25 @@ const collectProductGallery = (rawProduct) => {
   ];
 
   orderedFields.forEach(([key, label]) => push(rawProduct?.[key], label));
+
+  const extraKeys = Object.keys(rawProduct || {})
+    .filter(k => !orderedFields.some(([key]) => key.toLowerCase() === k.toLowerCase()))
+    .filter(k => /(?:image|img|thumbnail|photo|front|side|back|top)/i.test(k));
+
+  extraKeys.sort((a, b) => {
+    const order = ['front', 'side', 'back', 'top', 'image', 'img', 'thumbnail', 'photo'];
+    const aKey = a.toLowerCase();
+    const bKey = b.toLowerCase();
+    const aIndex = order.findIndex(pattern => aKey.includes(pattern));
+    const bIndex = order.findIndex(pattern => bKey.includes(pattern));
+    if (aIndex !== bIndex) return aIndex - bIndex;
+    return aKey.localeCompare(bKey, undefined, { numeric: true });
+  });
+
+  extraKeys.forEach((key) => {
+    const label = key.replace(/_/g, ' ').replace(/image/i, '').trim() || 'View';
+    push(rawProduct[key], label.charAt(0).toUpperCase() + label.slice(1));
+  });
 
   return gallery.length > 0 ? gallery : [{ url: resolveImageUrl(getImageField(rawProduct)), label: 'Main' }];
 };
