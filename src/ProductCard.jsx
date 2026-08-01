@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Heart, Eye, Star } from 'lucide-react';
 import ImageWithFallback from './imageUtils';
 
@@ -18,14 +18,23 @@ function Stars({ rating }) {
     );
 }
 
-export default function ProductCard({ product, onAdd, currentQty = 0 }) {
+export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) {
     const fallbackImage = '/placeholder.svg';
     const [added, setAdded] = useState(false);
     const [liked, setLiked] = useState(false);
+    const [activeView, setActiveView] = useState(0);
     const cardRef = useRef(null);
     const available = product.stockQuantity ?? product.stock ?? 0;
     const inStock = product.inStock !== undefined ? product.inStock : available > 0;
     const maxReached = currentQty >= available;
+    const galleryItems = Array.isArray(product.galleryImages) && product.galleryImages.length > 0
+        ? product.galleryImages
+        : [{ url: product.image || fallbackImage, label: 'Main' }];
+    const activeImage = galleryItems[activeView]?.url || fallbackImage;
+
+    useEffect(() => {
+        setActiveView(0);
+    }, [product.id]);
 
     const handleAdd = () => {
         if (!inStock || maxReached) return;
@@ -52,17 +61,32 @@ export default function ProductCard({ product, onAdd, currentQty = 0 }) {
             className="product-card"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
+            onClick={() => onView?.(product)}
         >
             {product.badge && (
                 <span className="product-badge" style={{ background: product.badgeColor }}>
                     {product.badge}
                 </span>
             )}
-            <button className={`product-like ${liked ? 'liked' : ''}`} onClick={() => setLiked(!liked)}>
+            <button className={`product-like ${liked ? 'liked' : ''}`} onClick={(event) => { event.stopPropagation(); setLiked(!liked); }}>
                 <Heart size={16} fill={liked ? '#800000' : 'none'} stroke={liked ? '#800000' : '#800000'} />
             </button>
             <div className="product-img-wrap">
-                <ImageWithFallback src={product.image} alt={product.title} className="product-img" fallbackImage={fallbackImage} />
+                <ImageWithFallback src={activeImage} alt={`${product.title} ${galleryItems[activeView]?.label || ''}`} className="product-img" fallbackImage={fallbackImage} />
+                {galleryItems.length > 1 && (
+                    <div className="product-view-switcher" onClick={(event) => event.stopPropagation()}>
+                        {galleryItems.map((item, index) => (
+                            <button
+                                key={`${item.label}-${index}`}
+                                type="button"
+                                className={`product-view-btn ${index === activeView ? 'active' : ''}`}
+                                onClick={() => setActiveView(index)}
+                            >
+                                {item.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
                 <div className="product-overlay">
                     <Eye size={18} /> Quick View
                 </div>
@@ -87,7 +111,7 @@ export default function ProductCard({ product, onAdd, currentQty = 0 }) {
                     <button
                         type="button"
                         className={`btn-add ${added ? 'added' : ''}`}
-                        onClick={handleAdd}
+                        onClick={(event) => { event.stopPropagation(); handleAdd(); }}
                         disabled={!inStock || maxReached}
                     >
                         {!inStock ? 'Sold Out' : maxReached ? 'Max Added' : added ? '✓ Added' : 'Add to Cart'}

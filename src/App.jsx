@@ -22,6 +22,65 @@ const getImageField = (rawProduct) => {
   return key ? rawProduct[key] : '';
 };
 
+const collectProductGallery = (rawProduct) => {
+  const seen = new Set();
+  const addEntry = (value, label = 'View') => {
+    if (!value && value !== 0) return;
+    const normalized = typeof value === 'string' ? value.trim() : value?.url || value?.src || value?.value || value?.text || '';
+    if (typeof normalized !== 'string') return;
+    const clean = normalized.trim();
+    if (!clean) return;
+    const resolved = resolveImageUrl(clean);
+    if (seen.has(resolved)) return;
+    seen.add(resolved);
+    return { url: resolved, label };
+  };
+
+  const gallery = [];
+  const push = (value, label) => {
+    const entry = addEntry(value, label);
+    if (entry) gallery.push(entry);
+  };
+
+  const directList = rawProduct?.images || rawProduct?.imageUrls || rawProduct?.image_gallery || rawProduct?.gallery || rawProduct?.imageURLs;
+  if (Array.isArray(directList)) {
+    directList.forEach(item => push(item, 'View'));
+  } else if (typeof directList === 'string') {
+    directList.split(/\||\n|;/).map(item => item.trim()).filter(Boolean).forEach(item => push(item, 'View'));
+  }
+
+  const orderedFields = [
+    ['front', 'Front'],
+    ['frontImage', 'Front'],
+    ['front_image', 'Front'],
+    ['frontView', 'Front'],
+    ['image', 'Main'],
+    ['image_url', 'Main'],
+    ['img', 'Main'],
+    ['thumbnail', 'Main'],
+    ['side', 'Side'],
+    ['sideImage', 'Side'],
+    ['side_image', 'Side'],
+    ['sideView', 'Side'],
+    ['back', 'Back'],
+    ['backImage', 'Back'],
+    ['back_image', 'Back'],
+    ['backView', 'Back'],
+    ['top', 'Top'],
+    ['topImage', 'Top'],
+    ['top_image', 'Top'],
+    ['topView', 'Top'],
+    ['image1', '1'],
+    ['image2', '2'],
+    ['image3', '3'],
+    ['image4', '4'],
+  ];
+
+  orderedFields.forEach(([key, label]) => push(rawProduct?.[key], label));
+
+  return gallery.length > 0 ? gallery : [{ url: resolveImageUrl(getImageField(rawProduct)), label: 'Main' }];
+};
+
 function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const title = String(rawProduct?.title || rawProduct?.name || 'Unnamed product').trim();
   const subtitle = String(rawProduct?.subtitle || rawProduct?.description || '').trim();
@@ -38,7 +97,8 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     ? 'Rare Available'
     : String(rawProduct?.badge || (inStock ? 'In Stock' : 'Sold Out')).trim();
   const badgeColor = String(rawProduct?.badgeColor || (stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : inStock ? '#a31a1a' : '#666666')).trim();
-  const image = resolveImageUrl(getImageField(rawProduct));
+  const galleryImages = collectProductGallery(rawProduct);
+  const image = galleryImages[0]?.url || resolveImageUrl(getImageField(rawProduct));
   const features = Array.isArray(rawProduct?.features)
     ? rawProduct.features.map(String)
     : typeof rawProduct?.features === 'string'
@@ -74,6 +134,7 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     badge,
     badgeColor,
     image,
+    galleryImages,
     stockQuantity,
     inStock,
     features,
@@ -92,7 +153,7 @@ function buildProductsByCategory(rawProducts = []) {
 
   rawProducts.forEach((product, index) => {
     const normalized = normalizeProduct(product, index);
-    if (normalized.inStock && grouped[normalized.category]) {
+    if (grouped[normalized.category]) {
       grouped[normalized.category].push(normalized);
     }
   });
@@ -181,7 +242,7 @@ function Section({ id, icon, title, accent, products, onAdd, cart }) {
         ) : products.map((p, i) => (
           <div key={p.id} className="card-animate" style={{ animationDelay: `${i * 0.12}s` }}>
             <div className="card-glow-wrap">
-              <ProductCard product={p} currentQty={cart.find(item => item.id === p.id)?.qty || 0} onAdd={onAdd} />
+              <ProductCard product={p} currentQty={cart.find(item => item.id === p.id)?.qty || 0} onAdd={onAdd} onView={openQuickView} />
             </div>
           </div>
         ))}
@@ -244,6 +305,8 @@ export default function App() {
   const [page, setPage] = useState(window.location.hash === '#collection' ? 'collection' : 'home');
   const [scrolled, setScrolled] = useState(false);
   const [inventoryProducts, setInventoryProducts] = useState(EMPTY_PRODUCTS);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [quickViewImageIndex, setQuickViewImageIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState('all');
   const collectionScrollRef = useRef(null);
 
@@ -345,6 +408,13 @@ export default function App() {
       .filter(i => i.qty > 0)
     );
   };
+
+  const openQuickView = (product) => {
+    setQuickViewProduct(product);
+    setQuickViewImageIndex(0);
+  };
+
+  const closeQuickView = () => setQuickViewProduct(null);
 
   const cartTotal = cart.reduce((s, i) => s + i.qty, 0);
 
@@ -500,7 +570,7 @@ export default function App() {
                     : (inventoryProducts[activeCategory] || [])).map((product, index) => (
                       <div key={`${product.id}-${index}`} className="card-animate" style={{ animationDelay: `${index * 0.08}s` }}>
                         <div className="card-glow-wrap">
-                          <ProductCard product={product} currentQty={cart.find((item) => item.id === product.id)?.qty || 0} onAdd={handleAdd} />
+                          <ProductCard product={product} currentQty={cart.find((item) => item.id === product.id)?.qty || 0} onAdd={handleAdd} onView={openQuickView} />
                         </div>
                       </div>
                     ))
@@ -516,7 +586,80 @@ export default function App() {
           onAdd={handleAdd}
           cart={cart}
           onBack={() => navigate('home')}
+          onView={openQuickView}
         />
+      )}
+
+      {quickViewProduct && (
+        <>
+          <div className="cart-overlay" onClick={closeQuickView} />
+          <div className="product-modal">
+            <button className="product-modal-close" onClick={closeQuickView}>
+              <X size={24} />
+            </button>
+            <div className="product-modal-grid">
+              <div className="product-modal-left">
+                <ImageWithFallback
+                  src={quickViewProduct.galleryImages?.[quickViewImageIndex]?.url || quickViewProduct.image}
+                  alt={quickViewProduct.title}
+                  className="product-modal-main-img"
+                />
+                {quickViewProduct.galleryImages?.length > 1 && (
+                  <div className="product-modal-thumbs">
+                    {quickViewProduct.galleryImages.map((item, index) => (
+                      <button
+                        key={`${item.label}-${index}`}
+                        type="button"
+                        className={`product-modal-thumb ${index === quickViewImageIndex ? 'active' : ''}`}
+                        onClick={() => setQuickViewImageIndex(index)}
+                      >
+                        <img src={item.url} alt={item.label} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="product-modal-right">
+                <div className="product-modal-header">
+                  <span className="product-modal-badge" style={{ background: quickViewProduct.badgeColor }}>
+                    {quickViewProduct.badge}
+                  </span>
+                  <span className="product-modal-stock">{quickViewProduct.inStock ? `In Stock (${quickViewProduct.stockQuantity} left)` : 'Sold Out'}</span>
+                </div>
+                <h2 className="product-modal-title">{quickViewProduct.title}</h2>
+                <p className="product-modal-subtitle">{quickViewProduct.subtitle}</p>
+                <div className="product-modal-specs">
+                  <div className="spec-row"><span>Price</span><strong>₹{quickViewProduct.price.toLocaleString('en-IN')}</strong></div>
+                  {quickViewProduct.scale && <div className="spec-row"><span>Scale</span><strong>{quickViewProduct.scale}</strong></div>}
+                  <div className="spec-row"><span>Reviews</span><strong>{quickViewProduct.reviews} reviews</strong></div>
+                </div>
+                {quickViewProduct.features?.length > 0 && (
+                  <div className="product-modal-features">
+                    <h4>Features</h4>
+                    <ul>
+                      {quickViewProduct.features.map((feature, index) => (
+                        <li key={`${feature}-${index}`}>{feature}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="product-modal-actions">
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => {
+                      handleAdd(quickViewProduct);
+                      closeQuickView();
+                    }}
+                    disabled={!quickViewProduct.inStock}
+                  >
+                    {quickViewProduct.inStock ? 'Add to Cart' : 'Sold Out'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Footer */}

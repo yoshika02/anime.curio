@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import ProductCard from './ProductCard';
 import ImageWithFallback from './imageUtils';
 
-export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack }) {
+export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView }) {
     const scrollRef = useRef(null);
     const featured = inventoryProducts.figurines.slice(0, 4);
     const [activeCategory, setActiveCategory] = useState('all');
@@ -86,7 +86,7 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack 
                     ) : visibleProducts.map((product, index) => (
                         <div key={`${product.id}-${index}`} className="card-animate" style={{ animationDelay: `${index * 0.08}s` }}>
                             <div className="card-glow-wrap">
-                                <ProductCard product={product} currentQty={cart.find((item) => item.id === product.id)?.qty || 0} onAdd={onAdd} />
+                                <ProductCard product={product} currentQty={cart.find((item) => item.id === product.id)?.qty || 0} onAdd={onAdd} onView={onView} />
                             </div>
                         </div>
                     ))}
