@@ -58,5 +58,12 @@ export default function ImageWithFallback({ src, alt, className, fallbackImage =
         }
     };
 
-    return <img src={currentSrc} alt={alt} className={className} onError={handleError} loading="lazy" {...props} />;
+    return React.createElement('img', {
+        src: currentSrc,
+        alt,
+        className,
+        onError: handleError,
+        loading: 'lazy',
+        ...props,
+    });
 }
