@@ -72,9 +72,13 @@ const collectProductGallery = (rawProduct) => {
     ['thumbnail', 'Main'],
     ['photo', 'Main'],
     ['image1', '1'],
+    ['image 1', '1'],
     ['image2', '2'],
+    ['image 2', '2'],
     ['image3', '3'],
+    ['image 3', '3'],
     ['image4', '4'],
+    ['image 4', '4'],
   ];
 
   orderedFields.forEach(([key, label]) => push(rawProduct?.[key], label));
@@ -633,7 +637,12 @@ export default function App() {
                         className={`product-modal-thumb ${index === quickViewImageIndex ? 'active' : ''}`}
                         onClick={() => setQuickViewImageIndex(index)}
                       >
-                        <img src={item.url} alt={item.label} />
+                        <ImageWithFallback
+                          src={item.url}
+                          alt={item.label}
+                          className="product-modal-thumb-img"
+                          fallbackImage="/placeholder.svg"
+                        />
                       </button>
                     ))}
                   </div>
