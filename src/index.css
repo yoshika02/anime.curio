@@ -728,6 +728,7 @@ body {
   padding: 0 8%;
   overflow: hidden;
   background: var(--maroon-dark);
+  width: 100%;
 }
 
 /* Desktop: landscape poster */
@@ -1101,9 +1102,8 @@ body {
 .collection-page {
   padding: 3rem 5%;
   background: var(--bg);
-}
-
-.collection-page-header {
+  width: 100%;
+  max-width: 100%;
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.8rem;
@@ -1141,11 +1141,11 @@ body {
   overflow-x: auto;
   padding-bottom: 0.5rem;
   scroll-snap-type: x mandatory;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .carousel-card {
-  flex: 0 0 320px;
+  flex: 0 0 min(320px, 100%);
   scroll-snap-align: center;
   border-radius: 28px;
   overflow: hidden;
@@ -1314,14 +1314,13 @@ body {
   border-radius: var(--radius);
   overflow: hidden;
   position: relative;
-  transition: transform 0.15s ease;
+  transition: box-shadow 0.2s ease;
   cursor: pointer;
-  transform-style: preserve-3d;
   box-shadow: 0 4px 12px rgba(194, 72, 91, 0.05);
 }
 
 .product-card:hover {
-  transform: translateY(-6px);
+  transform: none;
   box-shadow: 0 8px 24px rgba(194, 72, 91, 0.1);
 }
 
@@ -1672,8 +1671,18 @@ body {
 
 /* ── Responsive ──────────────────────────────────────────────────────── */
 @media (max-width:768px) {
+  .site-header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 1rem 4%;
+  }
+
   .site-nav {
-    display: none;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
   }
 
   .hero {
@@ -1710,6 +1719,7 @@ body {
 
   .product-grid {
     grid-template-columns: 1fr;
+    gap: 1.2rem;
   }
 
   .product-img-wrap {

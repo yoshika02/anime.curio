@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Heart, Eye, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import ImageWithFallback from './imageUtils';
 
@@ -43,18 +43,6 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
         setTimeout(() => setAdded(false), 1200);
     };
 
-    const handleMouseMove = (e) => {
-        const card = cardRef.current;
-        const rect = card.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width - 0.5) * 14;
-        const y = ((e.clientY - rect.top) / rect.height - 0.5) * -14;
-        card.style.transform = `perspective(800px) rotateX(${y}deg) rotateY(${x}deg) translateY(-8px)`;
-    };
-
-    const handleMouseLeave = () => {
-        cardRef.current.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateY(0)';
-    };
-
     const prevImage = (event) => {
         event.stopPropagation();
         setActiveView((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
@@ -67,10 +55,7 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
 
     return (
         <div
-            ref={cardRef}
             className="product-card"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
             onClick={() => onView?.(product)}
         >
             <div className="product-card-top-row">
