@@ -1,25 +1,9 @@
 import React, { useRef, useState } from 'react';
 import ProductCard from './ProductCard';
+import ImageWithFallback from './imageUtils';
 
 export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack }) {
     const scrollRef = useRef(null);
-    const convertDriveUrl = (rawValue) => {
-        const fallbackImage = '/Phone_portrait_old.png';
-        if (!rawValue && rawValue !== 0) return fallbackImage;
-        let image = typeof rawValue === 'string' ? rawValue.trim() : rawValue?.url || rawValue?.src || rawValue?.value || rawValue?.text || '';
-        if (typeof image !== 'string') image = String(image);
-        image = image.trim();
-
-        const imageFormula = image.match(/(?:^=)?IMAGE\(['"]([^'"]+)['"]/i);
-        if (imageFormula) image = imageFormula[1];
-
-        const hyperlinkFormula = image.match(/(?:^=)?HYPERLINK\(['"]([^'"]+)['"]\s*,?/i);
-        if (hyperlinkFormula) image = hyperlinkFormula[1];
-
-        const driveMatch = image.match(/(?:https?:\/\/)?drive\.google\.com\/.*(?:\/d\/|id=)([a-zA-Z0-9_-]+)/i);
-        if (driveMatch) return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
-        return image || fallbackImage;
-    };
     const featured = inventoryProducts.figurines.slice(0, 4);
     const [activeCategory, setActiveCategory] = useState('all');
     const allProducts = [
@@ -62,13 +46,10 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack 
                     <div className="collection-carousel" ref={scrollRef}>
                         {featured.map((item) => (
                             <div key={item.id} className="carousel-card">
-                                <img
-                                    src={convertDriveUrl(item.image)}
+                                <ImageWithFallback
+                                    src={item.image}
                                     alt={item.title}
                                     className="carousel-image"
-                                    onError={(e) => {
-                                        e.currentTarget.src = '/placeholder.svg';
-                                    }}
                                 />
                                 <div className="carousel-meta">
                                     <span className="carousel-name">{item.title}</span>

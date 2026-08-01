@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, KeyRound, ShieldCheck, Truck, Gem, Medal } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
+import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
 
 // ─── Product Data ────────────────────────────────────────────────────────────
 const EMPTY_PRODUCTS = {
@@ -11,25 +12,7 @@ const EMPTY_PRODUCTS = {
   keychains: [],
 };
 
-const resolveImageUrl = (rawValue) => {
-  if (!rawValue && rawValue !== 0) return '';
-  let image = typeof rawValue === 'string' ? rawValue.trim() : rawValue?.url || rawValue?.src || '';
-  if (typeof image !== 'string') image = String(image);
-  image = image.trim();
-
-  // Remove Google Sheets IMAGE formula wrappers.
-  const imageFormula = image.match(/IMAGE\("([^"]+)"\)/i);
-  if (imageFormula) image = imageFormula[1];
-
-  const hyperlinkFormula = image.match(/HYPERLINK\("([^"]+)"\s*,?/i);
-  if (hyperlinkFormula) image = hyperlinkFormula[1];
-
-  // Handle common Google Drive link patterns.
-  const driveMatch = image.match(/\/d\/([a-zA-Z0-9_-]+)/) || image.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (driveMatch) return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
-
-  return image;
-};
+const resolveImageUrl = (rawValue) => getPrimaryImageUrl(rawValue, '/placeholder.svg');
 
 const getImageField = (rawProduct) => {
   if (!rawProduct || typeof rawProduct !== 'object') return '';
@@ -451,7 +434,7 @@ export default function App() {
                 Premium merchandise crafted for true enthusiasts.
               </p>
               <div className="hero-actions">
-                <button className="btn-primary" onClick={() => scrollTo('figurines')}>
+                <button className="btn-primary" onClick={() => navigate('collection')}>
                   <Zap size={16} /> Start Collecting
                 </button>
                 <button className="btn-secondary" onClick={() => scrollTo('mystery')}>
@@ -481,18 +464,10 @@ export default function App() {
                 <div className="collection-carousel" ref={collectionScrollRef}>
                   {(inventoryProducts.figurines || []).slice(0, 4).map((item) => (
                     <div key={item.id} className="carousel-card">
-                      <img
-                        src={(function (raw) {
-                          if (!raw) return '/placeholder.svg';
-                          const m = String(raw).match(/(?:https?:\/\/)?drive\.google\.com\/.*(?:\/d\/|id=)([a-zA-Z0-9_-]+)/i);
-                          if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-                          const f = String(raw).match(/(?:^=)?IMAGE\(['"]([^'"\)]+)['"]/i);
-                          if (f) return f[1];
-                          return String(raw);
-                        })(item.image)}
+                      <ImageWithFallback
+                        src={item.image}
                         alt={item.title}
                         className="carousel-image"
-                        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
                       />
                       <div className="carousel-meta">
                         <span className="carousel-name">{item.title}</span>
