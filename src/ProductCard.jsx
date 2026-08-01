@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Heart, Eye, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import ImageWithFallback from './imageUtils';
 
@@ -23,7 +23,6 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
     const [added, setAdded] = useState(false);
     const [liked, setLiked] = useState(false);
     const [activeView, setActiveView] = useState(0);
-    const cardRef = useRef(null);
     const available = product.stockQuantity ?? product.stock ?? 0;
     const inStock = product.inStock !== undefined ? product.inStock : available > 0;
     const maxReached = currentQty >= available;
