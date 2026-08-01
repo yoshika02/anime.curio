@@ -636,11 +636,7 @@ export default function App() {
                 {quickViewProduct.features?.length > 0 && (
                   <div className="product-modal-features">
                     <h4>Features</h4>
-                    <ul>
-                      {quickViewProduct.features.map((feature, index) => (
-                        <li key={`${feature}-${index}`}>{feature}</li>
-                      ))}
-                    </ul>
+                    <p>{quickViewProduct.features.slice(0, 3).join(' | ')}</p>
                   </div>
                 )}
                 <div className="product-modal-actions">
@@ -654,6 +650,19 @@ export default function App() {
                     disabled={!quickViewProduct.inStock}
                   >
                     {quickViewProduct.inStock ? 'Add to Cart' : 'Sold Out'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary btn-buy-now"
+                    onClick={() => {
+                      if (!quickViewProduct.inStock) return;
+                      handleAdd(quickViewProduct);
+                      closeQuickView();
+                      setCartOpen(true);
+                    }}
+                    disabled={!quickViewProduct.inStock}
+                  >
+                    Buy Now
                   </button>
                 </div>
               </div>
