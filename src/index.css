@@ -121,6 +121,8 @@
 
 html {
   scroll-behavior: smooth;
+  min-height: 100%;
+  width: 100%;
 }
 
 body {
@@ -128,6 +130,14 @@ body {
   background: var(--bg);
   color: var(--text);
   overflow-x: hidden;
+  min-height: 100%;
+  width: 100%;
+}
+
+#root,
+.app {
+  min-height: 100%;
+  width: 100%;
 }
 
 .app {
@@ -735,6 +745,7 @@ body {
 .hero-bg {
   position: absolute;
   inset: 0;
+  background-color: rgba(125, 26, 42, 0.95);
   background-image: url('/Website_landscape_old.png');
   background-size: cover;
   background-position: center center;
@@ -1693,6 +1704,7 @@ body {
 
   .hero-content {
     text-align: left;
+    opacity: 1;
   }
 
   .hero-actions {
