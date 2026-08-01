@@ -650,7 +650,7 @@ export default function App() {
                 <p className="product-modal-subtitle">{quickViewProduct.subtitle}</p>
                 <div className="product-modal-specs">
                   <div className="spec-row"><span>Price</span><strong>₹{quickViewProduct.price.toLocaleString('en-IN')}</strong></div>
-                  {quickViewProduct.scale && <div className="spec-row"><span>Scale</span><strong>{quickViewProduct.scale}</strong></div>}
+                  {quickViewProduct.scale && <div className="spec-row"><span>Size</span><strong>{quickViewProduct.scale}</strong></div>}
                   <div className="spec-row"><span>Reviews</span><strong>{quickViewProduct.reviews} reviews</strong></div>
                 </div>
                 {quickViewProduct.features?.length > 0 && (

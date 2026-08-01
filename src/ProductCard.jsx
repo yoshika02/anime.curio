@@ -73,6 +73,14 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
             onMouseLeave={handleMouseLeave}
             onClick={() => onView?.(product)}
         >
+            <div className="product-card-top-row">
+                {product.scale && <span className="product-scale-badge">{product.scale}</span>}
+                {product.stockQuantity !== undefined && (
+                    <span className={`product-stock-badge ${product.inStock ? 'in-stock' : 'sold-out'}`}>
+                        {product.inStock ? `Stock: ${product.stockQuantity}` : 'Sold Out'}
+                    </span>
+                )}
+            </div>
             {product.badge && (
                 <span className="product-badge" style={{ background: product.badgeColor }}>
                     {product.badge}
@@ -112,7 +120,7 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
             <div className="product-info">
                 <p className="product-subtitle">{product.subtitle}</p>
                 <h3 className="product-title">{product.title}</h3>
-                {product.scale && <p className="product-scale">Scale: {product.scale}</p>}
+                {product.scale && <p className="product-meta">Size: {product.scale}</p>}
                 <Stars rating={product.rating} />
                 <p className="product-reviews">{product.reviews} reviews</p>
                 {product.features?.length > 0 && (
