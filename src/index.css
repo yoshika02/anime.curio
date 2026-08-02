@@ -399,8 +399,9 @@ body {
 
 .product-modal-main-img {
   width: 100%;
-  min-height: 420px;
-  max-height: 560px;
+  min-height: 320px;
+  max-height: 520px;
+  height: auto;
   border-radius: calc(var(--radius) - 2px);
   object-fit: contain;
   background: var(--bg2);
@@ -521,10 +522,14 @@ body {
 }
 
 .product-modal-actions .btn-primary,
-.product-modal-actions .btn-buy-now {
-  flex: 1 1 160px;
-  min-height: 48px;
-  padding: 0.85rem 1.1rem;
+.product-modal-actions .btn-buy-now,
+.product-modal-actions .btn-secondary {
+  flex: 1 1 150px;
+  min-width: 140px;
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+  border-radius: 18px;
 }
 
 .product-modal-actions .btn-buy-now {
@@ -1724,8 +1729,8 @@ body {
     width: auto;
     padding: 0.75rem;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(230, 230, 250, 0.95);
+    border-color: rgba(182, 156, 255, 0.45);
   }
 
   .cart-toggle svg {
