@@ -1710,16 +1710,26 @@ body {
 
   .site-nav {
     width: 100%;
+    order: 2;
     justify-content: flex-start;
     gap: 1rem;
     overflow-x: auto;
     padding-bottom: 0.5rem;
-    order: 1;
   }
 
   .cart-toggle {
-    order: 2;
+    order: 1;
     margin-left: auto;
+    min-width: 44px;
+    width: auto;
+    padding: 0.75rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  .cart-toggle svg {
+    display: block;
   }
 
   .hero {
