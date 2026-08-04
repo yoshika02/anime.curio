@@ -590,33 +590,7 @@ export default function App() {
               </div>
             </div>
 
-            <section className="collection-all-products">
-              <div className="collection-all-header">
-                <div className="pill-nav">
-                  {[{ key: 'all', label: 'All Products' }, { key: 'figurines', label: '1. Anime Figurines' }, { key: 'combos', label: '2. Combo Packs' }, { key: 'mystery', label: '3. Mystery Balls' }, { key: 'keychains', label: '4. Key Chains' }].map(cat => (
-                    <button key={cat.key} className={`pill ${activeCategory === cat.key ? 'active' : ''}`} onClick={() => setActiveCategory(cat.key)}>{cat.label}</button>
-                  ))}
-                </div>
-                <h3>All Products</h3>
-              </div>
-              <div className="product-grid collection-products-grid">
-                {((activeCategory === 'all'
-                  ? [...(inventoryProducts.figurines || []), ...(inventoryProducts.combos || []), ...(inventoryProducts.mystery || []), ...(inventoryProducts.keychains || [])]
-                  : (inventoryProducts[activeCategory] || []))).length === 0 ? (
-                  <div className="empty-state">No products available yet.</div>
-                ) : (
-                  (activeCategory === 'all'
-                    ? [...(inventoryProducts.figurines || []), ...(inventoryProducts.combos || []), ...(inventoryProducts.mystery || []), ...(inventoryProducts.keychains || [])]
-                    : (inventoryProducts[activeCategory] || [])).map((product, index) => (
-                      <div key={`${product.id}-${index}`} className="card-animate" style={{ animationDelay: `${index * 0.08}s` }}>
-                        <div className="card-glow-wrap">
-                          <ProductCard product={product} currentQty={cart.find((item) => item.id === product.id)?.qty || 0} onAdd={handleAdd} onView={openQuickView} />
-                        </div>
-                      </div>
-                    ))
-                )}
-              </div>
-            </section>
+
           </div>
           
           {/* Features */}
