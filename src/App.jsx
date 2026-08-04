@@ -116,7 +116,29 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const title = String(rawProduct?.title || rawProduct?.name || 'Unnamed product').trim();
   const subtitle = String(rawProduct?.subtitle || rawProduct?.description || '').trim();
   const price = parseNumeric(rawProduct?.price ?? rawProduct?.currentPrice ?? rawProduct?.sellingPrice);
-  const actualPrice = parseNumeric(rawProduct?.actualPrice ?? rawProduct?.mrp ?? rawProduct?.MRP ?? rawProduct?.originalPrice ?? rawProduct?.listPrice ?? rawProduct?.maxRetailPrice ?? rawProduct?.max_retail_price) || price;
+  const explicitActual = parseNumeric(rawProduct?.actualPrice ?? rawProduct?.mrp ?? rawProduct?.MRP ?? rawProduct?.originalPrice ?? rawProduct?.listPrice ?? rawProduct?.maxRetailPrice ?? rawProduct?.max_retail_price);
+  const explicitDiscount = parseNumeric(rawProduct?.discount ?? rawProduct?.discountPercent ?? rawProduct?.percentOff ?? rawProduct?.off);
+
+  // Compute discount percent and actual (original/MRP) price robustly:
+  // - If an explicit discount percent exists, use it to derive actual price when missing.
+  // - If an explicit actual price exists, compute discount percent from it.
+  // - Fallback: no discount.
+  let discountPercent = 0;
+  let actualPrice = explicitActual || 0;
+
+  if (explicitDiscount > 0) {
+    discountPercent = Math.round(explicitDiscount);
+    if (!actualPrice || actualPrice <= price) {
+      const denom = 1 - (discountPercent / 100);
+      actualPrice = denom > 0 ? Math.round(price / denom) : price;
+    }
+  } else if (explicitActual > 0 && explicitActual > price) {
+    actualPrice = explicitActual;
+    discountPercent = Math.round(((actualPrice - price) / actualPrice) * 100);
+  } else {
+    actualPrice = explicitActual || price;
+    discountPercent = actualPrice > price ? Math.round(((actualPrice - price) / actualPrice) * 100) : 0;
+  }
   const rating = Number(rawProduct?.rating) || 4.5;
   const reviews = Number(rawProduct?.reviews || rawProduct?.review) || 0;
   const scale = String(rawProduct?.scale || rawProduct?.size || 'Standard').trim();
@@ -152,9 +174,6 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     11: 'figurines',
     12: 'figurines',
   }[categoryId] || 'figurines';
-
-  const discountPercent = parseNumeric(rawProduct?.discount ?? rawProduct?.discountPercent ?? rawProduct?.percentOff ?? rawProduct?.off)
-    || (actualPrice > price ? Math.round(((actualPrice - price) / actualPrice) * 100) : 0);
 
   return {
     id: Number(rawProduct?.id) || fallbackIndex + 1,
@@ -226,7 +245,16 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
                   <img src={item.image} alt={item.title} className="cart-item-img" />
                   <div className="cart-item-info">
                     <p className="cart-item-name">{item.title}</p>
-                    <p className="cart-item-price">₹{(item.price * item.qty).toLocaleString('en-IN')}</p>
+                    <div className="cart-item-price-group">
+                      <span className="cart-item-price">₹{item.price.toLocaleString('en-IN')}</span>
+                      {item.actualPrice > item.price && (
+                        <>
+                          <span className="cart-item-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
+                          {item.discountPercent > 0 && <span className="cart-item-discount">-{item.discountPercent}%</span>}
+                        </>
+                      )}
+                    </div>
+                    <p style={{ marginTop: 6, fontSize: '0.95rem', color: 'var(--text-muted)' }}>Qty: {item.qty} • Subtotal ₹{(item.price * item.qty).toLocaleString('en-IN')}</p>
                     <div className="cart-item-controls">
                       <button onClick={() => onUpdateQty(item.id, -1)}>−</button>
                       <span>{item.qty}</span>
@@ -594,7 +622,15 @@ export default function App() {
                       />
                       <div className="carousel-meta">
                         <span className="carousel-name">{item.title}</span>
-                        <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
+                        <div className="carousel-price-group">
+                          <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
+                          {item.actualPrice > item.price && (
+                            <>
+                              <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
+                              {item.discountPercent > 0 && <span className="carousel-discount">-{item.discountPercent}%</span>}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -671,7 +707,7 @@ export default function App() {
                       ₹{quickViewProduct.price.toLocaleString('en-IN')}
                       {quickViewProduct.actualPrice > quickViewProduct.price && (
                         <span className="price-meta">
-                          <span className="price-old">₹{quickViewProduct.actualPrice.toLocaleString('en-IN')}</span>
+                          <span className="price-old">M.R.P: ₹{quickViewProduct.actualPrice.toLocaleString('en-IN')}</span>
                           {quickViewProduct.discountPercent > 0 && <span className="price-discount">-{quickViewProduct.discountPercent}%</span>}
                         </span>
                       )}

@@ -53,7 +53,15 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                                 />
                                 <div className="carousel-meta">
                                     <span className="carousel-name">{item.title}</span>
-                                    <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
+                                    <div className="carousel-price-group">
+                                        <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
+                                        {item.actualPrice > item.price && (
+                                            <>
+                                                <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
+                                                {item.discountPercent > 0 && <span className="carousel-discount">-{item.discountPercent}%</span>}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
