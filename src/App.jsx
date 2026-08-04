@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, KeyRound, ShieldCheck, Truck, Gem, Medal } from 'lucide-react';
+import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
@@ -496,10 +496,27 @@ export default function App() {
             </div>
           </div>
         </nav>
-        <button className={`cart-toggle ${cartTotal > 0 ? 'cart-has-items' : ''}`} onClick={() => setCartOpen(true)}>
-          <ShoppingCart size={18} />
-          {cartTotal > 0 && <span className="cart-badge">{cartTotal}</span>}
-        </button>
+        <div className="header-actions">
+          <button className="header-action-btn action-community">
+            <Users size={24} />
+            <span>Community</span>
+          </button>
+          <button className="header-action-btn action-new">
+            <Star size={24} />
+            <span>New</span>
+          </button>
+          <button className="header-action-btn action-cart" onClick={() => setCartOpen(true)}>
+            <div className="cart-icon-wrapper">
+              <ShoppingCart size={24} />
+              {cartTotal > 0 && <span className="cart-badge">{cartTotal}</span>}
+            </div>
+            <span>Cart</span>
+          </button>
+          <button className="header-action-btn action-account">
+            <User size={24} />
+            <span>Account</span>
+          </button>
+        </div>
       </header>
 
       {/* Cart */}

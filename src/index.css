@@ -273,44 +273,65 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.cart-toggle {
-  position: relative;
-  background: var(--maroon);
-  border: 1px solid var(--maroon-dark);
-  color: white;
-  padding: 0.65rem 1.15rem;
-  border-radius: 30px;
-  cursor: pointer;
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(194, 72, 91, 0.2);
-  min-width: 140px;
-  min-height: 42px;
+  gap: 1.5rem;
 }
 
-.cart-toggle:hover,
-.cart-has-items {
-  background: var(--maroon-dark);
-  box-shadow: 0 6px 16px rgba(194, 72, 91, 0.3);
-  border-color: var(--maroon-dark);
+.header-action-btn {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: transform 0.2s;
+}
+
+.header-action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.action-community {
+  color: #10b981;
+}
+
+.action-new {
+  color: #4b5563;
+}
+
+.action-cart {
+  color: #f97316;
+}
+
+.action-account {
+  color: #3b82f6;
+}
+
+.cart-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cart-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  background: var(--maroon-light);
+  top: -8px;
+  right: -10px;
+  background: #ef4444;
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  width: 20px;
+  min-width: 20px;
   height: 20px;
-  border-radius: 50%;
+  padding: 0 4px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1723,19 +1744,18 @@ body {
     padding-bottom: 0.5rem;
   }
 
-  .cart-toggle {
+  .header-actions {
     order: 1;
     margin-left: auto;
-    min-width: 44px;
-    width: auto;
-    padding: 0.75rem;
-    border-radius: 50%;
-    background: rgba(230, 230, 250, 0.95);
-    border-color: rgba(182, 156, 255, 0.45);
+    gap: 0.85rem;
   }
 
-  .cart-toggle svg {
-    display: block;
+  .header-action-btn span {
+    display: none;
+  }
+  
+  .header-action-btn {
+    gap: 0;
   }
 
   .hero {
@@ -1817,10 +1837,7 @@ body {
     width: 100%;
   }
 
-  .cart-toggle {
-    align-self: flex-start;
-    width: auto;
-  }
+
 
   .product-modal {
     inset: 2vh 2vw 2vh 2vw;
