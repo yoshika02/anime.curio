@@ -58,18 +58,20 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
             onClick={() => onView?.(product)}
         >
             <div className="product-card-top-row">
-                {product.scale && <span className="product-scale-badge">{product.scale}</span>}
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', zIndex: 5 }}>
+                    {product.scale && <span className="product-scale-badge">{product.scale}</span>}
+                    {product.badge && (
+                        <span className="product-badge" style={{ position: 'static', background: product.badgeColor }}>
+                            {product.badge}
+                        </span>
+                    )}
+                </div>
                 {product.stockQuantity !== undefined && (
                     <span className={`product-stock-badge ${product.inStock ? 'in-stock' : 'sold-out'}`}>
                         {product.inStock ? `Stock: ${product.stockQuantity}` : 'Sold Out'}
                     </span>
                 )}
             </div>
-            {product.badge && (
-                <span className="product-badge" style={{ background: product.badgeColor }}>
-                    {product.badge}
-                </span>
-            )}
             <button className={`product-like ${liked ? 'liked' : ''}`} onClick={(event) => { event.stopPropagation(); setLiked(!liked); }}>
                 <Heart size={16} fill={liked ? '#800000' : 'none'} stroke={liked ? '#800000' : '#800000'} />
             </button>

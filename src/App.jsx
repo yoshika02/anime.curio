@@ -543,8 +543,7 @@ export default function App() {
 
           <StatsBar />
 
-          {/* Features */}
-          <FeaturesSection />
+          {/* Features moved down below collection */}
 
           {/* Collection preview (carousel + pills) on Home */}
           <div className="collection-page">
@@ -602,6 +601,10 @@ export default function App() {
               </div>
             </section>
           </div>
+          
+          {/* Features */}
+          <FeaturesSection />
+          
           {/* Products removed from home (collection has separate page) */}
         </>
       ) : (
