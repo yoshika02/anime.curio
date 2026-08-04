@@ -142,6 +142,7 @@ body {
 
 .app {
   min-height: 100vh;
+  padding-top: 92px;
 }
 
 /* ── Header ──────────────────────────────────────────────────────────── */
@@ -1554,6 +1555,9 @@ body {
 }
 
 .product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
   padding: 1.2rem 1.4rem 1.4rem;
 }
 
@@ -1632,11 +1636,37 @@ body {
   flex-wrap: wrap;
 }
 
+.product-price-group {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
 .product-price {
   font-family: 'Outfit', sans-serif;
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--maroon);
+}
+
+.product-price-old {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.product-discount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-height: 24px;
 }
 
 .btn-add {
@@ -1757,6 +1787,10 @@ body {
 
   .header-action-btn {
     gap: 0;
+  }
+
+  .app {
+    padding-top: 120px;
   }
 
   .hero {

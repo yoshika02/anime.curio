@@ -114,7 +114,15 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
                     </div>
                 )}
                 <div className="product-footer">
-                    <span className="product-price">₹{product.price.toLocaleString('en-IN')}</span>
+                    <div className="product-price-group">
+                        <span className="product-price">₹{product.price.toLocaleString('en-IN')}</span>
+                        {product.actualPrice > product.price && (
+                            <>
+                                <span className="product-price-old">₹{product.actualPrice.toLocaleString('en-IN')}</span>
+                                {product.discountPercent > 0 && <span className="product-discount">-{product.discountPercent}%</span>}
+                            </>
+                        )}
+                    </div>
                     <button
                         type="button"
                         className={`btn-add ${added ? 'added' : ''}`}

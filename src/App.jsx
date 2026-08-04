@@ -105,10 +105,18 @@ const collectProductGallery = (rawProduct) => {
   return gallery.length > 0 ? gallery : [{ url: resolveImageUrl(getImageField(rawProduct)), label: 'Main' }];
 };
 
+function parseNumeric(value) {
+  if (value === undefined || value === null) return 0;
+  if (typeof value === 'number' && !Number.isNaN(value)) return value;
+  const parsed = Number(String(value).replace(/[^\d.-]+/g, ''));
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const title = String(rawProduct?.title || rawProduct?.name || 'Unnamed product').trim();
   const subtitle = String(rawProduct?.subtitle || rawProduct?.description || '').trim();
-  const price = Number(rawProduct?.price) || 0;
+  const price = parseNumeric(rawProduct?.price ?? rawProduct?.currentPrice ?? rawProduct?.sellingPrice);
+  const actualPrice = parseNumeric(rawProduct?.actualPrice ?? rawProduct?.mrp ?? rawProduct?.MRP ?? rawProduct?.originalPrice ?? rawProduct?.listPrice ?? rawProduct?.maxRetailPrice ?? rawProduct?.max_retail_price) || price;
   const rating = Number(rawProduct?.rating) || 4.5;
   const reviews = Number(rawProduct?.reviews || rawProduct?.review) || 0;
   const scale = String(rawProduct?.scale || rawProduct?.size || 'Standard').trim();
@@ -145,6 +153,9 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     12: 'figurines',
   }[categoryId] || 'figurines';
 
+  const discountPercent = parseNumeric(rawProduct?.discount ?? rawProduct?.discountPercent ?? rawProduct?.percentOff ?? rawProduct?.off)
+    || (actualPrice > price ? Math.round(((actualPrice - price) / actualPrice) * 100) : 0);
+
   return {
     id: Number(rawProduct?.id) || fallbackIndex + 1,
     name: title,
@@ -152,6 +163,8 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     subtitle,
     scale,
     price,
+    actualPrice,
+    discountPercent,
     rating,
     reviews,
     review: reviews,
@@ -592,10 +605,10 @@ export default function App() {
 
 
           </div>
-          
+
           {/* Features */}
           <FeaturesSection />
-          
+
           {/* Products removed from home (collection has separate page) */}
         </>
       ) : (
@@ -652,7 +665,18 @@ export default function App() {
                 <h2 className="product-modal-title">{quickViewProduct.title}</h2>
                 <p className="product-modal-subtitle">{quickViewProduct.subtitle}</p>
                 <div className="product-modal-specs">
-                  <div className="spec-row"><span>Price</span><strong>₹{quickViewProduct.price.toLocaleString('en-IN')}</strong></div>
+                  <div className="spec-row">
+                    <span>Price</span>
+                    <strong>
+                      ₹{quickViewProduct.price.toLocaleString('en-IN')}
+                      {quickViewProduct.actualPrice > quickViewProduct.price && (
+                        <span className="price-meta">
+                          <span className="price-old">₹{quickViewProduct.actualPrice.toLocaleString('en-IN')}</span>
+                          {quickViewProduct.discountPercent > 0 && <span className="price-discount">-{quickViewProduct.discountPercent}%</span>}
+                        </span>
+                      )}
+                    </strong>
+                  </div>
                   {quickViewProduct.scale && <div className="spec-row"><span>Size</span><strong>{quickViewProduct.scale}</strong></div>}
                   <div className="spec-row"><span>Reviews</span><strong>{quickViewProduct.reviews} reviews</strong></div>
                 </div>
