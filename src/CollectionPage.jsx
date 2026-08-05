@@ -54,12 +54,13 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                                 <div className="carousel-meta">
                                     <span className="carousel-name">{item.title}</span>
                                     <div className="carousel-price-group">
-                                        <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
+                                        <span className="carousel-price"><span className="currency-symbol">₹</span>{item.price.toLocaleString('en-IN')}</span>
                                         {item.actualPrice > item.price && (
-                                            <>
+                                            <span className="carousel-mrp-group">
+                                                <span className="carousel-mrp-label">M.R.P:</span>
                                                 <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
-                                                {item.discountPercent > 0 && <span className="carousel-discount">-{item.discountPercent}%</span>}
-                                            </>
+                                                {item.discountPercent > 0 && <span className="carousel-discount">({item.discountPercent}% off)</span>}
+                                            </span>
                                         )}
                                     </div>
                                 </div>

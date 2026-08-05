@@ -58,11 +58,16 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
             onClick={() => onView?.(product)}
         >
             <div className="product-card-top-row">
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', zIndex: 5 }}>
+                <div className="product-badges-group">
                     {product.scale && <span className="product-scale-badge">{product.scale}</span>}
                     {product.badge && (
-                        <span className="product-badge" style={{ position: 'static', background: product.badgeColor }}>
+                        <span className="product-badge-item" style={{ background: product.badgeColor }}>
                             {product.badge}
+                        </span>
+                    )}
+                    {product.stockQuantity !== undefined && (
+                        <span className={`product-stock-badge ${product.inStock ? 'in-stock' : 'sold-out'}`}>
+                            {product.inStock ? `Stock: ${product.stockQuantity}` : 'Sold Out'}
                         </span>
                     )}
                 </div>
@@ -99,9 +104,8 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
                 </div>
             </div>
             <div className="product-info">
-                <p className="product-subtitle">{product.subtitle}</p>
+                {product.subtitle && <p className="product-subtitle">{product.subtitle}</p>}
                 <h3 className="product-title">{product.title}</h3>
-                {product.scale && <p className="product-meta">Size: {product.scale}</p>}
                 <Stars rating={product.rating} />
                 <p className="product-reviews">{product.reviews} reviews</p>
                 {product.features?.length > 0 && (
@@ -115,12 +119,13 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
                 )}
                 <div className="product-footer">
                     <div className="product-price-group">
-                        <span className="product-price">₹{product.price.toLocaleString('en-IN')}</span>
+                        <span className="product-price"><span className="currency-symbol">₹</span>{product.price.toLocaleString('en-IN')}</span>
                         {product.actualPrice > product.price && (
-                            <>
+                            <span className="product-mrp-group">
+                                <span className="product-mrp-label">M.R.P:</span>
                                 <span className="product-price-old">₹{product.actualPrice.toLocaleString('en-IN')}</span>
-                                {product.discountPercent > 0 && <span className="product-discount">-{product.discountPercent}%</span>}
-                            </>
+                                {product.discountPercent > 0 && <span className="product-discount">({product.discountPercent}% off)</span>}
+                            </span>
                         )}
                     </div>
                     <button

@@ -136,8 +136,15 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     actualPrice = explicitActual;
     discountPercent = Math.round(((actualPrice - price) / actualPrice) * 100);
   } else {
-    actualPrice = explicitActual || price;
-    discountPercent = actualPrice > price ? Math.round(((actualPrice - price) / actualPrice) * 100) : 0;
+    if (price > 0) {
+      const defaultDiscount = 25;
+      const calculatedActual = Math.ceil((price / (1 - defaultDiscount / 100)) / 10) * 10 - 1;
+      actualPrice = Math.max(calculatedActual, price + 50);
+      discountPercent = Math.round(((actualPrice - price) / actualPrice) * 100);
+    } else {
+      actualPrice = price;
+      discountPercent = 0;
+    }
   }
   const rating = Number(rawProduct?.rating) || 4.5;
   const reviews = Number(rawProduct?.reviews || rawProduct?.review) || 0;
@@ -703,15 +710,16 @@ export default function App() {
                 <div className="product-modal-specs">
                   <div className="spec-row">
                     <span>Price</span>
-                    <strong>
-                      ₹{quickViewProduct.price.toLocaleString('en-IN')}
+                    <div className="product-price-group">
+                      <span className="product-price"><span className="currency-symbol">₹</span>{quickViewProduct.price.toLocaleString('en-IN')}</span>
                       {quickViewProduct.actualPrice > quickViewProduct.price && (
-                        <span className="price-meta">
-                          <span className="price-old">M.R.P: ₹{quickViewProduct.actualPrice.toLocaleString('en-IN')}</span>
-                          {quickViewProduct.discountPercent > 0 && <span className="price-discount">-{quickViewProduct.discountPercent}%</span>}
+                        <span className="product-mrp-group">
+                          <span className="product-mrp-label">M.R.P:</span>
+                          <span className="product-price-old">₹{quickViewProduct.actualPrice.toLocaleString('en-IN')}</span>
+                          {quickViewProduct.discountPercent > 0 && <span className="product-discount">({quickViewProduct.discountPercent}% off)</span>}
                         </span>
                       )}
-                    </strong>
+                    </div>
                   </div>
                   {quickViewProduct.scale && <div className="spec-row"><span>Size</span><strong>{quickViewProduct.scale}</strong></div>}
                   <div className="spec-row"><span>Reviews</span><strong>{quickViewProduct.reviews} reviews</strong></div>

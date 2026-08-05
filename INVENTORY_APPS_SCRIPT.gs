@@ -10,12 +10,16 @@
  * 4. Copy the Web App URL and paste it into App.jsx (SHEETS_API_URL)
  *
  * SHEET COLUMN ORDER (Row 1 = headers, exactly these names):
- *   id | category | title | subtitle | price | rating | reviews | badge | badgeColor | stock | image
+ *   id | category | title | subtitle | price | actualPrice | rating | reviews | badge | badgeColor | stock | image
+ *
+ * NOTE ON PRICES:
+ * - "price" = Current Selling Price (e.g. 366)
+ * - "actualPrice" (or "mrp" / "originalPrice") = Actual Original MRP (e.g. 540)
  *
  * CATEGORY values (case-sensitive): figurines | combos | mystery | keychains
  *
  * EXAMPLE ROW:
- *   1 | figurines | Shadow Swordsman 1/7 Scale | Demon Slayer Series | 10999 | 4.9 | 312 | New | #a31a1a | 15 | /products/figurine_1.png
+ *   1 | figurines | Shadow Swordsman 1/7 Scale | Demon Slayer Series | 366 | 540 | 4.9 | 312 | New | #a31a1a | 15 | /products/figurine_1.png
  */
 
 function doGet(e) {
@@ -37,7 +41,7 @@ function doGet(e) {
         headers.forEach((header, i) => {
           const val = row[i];
           // Auto-cast numeric fields
-          if (['id', 'price', 'rating', 'reviews', 'stock', 'category', 'category_id', 'categoryId'].includes(header)) {
+          if (['id', 'price', 'actualPrice', 'originalPrice', 'mrp', 'MRP', 'rating', 'reviews', 'stock', 'category', 'category_id', 'categoryId'].includes(header)) {
             obj[header] = Number(val) || (header === 'category' || header === 'category_id' || header === 'categoryId' ? val : 0);
           } else {
             obj[header] = String(val).trim();

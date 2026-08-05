@@ -1423,32 +1423,42 @@ body {
 
 .product-card-top-row {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  right: 1rem;
+  top: 0.75rem;
+  left: 0.75rem;
+  right: 3.2rem;
   display: flex;
-  justify-content: space-between;
-  gap: 0.65rem;
   align-items: center;
-  z-index: 4;
+  z-index: 5;
+}
+
+.product-badges-group {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .product-scale-badge,
-.product-stock-badge {
+.product-stock-badge,
+.product-badge-item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.65rem;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: white;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .product-scale-badge {
+  background: var(--maroon);
+}
+
+.product-badge-item {
   background: var(--maroon);
 }
 
@@ -1460,25 +1470,11 @@ body {
   background: #6b7280;
 }
 
-.product-badge {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 0.3rem 0.75rem;
-  border-radius: 20px;
-  z-index: 2;
-}
-
 .product-like {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: rgba(255, 255, 255, 0.8);
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
   border: 1px solid var(--maroon-pale);
   border-radius: 50%;
   width: 34px;
@@ -1487,8 +1483,9 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 2;
+  z-index: 6;
   transition: all 0.25s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .product-like:hover,
@@ -1499,18 +1496,22 @@ body {
 
 .product-img-wrap {
   position: relative;
-  height: 280px;
+  height: 270px;
   overflow: hidden;
   border-bottom: 1px solid var(--maroon-pale);
-  background: var(--bg2);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .product-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  transition: transform 0.5s;
+  object-fit: contain;
+  padding: 0.5rem;
+  transition: transform 0.4s ease;
+  mix-blend-mode: multiply;
 }
 
 .product-view-switcher {
@@ -1679,37 +1680,58 @@ body {
   flex-wrap: wrap;
 }
 
-.product-price-group {
+.product-price-group,
+.carousel-price-group {
   display: flex;
-  align-items: center;
-  gap: 0.55rem;
+  align-items: baseline;
+  gap: 0.45rem;
   flex-wrap: wrap;
 }
 
-.product-price {
+.product-price,
+.carousel-price {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 800;
-  color: var(--maroon);
+  color: #0f1111;
+  line-height: 1;
 }
 
-.product-price-old {
-  font-size: 0.92rem;
-  color: var(--text-muted);
+.currency-symbol {
+  font-size: 0.72em;
+  vertical-align: super;
+  font-weight: 600;
+  margin-right: 1px;
+}
+
+.product-mrp-group,
+.carousel-mrp-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+}
+
+.product-mrp-label,
+.carousel-mrp-label {
+  color: #565959;
+  font-weight: 400;
+}
+
+.product-price-old,
+.carousel-price-old {
+  font-size: 0.82rem;
+  color: #565959;
   text-decoration: line-through;
 }
 
-.product-discount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(220, 38, 38, 0.12);
-  color: #b91c1c;
-  font-size: 0.75rem;
-  font-weight: 700;
-  min-height: 24px;
+.product-discount,
+.carousel-discount {
+  color: #cc0c39;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: none;
+  padding: 0;
 }
 
 .btn-add {
@@ -1821,15 +1843,30 @@ body {
   .header-actions {
     order: 1;
     margin-left: auto;
-    gap: 0.85rem;
-  }
-
-  .header-action-btn span {
-    display: none;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
   }
 
   .header-action-btn {
-    gap: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0.15rem 0.2rem;
+  }
+
+  .header-action-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .header-action-btn span {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.1;
   }
 
   .app {
