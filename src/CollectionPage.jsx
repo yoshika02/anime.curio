@@ -2,8 +2,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import ImageWithFallback from './imageUtils';
 
-export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all' }) {
+export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all', recentlyViewed = [] }) {
     const scrollRef = useRef(null);
+    const recentScrollRef = useRef(null);
     const featured = inventoryProducts.figurines.slice(0, 4);
     const [activeCategory, setActiveCategory] = useState(initialCategory);
 
@@ -41,9 +42,11 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
         <main className="collection-page">
             <div className="collection-page-header">
                 <div>
-                    <h2 className="collection-title">Top Collectibles</h2>
+                    <h2 className="collection-title">
+                        {activeCategory === 'all' ? '🔥 New Arrivals & Top Collectibles' : 'Top Collectibles'}
+                    </h2>
                     <p className="collection-copy">
-                        Browse the latest premium figures front and center, then explore every product in the collection.
+                        Discover newly landed anime figures and trending merchandise front and center.
                     </p>
                 </div>
                 <div className="collection-carousel-wrap">
@@ -84,6 +87,31 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                     </button>
                 </div>
             </div>
+
+            {/* Recently Viewed Products Section */}
+            {recentlyViewed.length > 0 && (
+                <section className="recently-viewed-section" style={{ margin: '1.5rem 0', background: '#fff', border: '1px solid var(--bg3)', borderRadius: '20px', padding: '1.25rem 1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', color: 'var(--maroon)', margin: 0, fontWeight: '800' }}>
+                            👀 Recently Viewed Items
+                        </h3>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Quick re-visit</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                        {recentlyViewed.map(item => (
+                            <div
+                                key={`recent-${item.id}`}
+                                onClick={() => onView?.(item)}
+                                style={{ flex: '0 0 140px', background: 'var(--bg2)', border: '1px solid var(--bg3)', borderRadius: '14px', padding: '0.6rem', cursor: 'pointer', textAlign: 'center', transition: 'transform 0.2s' }}
+                            >
+                                <ImageWithFallback src={item.image} alt={item.title} style={{ width: '100%', height: '90px', objectFit: 'contain', borderRadius: '8px' }} />
+                                <div style={{ fontSize: '0.78rem', fontWeight: 'bold', color: 'var(--text)', margin: '0.4rem 0 0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--maroon)', fontWeight: 'bold' }}>₹{item.price.toLocaleString('en-IN')}</div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             <section className="collection-all-products">
                 <div className="collection-all-header">

@@ -242,7 +242,7 @@ function buildProductsByCategory(rawProducts = []) {
 
 // ─── Cart Sidebar ─────────────────────────────────────────────────────────────
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
-function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
+function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user, setUser }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
   const [country, setCountry] = useState('India');
   const [firstName, setFirstName] = useState('');
@@ -259,18 +259,67 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
   const [textOffers, setTextOffers] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState('');
 
+  // Auto-fill from user profile when logged in
+  useEffect(() => {
+    if (user) {
+      if (user.name) {
+        const parts = user.name.split(' ');
+        setFirstName(parts[0] || '');
+        setLastName(parts.slice(1).join(' ') || parts[0] || '');
+      }
+      if (user.email) setEmail(user.email);
+      if (user.phone) setPhone(String(user.phone).replace(/\D/g, '').slice(-10));
+      if (user.address) setAddress(user.address);
+      if (user.city) setCity(user.city);
+      if (user.state) setState(user.state);
+      if (user.pincode) setPincode(user.pincode);
+    }
+  }, [user]);
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const shippingFee = 79;
+  const FREE_SHIPPING_THRESHOLD = 999;
+  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const shippingFee = isFreeShipping ? 0 : 79;
   const grandTotal = subtotal + shippingFee;
+  const amountForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
 
   const handleSubmitOrder = (e) => {
     e.preventDefault();
-    if (!lastName || !email || !phone || !address || !city || !pincode) return;
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    if (!lastName || !email || cleanPhone.length < 10 || !address || !city || !pincode) return;
 
+    const formattedPhone = `+91 ${cleanPhone}`;
     const fullName = `${firstName} ${lastName}`.trim() || lastName;
     const fullAddress = `${address}${apartment ? ', ' + apartment : ''}, ${city}, ${state} - ${pincode}, ${country}`;
     const orderNum = 'ACK-' + Math.floor(100000 + Math.random() * 900000);
     setCreatedOrderId(orderNum);
+
+    // Save shipping details to logged-in profile if saveInfo checked
+    if (saveInfo) {
+      const updatedUser = {
+        ...(user || {}),
+        name: fullName,
+        email: email,
+        phone: cleanPhone,
+        address: address,
+        city: city,
+        state: state,
+        pincode: pincode
+      };
+      setUser?.(updatedUser);
+      localStorage.setItem('animecurio_current_user', JSON.stringify(updatedUser));
+
+      try {
+        const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
+        const idx = dbUsers.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+        if (idx !== -1) {
+          dbUsers[idx] = updatedUser;
+        } else {
+          dbUsers.push(updatedUser);
+        }
+        localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
+      } catch (err) {}
+    }
 
     const itemsSummary = cart
       .map((item, idx) => `${idx + 1}. ${item.title} x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
@@ -284,14 +333,14 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
       `📋 *Confirmation ID:* ${orderNum}\n\n` +
       `👤 *Customer:* ${fullName}\n` +
       `📧 *Gmail:* ${email}\n` +
-      `📞 *WhatsApp:* ${phone}\n` +
+      `📞 *WhatsApp:* ${formattedPhone}\n` +
       (company ? `🏢 *Business:* ${company}\n` : '') +
       `🏙️ *City:* ${city}\n` +
       `📍 *Address:* ${fullAddress}\n` +
-      `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${phone})\n\n` +
+      `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${formattedPhone})\n\n` +
       `📦 *Items:* \n${itemsSummaryFormatted}\n\n` +
       `💵 *Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
-      `🚚 *Shipping Charges:* ₹${shippingFee}\n` +
+      `🚚 *Shipping Charges:* ${isFreeShipping ? 'FREE (Orders ₹999+)' : '₹79'}\n` +
       `💰 *Total Amount:* ₹${grandTotal.toLocaleString('en-IN')}`;
 
     const newOrder = {
@@ -303,7 +352,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
       shippingFee: shippingFee,
       name: fullName,
       email: email,
-      phone: phone,
+      phone: formattedPhone,
       address: fullAddress,
       status: 'Payment Pending (QR Sent)'
     };
@@ -320,12 +369,12 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
             orderId: orderNum,
             timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
             name: fullName,
-            whatsapp: phone,
+            whatsapp: formattedPhone,
             email: email,
             business: company,
             city: city,
             orderItems: itemsSummary,
-            orderTotal: `₹${grandTotal.toLocaleString('en-IN')} (incl. ₹${shippingFee} shipping)`,
+            orderTotal: `₹${grandTotal.toLocaleString('en-IN')} (${isFreeShipping ? 'FREE Shipping' : 'incl. ₹79 shipping'})`,
             notes: fullAddress,
             status: 'Payment Pending (QR Sent)'
           })
@@ -384,6 +433,15 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
           </div>
         ) : step === 'cart' ? (
           <>
+            <div className="shipping-progress-banner" style={{ background: isFreeShipping ? '#f0fdf4' : '#fff5f6', border: `1px solid ${isFreeShipping ? '#86efac' : '#fecdd3'}`, padding: '0.65rem 0.85rem', borderRadius: '12px', margin: '0.5rem 1rem 0.25rem', fontSize: '0.82rem', color: isFreeShipping ? '#166534' : 'var(--maroon)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
+              <Truck size={18} color={isFreeShipping ? '#16a34a' : 'var(--maroon)'} />
+              {isFreeShipping ? (
+                <span>🎉 Congratulations! You unlocked <strong>FREE Shipping</strong> (Saved ₹79)!</span>
+              ) : (
+                <span>Add <strong>₹{amountForFreeShipping.toLocaleString('en-IN')}</strong> more to unlock <strong>FREE Shipping</strong> (Orders ₹999+)!</span>
+              )}
+            </div>
+
             <div className="cart-items">
               {cart.map(item => (
                 <div key={item.id} className="cart-item">
@@ -424,7 +482,9 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                   <span>Shipping Charges</span>
-                  <span>₹{shippingFee}</span>
+                  <span style={{ color: isFreeShipping ? '#16a34a' : 'var(--text)', fontWeight: isFreeShipping ? 600 : 'normal' }}>
+                    {isFreeShipping ? 'FREE (Waved Off 🎉)' : '₹79'}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1rem', color: 'var(--text)', borderTop: '1px solid var(--bg3)', paddingTop: '0.35rem' }}>
                   <span>Total Amount</span>
@@ -439,6 +499,11 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
             <button type="button" className="btn-back-cart" onClick={() => setStep('cart')}>
               ← Back to Cart Items
             </button>
+
+            <div className="shipping-progress-banner" style={{ background: isFreeShipping ? '#f0fdf4' : '#fff5f6', border: `1px solid ${isFreeShipping ? '#86efac' : '#fecdd3'}`, padding: '0.5rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', color: isFreeShipping ? '#166534' : 'var(--maroon)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
+              <Truck size={16} color={isFreeShipping ? '#16a34a' : 'var(--maroon)'} />
+              {isFreeShipping ? '🎉 FREE Shipping Unlocked!' : `Add ₹${amountForFreeShipping} more for FREE Shipping`}
+            </div>
 
             <div className="form-group">
               <label>Country/Region</label>
@@ -522,7 +587,21 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
             </div>
 
             <div className="form-group">
-              <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone (WhatsApp) *" />
+              <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block', fontWeight: 600 }}>WhatsApp Mobile Number *</label>
+              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                <span style={{ background: 'var(--bg2)', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid var(--bg3)', fontWeight: 'bold', fontSize: '0.85rem', color: 'var(--maroon)' }}>
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  required
+                  maxLength={10}
+                  value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="10-digit mobile number"
+                  style={{ flex: 1 }}
+                />
+              </div>
             </div>
 
             <div className="checkbox-group">
@@ -551,7 +630,9 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                   <span>Shipping Charges</span>
-                  <span>₹{shippingFee}</span>
+                  <span style={{ color: isFreeShipping ? '#16a34a' : 'var(--text)', fontWeight: isFreeShipping ? 600 : 'normal' }}>
+                    {isFreeShipping ? 'FREE (Waved Off 🎉)' : '₹79'}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1rem', color: 'var(--text)', borderTop: '1px solid var(--bg3)', paddingTop: '0.35rem' }}>
                   <span>Total Amount</span>
@@ -571,7 +652,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
 
 // ─── Account / Profile & Order History Modal ──────────────────────────────────
 function AccountModal({ onClose, user, setUser, orders = [] }) {
-  const [authMode, setAuthMode] = useState(user?.email ? 'profile' : 'signin'); // 'signin' | 'signup' | 'profile'
+  const [authMode, setAuthMode] = useState(user?.email ? 'profile' : 'signin'); // 'signin' | 'signup' | 'forgot' | 'profile'
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'orders'
   
   // Login State
@@ -579,17 +660,22 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
+  // Forgot Password State
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotMsg, setForgotMsg] = useState('');
+  const [recoveredPassword, setRecoveredPassword] = useState('');
+
   // Register State
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('8360048865');
+  const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regAddress, setRegAddress] = useState('');
 
   // Profile Edit State
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '8360048865');
+  const [phone, setPhone] = useState(user?.phone ? String(user.phone).replace(/\D/g, '').slice(-10) : '');
   const [address, setAddress] = useState(user?.address || '');
   const [saved, setSaved] = useState(false);
 
@@ -598,7 +684,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
     if (user?.email) {
       setName(user.name || '');
       setEmail(user.email || '');
-      setPhone(user.phone || '8360048865');
+      setPhone(user.phone ? String(user.phone).replace(/\D/g, '').slice(-10) : '');
       setAddress(user.address || '');
       setAuthMode('profile');
     }
@@ -611,15 +697,15 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
 
     try {
       const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
-      const found = dbUsers.find(u => u.email.toLowerCase() === loginEmail.toLowerCase() && u.password === loginPassword);
+      const found = dbUsers.find(u => u.email.trim().toLowerCase() === loginEmail.trim().toLowerCase() && u.password === loginPassword);
 
       if (found) {
         setUser(found);
         localStorage.setItem('animecurio_current_user', JSON.stringify(found));
         setAuthMode('profile');
       } else {
-        // Fallback create/sign-in for smooth user experience
-        const newUser = { name: loginEmail.split('@')[0], email: loginEmail, phone: '8360048865', address: '', password: loginPassword };
+        // Create user profile on sign in
+        const newUser = { name: loginEmail.split('@')[0], email: loginEmail.trim(), phone: '', address: '', password: loginPassword };
         dbUsers.push(newUser);
         localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
         setUser(newUser);
@@ -627,22 +713,48 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
         setAuthMode('profile');
       }
     } catch (err) {
-      const fallbackUser = { name: loginEmail.split('@')[0], email: loginEmail, phone: '8360048865', address: '' };
+      const fallbackUser = { name: loginEmail.split('@')[0], email: loginEmail.trim(), phone: '', address: '' };
       setUser(fallbackUser);
       localStorage.setItem('animecurio_current_user', JSON.stringify(fallbackUser));
       setAuthMode('profile');
     }
   };
 
+  // Handle Forgot Password Recovery
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    setForgotMsg('');
+    setRecoveredPassword('');
+
+    try {
+      const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
+      const found = dbUsers.find(u => u.email.trim().toLowerCase() === forgotEmail.trim().toLowerCase());
+      if (found && found.password) {
+        setRecoveredPassword(`Your password is: ${found.password}`);
+        setForgotMsg('✓ Account found! Password recovered.');
+      } else {
+        const tempPass = 'Anime' + Math.floor(1000 + Math.random() * 9000);
+        const newUser = { name: forgotEmail.split('@')[0], email: forgotEmail.trim(), phone: '', address: '', password: tempPass };
+        dbUsers.push(newUser);
+        localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
+        setRecoveredPassword(`Temporary password created: ${tempPass}`);
+        setForgotMsg('✓ Account created! Use this temporary password to sign in.');
+      }
+    } catch (err) {
+      setForgotMsg('Unable to recover password. Please create a new account.');
+    }
+  };
+
   // Handle Sign Up
   const handleSignUp = (e) => {
     e.preventDefault();
-    if (!regName || !regEmail || !regPassword) return;
+    const cleanPhone = regPhone.replace(/\D/g, '').slice(-10);
+    if (!regName || !regEmail || !regPassword || cleanPhone.length < 10) return;
 
     const newUser = {
       name: regName,
-      email: regEmail,
-      phone: regPhone,
+      email: regEmail.trim(),
+      phone: `+91 ${cleanPhone}`,
       address: regAddress,
       password: regPassword,
       created_at: new Date().toISOString()
@@ -650,13 +762,10 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
 
     try {
       const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
-      // Filter out existing email
-      const updatedDb = dbUsers.filter(u => u.email.toLowerCase() !== regEmail.toLowerCase());
+      const updatedDb = dbUsers.filter(u => u.email.trim().toLowerCase() !== regEmail.trim().toLowerCase());
       updatedDb.push(newUser);
       localStorage.setItem('animecurio_d1_users', JSON.stringify(updatedDb));
-    } catch (err) {
-      console.error('Failed to sync user to D1 store', err);
-    }
+    } catch (err) {}
 
     setUser(newUser);
     localStorage.setItem('animecurio_current_user', JSON.stringify(newUser));
@@ -666,13 +775,14 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
   // Handle Save Profile Updates
   const handleSaveProfile = (e) => {
     e.preventDefault();
-    const updated = { ...user, name, email, phone, address };
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    const updated = { ...user, name, email: email.trim(), phone: `+91 ${cleanPhone}`, address };
     setUser(updated);
     localStorage.setItem('animecurio_current_user', JSON.stringify(updated));
 
     try {
       const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
-      const idx = dbUsers.findIndex(u => u.email.toLowerCase() === (user?.email || '').toLowerCase());
+      const idx = dbUsers.findIndex(u => u.email.trim().toLowerCase() === (user?.email || '').trim().toLowerCase());
       if (idx !== -1) {
         dbUsers[idx] = updated;
       } else {
@@ -693,8 +803,11 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
   };
 
   // Filter orders for current logged-in user email
-  const userEmailLower = (user?.email || '').toLowerCase();
-  const userOrders = orders.filter(o => !userEmailLower || (o.email && o.email.toLowerCase() === userEmailLower));
+  const userEmailLower = (user?.email || '').trim().toLowerCase();
+  const userOrders = orders.filter(o => {
+    if (!userEmailLower) return true;
+    return (o.email || '').trim().toLowerCase() === userEmailLower;
+  });
 
   return (
     <div className="cart-overlay" onClick={onClose}>
@@ -702,7 +815,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
         <div className="cart-header">
           <h2 className="cart-title">
             <User size={22} />
-            {authMode === 'signin' ? 'Sign In' : authMode === 'signup' ? 'Create Account' : `Welcome, ${user?.name || 'Anime Fan'}!`}
+            {authMode === 'signin' ? 'Sign In' : authMode === 'signup' ? 'Create Account' : authMode === 'forgot' ? 'Reset Password' : `Welcome, ${user?.name || 'Anime Fan'}!`}
           </h2>
           <button className="cart-close" onClick={onClose}><X size={20} /></button>
         </div>
@@ -730,6 +843,11 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                   placeholder="Enter your password"
                 />
               </div>
+              <div style={{ textAlign: 'right', marginTop: '-0.25rem' }}>
+                <button type="button" onClick={() => setAuthMode('forgot')} style={{ background: 'none', border: 'none', color: 'var(--maroon)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>
+                  Forgot Password?
+                </button>
+              </div>
               {loginError && <p className="auth-error">{loginError}</p>}
               <button type="submit" className="btn-primary full-width" style={{ marginTop: '0.5rem' }}>
                 Sign In →
@@ -739,6 +857,40 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
               <span>Don't have an account?</span>
               <button className="auth-switch-btn" onClick={() => setAuthMode('signup')}>
                 Create Account / Sign Up
+              </button>
+            </div>
+          </div>
+        ) : authMode === 'forgot' ? (
+          <div className="account-modal-body">
+            <h3 style={{ fontSize: '1rem', margin: '0 0 0.4rem', color: 'var(--maroon)' }}>Recover Account Password</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+              Enter your registered Gmail address below to view or reset your password.
+            </p>
+            <form onSubmit={handleForgotPassword} className="account-form">
+              <div className="form-group">
+                <label>Gmail / Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  placeholder="e.g. yoshika@gmail.com"
+                />
+              </div>
+              {forgotMsg && <p style={{ fontSize: '0.83rem', color: recoveredPassword ? '#16a34a' : '#ef4444', margin: '0.25rem 0' }}>{forgotMsg}</p>}
+              {recoveredPassword && (
+                <div style={{ background: '#f0fdf4', border: '1px solid #86efac', padding: '0.75rem', borderRadius: '10px', fontWeight: 'bold', color: '#166534', fontSize: '0.9rem', textAlign: 'center', margin: '0.5rem 0' }}>
+                  {recoveredPassword}
+                </div>
+              )}
+              <button type="submit" className="btn-primary full-width" style={{ marginTop: '0.5rem' }}>
+                Recover Password →
+              </button>
+            </form>
+            <div className="auth-switch-box">
+              <span>Remembered your password?</span>
+              <button className="auth-switch-btn" onClick={() => setAuthMode('signin')}>
+                Back to Sign In
               </button>
             </div>
           </div>
@@ -766,14 +918,21 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                 />
               </div>
               <div className="form-group">
-                <label>WhatsApp Phone *</label>
-                <input
-                  type="tel"
-                  required
-                  value={regPhone}
-                  onChange={e => setRegPhone(e.target.value)}
-                  placeholder="e.g. 8360048865"
-                />
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block', fontWeight: 600 }}>WhatsApp Phone *</label>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  <span style={{ background: 'var(--bg2)', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid var(--bg3)', fontWeight: 'bold', fontSize: '0.85rem', color: 'var(--maroon)' }}>
+                    +91
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    maxLength={10}
+                    value={regPhone}
+                    onChange={e => setRegPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="10-digit mobile number"
+                    style={{ flex: 1 }}
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label>Create Password *</label>
@@ -836,8 +995,21 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                     <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@gmail.com" required />
                   </div>
                   <div className="form-group">
-                    <label>WhatsApp Phone</label>
-                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="8360048865" required />
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block', fontWeight: 600 }}>WhatsApp Phone</label>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <span style={{ background: 'var(--bg2)', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid var(--bg3)', fontWeight: 'bold', fontSize: '0.85rem', color: 'var(--maroon)' }}>
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        required
+                        maxLength={10}
+                        value={phone}
+                        onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="10-digit mobile number"
+                        style={{ flex: 1 }}
+                      />
+                    </div>
                   </div>
                   <div className="form-group">
                     <label>Saved Shipping Address</label>
@@ -1115,6 +1287,28 @@ export default function App() {
     });
   };
 
+  const [recentlyViewed, setRecentlyViewed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('animecurio_recently_viewed');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    if (!newsletterEmail) return;
+    setNewsletterSubscribed(true);
+    setTimeout(() => {
+      setNewsletterSubscribed(false);
+      setNewsletterEmail('');
+    }, 4000);
+  };
+
   const navigateToCollection = (categoryKey = 'all') => {
     setCollectionCategory(categoryKey);
     navigate('collection');
@@ -1123,9 +1317,25 @@ export default function App() {
   const openQuickView = (product) => {
     setQuickViewProduct(product);
     setQuickViewImageIndex(0);
+    setRecentlyViewed(prev => {
+      const filtered = prev.filter(p => p.id !== product.id);
+      const updated = [product, ...filtered].slice(0, 8);
+      localStorage.setItem('animecurio_recently_viewed', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const closeQuickView = () => setQuickViewProduct(null);
+
+  const allFlattenedProducts = Object.values(inventoryProducts).flat();
+  const similarProducts = quickViewProduct
+    ? allFlattenedProducts
+        .filter(p => p.id !== quickViewProduct.id && (p.category === quickViewProduct.category || p.categoryId === quickViewProduct.categoryId))
+        .slice(0, 4)
+    : [];
+  const displaySimilarProducts = similarProducts.length >= 2
+    ? similarProducts
+    : allFlattenedProducts.filter(p => p.id !== quickViewProduct?.id).slice(0, 4);
 
   const cartTotal = cart.reduce((s, i) => s + i.qty, 0);
 
@@ -1220,6 +1430,8 @@ export default function App() {
           onRemove={handleRemove}
           onUpdateQty={handleUpdateQty}
           onPlaceOrder={handlePlaceOrder}
+          user={user}
+          setUser={setUser}
         />
       )}
 
@@ -1319,6 +1531,7 @@ export default function App() {
           onBack={() => navigate('home')}
           onView={openQuickView}
           initialCategory={collectionCategory}
+          recentlyViewed={recentlyViewed}
         />
       )}
 
@@ -1415,6 +1628,32 @@ export default function App() {
                   </button>
                 </div>
               </div>
+
+              {/* Similar Products Recommendation */}
+              {displaySimilarProducts.length > 0 && (
+                <div className="similar-products-modal-section" style={{ gridColumn: '1 / -1', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--bg3)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                    <h3 style={{ fontSize: '0.98rem', color: 'var(--maroon)', margin: 0, fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Sparkles size={18} color="var(--maroon)" /> Similar Collectibles You May Also Like
+                    </h3>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Explore more</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                    {displaySimilarProducts.map(item => (
+                      <div
+                        key={item.id}
+                        className="similar-card-item"
+                        onClick={() => openQuickView(item)}
+                        style={{ background: '#fff', border: '1px solid var(--bg3)', borderRadius: '14px', padding: '0.6rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s ease', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}
+                      >
+                        <ImageWithFallback src={item.image} alt={item.title} style={{ width: '100%', height: '85px', objectFit: 'contain', borderRadius: '8px' }} />
+                        <div style={{ fontSize: '0.76rem', fontWeight: 'bold', color: 'var(--text)', margin: '0.4rem 0 0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--maroon)', fontWeight: 'bold' }}>₹{item.price.toLocaleString('en-IN')}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </>
@@ -1422,6 +1661,68 @@ export default function App() {
 
       {/* Footer */}
       <footer className="site-footer">
+        <div className="footer-cards-wrapper">
+          {/* Email Newsletter Subscription */}
+          <div className="newsletter-card">
+            <div className="newsletter-icon">📬</div>
+            <h3>Subscribe to our emails</h3>
+            <p>Get the latest deals, new arrivals, and exclusive offers straight to your inbox.</p>
+            <form onSubmit={handleNewsletterSubmit} className="newsletter-form">
+              <input
+                type="email"
+                required
+                placeholder="Enter your email"
+                value={newsletterEmail}
+                onChange={e => setNewsletterEmail(e.target.value)}
+              />
+              <button type="submit">Subscribe</button>
+            </form>
+            {newsletterSubscribed && (
+              <div style={{ color: '#16a34a', fontWeight: 'bold', fontSize: '0.85rem', marginTop: '0.75rem' }}>
+                ✓ Thank you for subscribing! Check your inbox for VIP drops.
+              </div>
+            )}
+            <p className="newsletter-note">No spam. Unsubscribe anytime.</p>
+          </div>
+
+          {/* Wholesale Supply Cities across India */}
+          <div className="wholesale-cities-card">
+            <div className="wholesale-title">
+              <Globe size={18} color="var(--maroon)" /> We Supply Wholesale Across India
+            </div>
+            <div className="city-pills-cloud">
+              {[
+                { city: 'Anime • Delhi', tag: '📊' },
+                { city: 'Gifts • Delhi', tag: '🎁' },
+                { city: 'Anime • Mumbai', tag: '📊' },
+                { city: 'Action • Delhi', tag: '🎨' },
+                { city: 'Anime • Bangalore', tag: '📊' },
+                { city: 'Gifts • Mumbai', tag: '🎁' },
+                { city: 'Anime • Hyderabad', tag: '📊' },
+                { city: 'Toys • Delhi', tag: '🧸' },
+                { city: 'Anime • Chennai', tag: '📊' },
+                { city: 'Action • Mumbai', tag: '🎨' },
+                { city: 'Anime • Kolkata', tag: '📊' },
+                { city: 'Gifts • Bangalore', tag: '🎁' },
+                { city: 'Anime • Pune', tag: '📊' },
+                { city: 'Toys • Mumbai', tag: '🧸' },
+                { city: 'Anime • Ahmedabad', tag: '📊' },
+                { city: 'Keychains • Delhi', tag: '🔑' },
+                { city: 'Anime • Jaipur', tag: '📊' },
+                { city: 'Costumes • Delhi', tag: '⚔️' },
+                { city: 'Anime • Lucknow', tag: '📊' },
+                { city: 'Anime • Chandigarh', tag: '📊' },
+                { city: 'Anime Supplier India', tag: '🏭' },
+                { city: 'About Us', tag: '🏬' }
+              ].map((item, idx) => (
+                <span key={idx} className="city-pill">
+                  <span className="city-pill-icon">{item.tag}</span> {item.city}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="footer-logo">AnimeCurio</div>
         <p className="footer-copy">© 2026 AnimeCurio. All rights reserved. | Made with ❤️ in India</p>
         <p className="footer-sub">Proudly serving anime fans across Bharat 🇮🇳</p>
