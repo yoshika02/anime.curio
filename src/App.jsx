@@ -240,31 +240,56 @@ function buildProductsByCategory(rawProducts = []) {
 
 // ─── Cart Sidebar ─────────────────────────────────────────────────────────────
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
-function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
+function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
-  const [name, setName] = useState('');
+  const [country, setCountry] = useState('India');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [company, setCompany] = useState('');
   const [address, setAddress] = useState('');
+  const [apartment, setApartment] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('Delhi');
+  const [pincode, setPincode] = useState('');
+  const [phone, setPhone] = useState('');
+  const [saveInfo, setSaveInfo] = useState(true);
+  const [textOffers, setTextOffers] = useState(false);
 
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-  const handlePlaceOrder = (e) => {
+  const handleSubmitOrder = (e) => {
     e.preventDefault();
-    if (!name || !email || !phone || !address) return;
+    if (!lastName || !email || !phone || !address || !city || !pincode) return;
+
+    const fullName = `${firstName} ${lastName}`.trim() || lastName;
+    const fullAddress = `${address}${apartment ? ', ' + apartment : ''}, ${city}, ${state} - ${pincode}, ${country}`;
 
     const itemsSummary = cart
       .map((item, idx) => `${idx + 1}. ${item.title} x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
       .join('\n');
 
     const msg = `🛒 *New Order from AnimeCurio*\n\n` +
-      `👤 *Customer:* ${name}\n` +
+      `👤 *Customer:* ${fullName}\n` +
       `📧 *Gmail:* ${email}\n` +
       `📞 *Phone:* ${phone}\n` +
-      `📍 *Address:* ${address}\n` +
+      `📍 *Address:* ${fullAddress}\n` +
       `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${phone})\n\n` +
       `📦 *Items:* \n${itemsSummary}\n\n` +
       `💰 *Total Amount:* ₹${total.toLocaleString('en-IN')}`;
+
+    const newOrder = {
+      id: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
+      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      items: cart.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty, image: i.image })),
+      total: total,
+      name: fullName,
+      email: email,
+      phone: phone,
+      address: fullAddress,
+      status: 'Payment Pending (QR Sent)'
+    };
+    onPlaceOrder?.(newOrder);
 
     const encoded = encodeURIComponent(msg);
     window.open(`https://wa.me/918360048865?text=${encoded}`, '_blank');
@@ -276,7 +301,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
       <div className="cart-overlay" onClick={onClose} />
       <aside className="cart-sidebar">
         <div className="cart-header">
-          <h2 className="cart-title">{step === 'checkout' ? 'Checkout Order' : step === 'success' ? 'Order Confirmed' : 'Your Cart'}</h2>
+          <h2 className="cart-title">{step === 'checkout' ? 'Shipping Address' : step === 'success' ? 'Order Confirmed' : 'Your Cart'}</h2>
           <button className="cart-close" onClick={onClose}><X size={20} /></button>
         </div>
 
@@ -285,7 +310,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
             <Sparkles size={48} color="#16a34a" />
             <h3>Order Request Submitted!</h3>
             <p>Your order details have been sent to WhatsApp line <strong>+91 8360048865</strong>.</p>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>We will send the payment QR code to your Gmail <strong>{email}</strong> shortly.</p>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>We will send the payment QR code directly to your Gmail and WhatsApp.</p>
             <button className="btn-primary" onClick={onClose} style={{ marginTop: '1rem' }}>Continue Shopping</button>
           </div>
         ) : cart.length === 0 ? (
@@ -337,32 +362,88 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
             </div>
           </>
         ) : (
-          <form onSubmit={handlePlaceOrder} className="checkout-form">
+          <form onSubmit={handleSubmitOrder} className="checkout-form">
             <button type="button" className="btn-back-cart" onClick={() => setStep('cart')}>
               ← Back to Cart Items
             </button>
+
             <div className="form-group">
-              <label>Full Name *</label>
-              <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" />
+              <label>Country/Region</label>
+              <select value={country} onChange={e => setCountry(e.target.value)}>
+                <option value="India">India</option>
+              </select>
             </div>
+
+            <div className="form-row two-col">
+              <div className="form-group">
+                <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First name (optional)" />
+              </div>
+              <div className="form-group">
+                <input type="text" required value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name *" />
+              </div>
+            </div>
+
             <div className="form-group">
-              <label>Gmail / Email Address *</label>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@gmail.com" />
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Gmail / Email Address *" />
             </div>
+
             <div className="form-group">
-              <label>WhatsApp Number *</label>
-              <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="e.g. 8360048865" />
+              <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Company (optional)" />
             </div>
+
             <div className="form-group">
-              <label>Shipping Address *</label>
-              <textarea required rows={3} value={address} onChange={e => setAddress(e.target.value)} placeholder="House no, Street, City, Pincode" />
+              <input type="text" required value={address} onChange={e => setAddress(e.target.value)} placeholder="Address *" />
             </div>
+
+            <div className="form-group">
+              <input type="text" value={apartment} onChange={e => setApartment(e.target.value)} placeholder="Apartment, suite, etc. (optional)" />
+            </div>
+
+            <div className="form-row three-col">
+              <div className="form-group">
+                <input type="text" required value={city} onChange={e => setCity(e.target.value)} placeholder="City *" />
+              </div>
+              <div className="form-group">
+                <select value={state} onChange={e => setState(e.target.value)}>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <input type="text" required value={pincode} onChange={e => setPincode(e.target.value)} placeholder="PIN code *" />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone (WhatsApp) *" />
+            </div>
+
+            <div className="checkbox-group">
+              <label className="form-checkbox">
+                <input type="checkbox" checked={saveInfo} onChange={e => setSaveInfo(e.target.checked)} />
+                <span>Save this information for next time</span>
+              </label>
+              <label className="form-checkbox">
+                <input type="checkbox" checked={textOffers} onChange={e => setTextOffers(e.target.checked)} />
+                <span>Text me with news and offers</span>
+              </label>
+            </div>
+
             <div className="payment-qr-notice" style={{ background: 'var(--maroon-pale)', padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.85rem', color: 'var(--maroon)' }}>
               <strong>💳 Payment via QR Code:</strong>
               <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text)' }}>
-                We will send the payment QR code directly to your Gmail (<strong>{email || 'your email'}</strong>) and WhatsApp.
+                We will send the payment QR code directly to your Gmail and WhatsApp.
               </p>
             </div>
+
             <div className="cart-footer">
               <div className="cart-total">
                 <span>Total Amount</span>
@@ -379,8 +460,9 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
   );
 }
 
-// ─── Account / Profile Modal ──────────────────────────────────────────────────
-function AccountModal({ onClose, user, setUser }) {
+// ─── Account / Profile & Order History Modal ──────────────────────────────────
+function AccountModal({ onClose, user, setUser, orders = [] }) {
+  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'orders'
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '8360048865');
@@ -403,28 +485,81 @@ function AccountModal({ onClose, user, setUser }) {
           <h2 className="cart-title"><User size={22} /> My Profile</h2>
           <button className="cart-close" onClick={onClose}><X size={20} /></button>
         </div>
+        <div className="profile-tabs">
+          <button
+            className={`profile-tab ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <User size={16} /> Details
+          </button>
+          <button
+            className={`profile-tab ${activeTab === 'orders' ? 'active' : ''}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            <Package size={16} /> Order History ({orders.length})
+          </button>
+        </div>
         <div className="account-modal-body">
-          <form onSubmit={handleSave} className="account-form">
-            <div className="form-group">
-              <label>Full Name</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" required />
+          {activeTab === 'profile' ? (
+            <form onSubmit={handleSave} className="account-form">
+              <div className="form-group">
+                <label>Full Name</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" required />
+              </div>
+              <div className="form-group">
+                <label>Email / Gmail Address</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@gmail.com" required />
+              </div>
+              <div className="form-group">
+                <label>WhatsApp Phone</label>
+                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="8360048865" required />
+              </div>
+              <div className="form-group">
+                <label>Saved Shipping Address</label>
+                <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter full address for fast checkout..." rows={3} />
+              </div>
+              <button type="submit" className="btn-primary full-width">
+                {saved ? '✓ Saved Profile Details' : 'Save Profile Details'}
+              </button>
+            </form>
+          ) : (
+            <div className="order-history-list">
+              {orders.length === 0 ? (
+                <div className="cart-empty" style={{ padding: '2rem 0' }}>
+                  <Package size={40} strokeWidth={1.2} />
+                  <p>No orders placed yet</p>
+                  <span>Your completed orders will appear here!</span>
+                </div>
+              ) : (
+                orders.map(order => (
+                  <div key={order.id} className="order-card">
+                    <div className="order-card-header">
+                      <div>
+                        <span className="order-id">{order.id}</span>
+                        <span className="order-date">{order.date}</span>
+                      </div>
+                      <span className="order-status-badge">{order.status}</span>
+                    </div>
+                    <div className="order-items-preview">
+                      {order.items.map(item => (
+                        <div key={item.id} className="order-item-row">
+                          <img src={item.image} alt={item.title} className="order-item-thumb" />
+                          <div className="order-item-meta">
+                            <span className="order-item-title">{item.title}</span>
+                            <span className="order-item-qty">Qty: {item.qty} • ₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="order-card-footer">
+                      <span>Total: <strong>₹{order.total.toLocaleString('en-IN')}</strong></span>
+                      <span className="order-email-dest">QR sent to {order.email}</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-            <div className="form-group">
-              <label>Email / Gmail Address</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@gmail.com" required />
-            </div>
-            <div className="form-group">
-              <label>WhatsApp Phone</label>
-              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="8360048865" required />
-            </div>
-            <div className="form-group">
-              <label>Saved Shipping Address</label>
-              <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter full address for fast checkout..." rows={3} />
-            </div>
-            <button type="submit" className="btn-primary full-width">
-              {saved ? '✓ Saved Profile Details' : 'Save Profile Details'}
-            </button>
-          </form>
+          )}
         </div>
       </div>
     </div>
@@ -633,6 +768,23 @@ export default function App() {
     }
   });
 
+  const [orders, setOrders] = useState(() => {
+    try {
+      const saved = localStorage.getItem('animecurio_orders');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const handlePlaceOrder = (newOrder) => {
+    setOrders(prev => {
+      const updated = [newOrder, ...prev];
+      localStorage.setItem('animecurio_orders', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const navigateToCollection = (categoryKey = 'all') => {
     setCollectionCategory(categoryKey);
     navigate('collection');
@@ -737,14 +889,16 @@ export default function App() {
           onClose={() => setCartOpen(false)}
           onRemove={handleRemove}
           onUpdateQty={handleUpdateQty}
+          onPlaceOrder={handlePlaceOrder}
         />
       )}
 
-      {/* Account / D1 Profile Modal */}
+      {/* Account / Profile Modal */}
       {accountOpen && (
         <AccountModal
           user={user}
           setUser={setUser}
+          orders={orders}
           onClose={() => setAccountOpen(false)}
         />
       )}
