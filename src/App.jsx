@@ -382,8 +382,6 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       } catch (err) {}
     }
 
-    const encoded = encodeURIComponent(msg);
-    window.open(`https://wa.me/918360048865?text=${encoded}`, '_blank');
     setStep('success');
   };
 
@@ -654,6 +652,8 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
 function AccountModal({ onClose, user, setUser, orders = [] }) {
   const [authMode, setAuthMode] = useState(user?.email ? 'profile' : 'signin'); // 'signin' | 'signup' | 'forgot' | 'profile'
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'orders'
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [copiedTracking, setCopiedTracking] = useState(false);
   
   // Login State
   const [loginEmail, setLoginEmail] = useState('');
@@ -969,6 +969,174 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
             <div className="profile-tabs">
               <button
                 className={`profile-tab ${activeTab === 'profile' ? 'active' : ''}`}
+        <button className="account-modal-close" onClick={onClose}>
+          <X size={20} />
+        </button>
+        <div className="account-modal-header">
+          <h2>{authMode === 'profile' ? 'My Account' : authMode === 'signup' ? 'Create Account' : authMode === 'forgot' ? 'Reset Password' : 'Sign In'}</h2>
+          <p>{authMode === 'profile' ? 'Manage your saved shipping details & track past orders' : authMode === 'signup' ? 'Create your profile for fast checkout & order tracking' : authMode === 'forgot' ? 'Recover your account details' : 'Access your profile and order history'}</p>
+        </div>
+
+        {authMode === 'signin' ? (
+          <div className="account-modal-body">
+            {loginError && <div className="auth-error-badge">{loginError}</div>}
+            <form onSubmit={handleSignIn} className="account-form">
+              <div className="form-group">
+                <label>Email / Gmail Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
+                  placeholder="e.g. yoshika@gmail.com"
+                />
+              </div>
+              <div className="form-group">
+                <label>Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  placeholder="Enter your password"
+                />
+              </div>
+              <div style={{ textAlign: 'right', marginTop: '-0.25rem', marginBottom: '0.75rem' }}>
+                <button type="button" className="auth-forgot-link" onClick={() => setAuthMode('forgot')}>
+                  Forgot Password?
+                </button>
+              </div>
+              <button type="submit" className="btn-primary full-width">
+                Sign In to Account
+              </button>
+            </form>
+            <div className="auth-switch-box">
+              <span>New collector on AnimeCurio?</span>
+              <button className="auth-switch-btn" onClick={() => setAuthMode('signup')}>
+                Create Account
+              </button>
+            </div>
+          </div>
+        ) : authMode === 'forgot' ? (
+          <div className="account-modal-body">
+            {forgotMsg && <div className="auth-info-badge">{forgotMsg}</div>}
+            {recoveredPassword ? (
+              <div className="password-recovered-box" style={{ background: '#f0fdf4', border: '1px solid #86efac', padding: '1rem', borderRadius: '12px', textAlign: 'center', marginBottom: '1rem' }}>
+                <div style={{ color: '#166534', fontWeight: 'bold', fontSize: '0.9rem' }}>Account Credentials Recovered</div>
+                <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#15803d' }}>
+                  Your password is: <strong style={{ fontSize: '1rem', background: '#fff', padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #bbf7d0' }}>{recoveredPassword}</strong>
+                </div>
+                <button
+                  className="btn-primary"
+                  style={{ marginTop: '0.85rem', width: '100%' }}
+                  onClick={() => {
+                    setLoginEmail(forgotEmail);
+                    setLoginPassword(recoveredPassword);
+                    setAuthMode('signin');
+                  }}
+                >
+                  Proceed to Sign In →
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotSubmit} className="account-form">
+                <div className="form-group">
+                  <label>Your Registered Gmail Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={forgotEmail}
+                    onChange={e => setForgotEmail(e.target.value)}
+                    placeholder="e.g. yoshika@gmail.com"
+                  />
+                </div>
+                <button type="submit" className="btn-primary full-width" style={{ marginTop: '0.5rem' }}>
+                  Recover Account
+                </button>
+              </form>
+            )}
+            <div className="auth-switch-box">
+              <span>Remembered your password?</span>
+              <button className="auth-switch-btn" onClick={() => setAuthMode('signin')}>
+                Back to Sign In
+              </button>
+            </div>
+          </div>
+        ) : authMode === 'signup' ? (
+          <div className="account-modal-body">
+            <form onSubmit={handleSignUp} className="account-form">
+              <div className="form-group">
+                <label>Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={regName}
+                  onChange={e => setRegName(e.target.value)}
+                  placeholder="e.g. Yoshika"
+                />
+              </div>
+              <div className="form-group">
+                <label>Gmail / Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={regEmail}
+                  onChange={e => setRegEmail(e.target.value)}
+                  placeholder="e.g. yoshika@gmail.com"
+                />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block', fontWeight: 600 }}>WhatsApp Phone *</label>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  <span style={{ background: 'var(--bg2)', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid var(--bg3)', fontWeight: 'bold', fontSize: '0.85rem', color: 'var(--maroon)' }}>
+                    +91
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    maxLength={10}
+                    value={regPhone}
+                    onChange={e => setRegPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="10-digit mobile number"
+                    style={{ flex: 1 }}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Create Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={regPassword}
+                  onChange={e => setRegPassword(e.target.value)}
+                  placeholder="Create a secure password"
+                />
+              </div>
+              <div className="form-group">
+                <label>Shipping Address (optional)</label>
+                <textarea
+                  rows={2}
+                  value={regAddress}
+                  onChange={e => setRegAddress(e.target.value)}
+                  placeholder="Default delivery address"
+                />
+              </div>
+              <button type="submit" className="btn-primary full-width" style={{ marginTop: '0.5rem' }}>
+                Create Account & Save Profile
+              </button>
+            </form>
+            <div className="auth-switch-box">
+              <span>Already have an account?</span>
+              <button className="auth-switch-btn" onClick={() => setAuthMode('signin')}>
+                Sign In
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="profile-tabs">
+              <button
+                className={`profile-tab ${activeTab === 'profile' ? 'active' : ''}`}
                 onClick={() => setActiveTab('profile')}
               >
                 <User size={16} /> Details
@@ -1029,31 +1197,40 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                     </div>
                   ) : (
                     userOrders.map(order => (
-                      <div key={order.id} className="order-card">
-                        <div className="order-card-header">
+                      <div
+                        key={order.id}
+                        className="order-card"
+                        onClick={() => setSelectedOrder(order)}
+                        style={{ cursor: 'pointer', transition: 'all 0.2s', border: '1px solid var(--bg3)', borderRadius: '14px', padding: '1rem', marginBottom: '0.75rem', background: '#fff' }}
+                      >
+                        <div className="order-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
                           <div>
-                            <span className="order-id">{order.id}</span>
-                            <span className="order-date">{order.date}</span>
+                            <span className="order-id" style={{ fontWeight: 'bold', fontSize: '0.95rem', color: '#0f172a' }}>{order.id}</span>
+                            <span className="order-date" style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{order.date}</span>
                             <div style={{ fontSize: '0.78rem', color: 'var(--maroon)', fontWeight: 600, marginTop: '2px' }}>
                               Tracking ID: TRACK-{order.id.replace('ACK-', '')}
                             </div>
                           </div>
-                          <span className="order-status-badge">{order.status}</span>
+                          <span className="order-status-badge" style={{ background: '#dcfce7', color: '#15803d', padding: '0.25rem 0.65rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 'bold' }}>{order.status}</span>
                         </div>
-                        <div className="order-items-preview">
-                          {order.items.map(item => (
-                            <div key={item.id} className="order-item-row">
-                              <img src={item.image} alt={item.title} className="order-item-thumb" />
-                              <div className="order-item-meta">
-                                <span className="order-item-title">{item.title}</span>
-                                <span className="order-item-qty">Qty: {item.qty} • ₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
+
+                        <div className="order-items-preview" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: '1px dashed #e2e8f0', borderBottom: '1px dashed #e2e8f0', padding: '0.5rem 0', margin: '0.5rem 0' }}>
+                          {order.items?.map(item => (
+                            <div key={item.id} className="order-item-row" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <ImageWithFallback src={item.image} alt={item.title} className="order-item-thumb" style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px', background: 'var(--bg2)', padding: '2px' }} />
+                              <div className="order-item-meta" style={{ flex: 1, minWidth: 0 }}>
+                                <span className="order-item-title" style={{ fontSize: '0.82rem', fontWeight: '600', color: 'var(--text)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
+                                <span className="order-item-qty" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Qty: {item.qty} • ₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
                               </div>
                             </div>
                           ))}
                         </div>
-                        <div className="order-card-footer">
+
+                        <div className="order-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem' }}>
                           <span>Total: <strong>₹{order.total.toLocaleString('en-IN')}</strong></span>
-                          <span className="order-email-dest">QR sent to {order.email}</span>
+                          <span style={{ color: 'var(--maroon)', fontWeight: 600, fontSize: '0.78rem' }}>
+                            🔍 Tap to view details & tracking →
+                          </span>
                         </div>
                       </div>
                     ))
@@ -1062,6 +1239,96 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
               )}
             </div>
           </>
+        )}
+
+        {/* Selected Order Full Details Pop-over Modal */}
+        {selectedOrder && (
+          <div className="order-details-modal-overlay" onClick={() => setSelectedOrder(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div className="order-details-modal" onClick={e => e.stopPropagation()} style={{ background: '#fff', width: '100%', maxWidth: '520px', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+              <div style={{ background: 'linear-gradient(135deg, var(--maroon), var(--maroon-dark))', color: '#fff', padding: '1.2rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'Outfit, sans-serif' }}>Order Details & Tracking</h3>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>{selectedOrder.id} • {selectedOrder.date}</span>
+                </div>
+                <button onClick={() => setSelectedOrder(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ padding: '1.25rem 1.5rem', maxHeight: '75vh', overflowY: 'auto' }}>
+                {/* Status Banner */}
+                <div style={{ background: '#fdf2f4', border: '1px solid #fecdd3', borderRadius: '12px', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Current Status</div>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 'bold', color: 'var(--maroon)' }}>{selectedOrder.status || 'Payment Pending (QR Sent)'}</div>
+                  </div>
+                  <span className="order-status-badge" style={{ background: '#dcfce7', color: '#15803d', padding: '0.25rem 0.65rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 'bold' }}>{selectedOrder.status}</span>
+                </div>
+
+                {/* Tracking ID Box */}
+                <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '12px', padding: '0.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Real-Time Tracking ID</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#0f172a' }}>TRACK-{selectedOrder.id.replace('ACK-', '')}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`TRACK-${selectedOrder.id.replace('ACK-', '')}`);
+                      setCopiedTracking(true);
+                      setTimeout(() => setCopiedTracking(false), 2000);
+                    }}
+                    style={{ background: copiedTracking ? '#16a34a' : 'var(--maroon)', color: '#fff', border: 'none', padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    {copiedTracking ? '✓ Copied' : 'Copy ID'}
+                  </button>
+                </div>
+
+                {/* Customer Shipping Details */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--text)', borderBottom: '1px solid var(--bg3)', paddingBottom: '0.35rem' }}>Shipping Address & Customer Info</h4>
+                  <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    <div><strong>Name:</strong> {selectedOrder.name || user?.name || 'Valued Collector'}</div>
+                    <div><strong>Email:</strong> {selectedOrder.email}</div>
+                    <div><strong>WhatsApp:</strong> {selectedOrder.phone || user?.phone}</div>
+                    <div><strong>Delivery Address:</strong> {selectedOrder.address}</div>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <h4 style={{ margin: '0 0 0.6rem 0', fontSize: '0.9rem', color: 'var(--text)', borderBottom: '1px solid var(--bg3)', paddingBottom: '0.35rem' }}>Order Items ({selectedOrder.items?.length || 0})</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {selectedOrder.items?.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                        <ImageWithFallback src={item.image} alt={item.title} style={{ width: '46px', height: '46px', objectFit: 'contain', borderRadius: '8px', background: '#fff', border: '1px solid #e2e8f0' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Qty: {item.qty} × ₹{item.price.toLocaleString('en-IN')}</div>
+                        </div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 'bold', color: 'var(--maroon)' }}>₹{(item.price * item.qty).toLocaleString('en-IN')}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pricing Breakdown */}
+                <div style={{ background: '#fdf2f4', padding: '0.85rem 1rem', borderRadius: '12px', fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', color: 'var(--text-muted)' }}>
+                    <span>Subtotal</span>
+                    <span>₹{(selectedOrder.subtotal || selectedOrder.total).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', color: 'var(--text-muted)' }}>
+                    <span>Shipping Fee</span>
+                    <span>{selectedOrder.shippingFee === 0 || selectedOrder.total >= 999 ? 'FREE' : `₹${selectedOrder.shippingFee || 79}`}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1rem', color: 'var(--maroon)', borderTop: '1px solid #fecdd3', paddingTop: '0.35rem' }}>
+                    <span>Grand Total</span>
+                    <span>₹{selectedOrder.total.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
