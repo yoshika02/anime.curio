@@ -157,14 +157,17 @@ body {
   padding: 1rem 5%;
   z-index: 1000;
   transition: all 0.4s ease;
-  border-bottom: 1px solid transparent;
+  background: rgba(251, 232, 234, 0.94);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(194, 72, 91, 0.16);
+  box-shadow: 0 4px 20px rgba(125, 26, 42, 0.06);
 }
 
 .header-scrolled {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(245, 228, 231, 0.98);
   backdrop-filter: blur(20px);
-  border-color: rgba(194, 72, 91, 0.12);
-  box-shadow: 0 2px 20px rgba(194, 72, 91, 0.08);
+  border-color: rgba(194, 72, 91, 0.22);
+  box-shadow: 0 4px 25px rgba(125, 26, 42, 0.12);
 }
 
 .header-scrolled .nav-link {

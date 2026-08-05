@@ -112,12 +112,25 @@ function parseNumeric(value) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+function getFieldCaseInsensitive(obj, ...names) {
+  if (!obj || typeof obj !== 'object') return undefined;
+  const keys = Object.keys(obj);
+  for (const name of names) {
+    const target = name.toLowerCase().replace(/[\s_-]+/g, '');
+    const foundKey = keys.find(k => k.toLowerCase().replace(/[\s_-]+/g, '') === target);
+    if (foundKey && obj[foundKey] !== undefined && obj[foundKey] !== null && String(obj[foundKey]).trim() !== '') {
+      return obj[foundKey];
+    }
+  }
+  return undefined;
+}
+
 function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const title = String(rawProduct?.title || rawProduct?.name || 'Unnamed product').trim();
   const subtitle = String(rawProduct?.subtitle || rawProduct?.description || '').trim();
-  const price = parseNumeric(rawProduct?.price ?? rawProduct?.currentPrice ?? rawProduct?.sellingPrice);
-  const explicitActual = parseNumeric(rawProduct?.actualPrice ?? rawProduct?.mrp ?? rawProduct?.MRP ?? rawProduct?.originalPrice ?? rawProduct?.listPrice ?? rawProduct?.maxRetailPrice ?? rawProduct?.max_retail_price);
-  const explicitDiscount = parseNumeric(rawProduct?.discount ?? rawProduct?.discountPercent ?? rawProduct?.percentOff ?? rawProduct?.off);
+  const price = parseNumeric(getFieldCaseInsensitive(rawProduct, 'price', 'currentPrice', 'sellingPrice') ?? rawProduct?.price);
+  const explicitActual = parseNumeric(getFieldCaseInsensitive(rawProduct, 'actualPrice', 'actual_price', 'mrp', 'originalPrice', 'listPrice', 'maxRetailPrice') ?? rawProduct?.actualPrice);
+  const explicitDiscount = parseNumeric(getFieldCaseInsensitive(rawProduct, 'discount', 'discountPercent', 'percentOff', 'off') ?? rawProduct?.discount);
 
   // Compute discount percent and actual (original/MRP) price robustly:
   // - If an explicit discount percent exists, use it to derive actual price when missing.
