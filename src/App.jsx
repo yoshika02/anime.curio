@@ -259,7 +259,9 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
   const [textOffers, setTextOffers] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState('');
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const shippingFee = 79;
+  const grandTotal = subtotal + shippingFee;
 
   const handleSubmitOrder = (e) => {
     e.preventDefault();
@@ -288,13 +290,17 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
       `📍 *Address:* ${fullAddress}\n` +
       `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${phone})\n\n` +
       `📦 *Items:* \n${itemsSummaryFormatted}\n\n` +
-      `💰 *Total Amount:* ₹${total.toLocaleString('en-IN')}`;
+      `💵 *Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
+      `🚚 *Shipping Charges:* ₹${shippingFee}\n` +
+      `💰 *Total Amount:* ₹${grandTotal.toLocaleString('en-IN')}`;
 
     const newOrder = {
       id: orderNum,
       date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       items: cart.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty, image: i.image })),
-      total: total,
+      total: grandTotal,
+      subtotal: subtotal,
+      shippingFee: shippingFee,
       name: fullName,
       email: email,
       phone: phone,
@@ -319,7 +325,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
             business: company,
             city: city,
             orderItems: itemsSummary,
-            orderTotal: `₹${total.toLocaleString('en-IN')}`,
+            orderTotal: `₹${grandTotal.toLocaleString('en-IN')} (incl. ₹${shippingFee} shipping)`,
             notes: fullAddress,
             status: 'Payment Pending (QR Sent)'
           })
@@ -411,9 +417,19 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
               ))}
             </div>
             <div className="cart-footer">
-              <div className="cart-total">
-                <span>Total</span>
-                <span>₹{total.toLocaleString('en-IN')}</span>
+              <div className="cart-total-breakdown" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '100%', marginBottom: '0.75rem', fontSize: '0.88rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                  <span>Subtotal</span>
+                  <span>₹{subtotal.toLocaleString('en-IN')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                  <span>Shipping Charges</span>
+                  <span>₹{shippingFee}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1rem', color: 'var(--text)', borderTop: '1px solid var(--bg3)', paddingTop: '0.35rem' }}>
+                  <span>Total Amount</span>
+                  <span>₹{grandTotal.toLocaleString('en-IN')}</span>
+                </div>
               </div>
               <button className="btn-checkout" onClick={() => setStep('checkout')}>Proceed to Checkout →</button>
             </div>
@@ -528,9 +544,19 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
             </div>
 
             <div className="cart-footer">
-              <div className="cart-total">
-                <span>Total Amount</span>
-                <span>₹{total.toLocaleString('en-IN')}</span>
+              <div className="cart-total-breakdown" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '100%', marginBottom: '0.75rem', fontSize: '0.88rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                  <span>Subtotal</span>
+                  <span>₹{subtotal.toLocaleString('en-IN')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                  <span>Shipping Charges</span>
+                  <span>₹{shippingFee}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1rem', color: 'var(--text)', borderTop: '1px solid var(--bg3)', paddingTop: '0.35rem' }}>
+                  <span>Total Amount</span>
+                  <span>₹{grandTotal.toLocaleString('en-IN')}</span>
+                </div>
               </div>
               <button type="submit" className="btn-checkout whatsapp-checkout">
                 Place Order & Get Payment QR →
