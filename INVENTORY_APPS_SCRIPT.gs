@@ -1,25 +1,15 @@
 /**
- * AnimeCurio – Google Sheets Inventory API
- * ==========================================
- * HOW TO SET UP:
- * 1. Open your Google Sheet (create one with the columns below)
- * 2. Go to Extensions → Apps Script → paste this entire file
- * 3. Click Deploy → New Deployment → Type: Web App
- *    - Execute as: Me
- *    - Who has access: Anyone
- * 4. Copy the Web App URL and paste it into App.jsx (SHEETS_API_URL)
+ * AnimeCurio – Google Sheets Inventory & Orders API
+ * ==================================================
+ * HOW TO SET UP / UPDATE:
+ * 1. Open your Google Sheet
+ * 2. Go to Extensions → Apps Script → replace code with this file
+ * 3. Click Deploy → Manage Deployments → Edit (Pencil) → New Version → Deploy
  *
- * SHEET COLUMN ORDER (Row 1 = headers, exactly these names):
- *   id | category | title | subtitle | price | actualPrice | rating | reviews | badge | badgeColor | stock | image
- *
- * NOTE ON PRICES:
- * - "price" = Current Selling Price (e.g. 366)
- * - "actualPrice" (or "mrp" / "originalPrice") = Actual Original MRP (e.g. 540)
- *
- * CATEGORY values (case-sensitive): figurines | combos | mystery | keychains
- *
- * EXAMPLE ROW:
- *   1 | figurines | Shadow Swordsman 1/7 Scale | Demon Slayer Series | 366 | 540 | 4.9 | 312 | New | #a31a1a | 15 | /products/figurine_1.png
+ * SPREADSHEET TABS:
+ * 1. "anime inventory" or "Inventory" (for catalog products)
+ * 2. "Orders" (auto-created if not exists, records incoming orders with columns):
+ *    Order ID | Timestamp | Name | WhatsApp | Email | Business | City | Order Items | Order Total | Notes | Status
  */
 
 function doGet(e) {
@@ -40,7 +30,6 @@ function doGet(e) {
         const obj = {};
         headers.forEach((header, i) => {
           const val = row[i];
-          // Auto-cast numeric fields
           if (['id', 'price', 'actualPrice', 'originalPrice', 'mrp', 'MRP', 'rating', 'reviews', 'stock', 'category', 'category_id', 'categoryId'].includes(header)) {
             obj[header] = Number(val) || (header === 'category' || header === 'category_id' || header === 'categoryId' ? val : 0);
           } else {
@@ -54,6 +43,49 @@ function doGet(e) {
 
   } catch (err) {
     return jsonResponse({ products: [], error: err.message });
+  }
+}
+
+/**
+ * Automatically logs placed orders into the "Orders" tab in Google Sheets!
+ */
+function doPost(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let ordersSheet = ss.getSheetByName('Orders');
+    
+    // Auto-create "Orders" sheet with exact headers if it doesn't exist
+    if (!ordersSheet) {
+      ordersSheet = ss.insertSheet('Orders');
+      ordersSheet.appendRow([
+        'Order ID', 'Timestamp', 'Name', 'WhatsApp', 'Email', 'Business', 'City', 'Order Items', 'Order Total', 'Notes', 'Status'
+      ]);
+      ordersSheet.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground('#f3e8ff');
+    }
+
+    let payload = {};
+    if (e && e.postData && e.postData.contents) {
+      payload = JSON.parse(e.postData.contents);
+    }
+
+    // Append order row to Google Sheets
+    ordersSheet.appendRow([
+      payload.orderId || '',
+      payload.timestamp || new Date().toLocaleString('en-IN'),
+      payload.name || '',
+      payload.whatsapp || '',
+      payload.email || '',
+      payload.business || '',
+      payload.city || '',
+      payload.orderItems || '',
+      payload.orderTotal || 0,
+      payload.notes || '',
+      payload.status || 'Payment Pending (QR Sent)'
+    ]);
+
+    return jsonResponse({ success: true, orderId: payload.orderId });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message });
   }
 }
 

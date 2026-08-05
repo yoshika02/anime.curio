@@ -1,36 +1,39 @@
 -- Cloudflare D1 Database Schema for AnimeCurio
--- ===============================================
+-- Copy and run these SQL queries directly inside Cloudflare D1 Studio!
 
--- 1. Users Table
+-- 1. Create Users Table
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     phone TEXT,
+    password TEXT NOT NULL,
     address TEXT,
     city TEXT,
+    state TEXT,
     pincode TEXT,
+    country TEXT DEFAULT 'India',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Orders Table
+-- 2. Create Orders Table
 CREATE TABLE IF NOT EXISTS orders (
     id TEXT PRIMARY KEY,
-    user_id TEXT REFERENCES users(id),
+    user_id TEXT,
     customer_name TEXT NOT NULL,
+    customer_email TEXT NOT NULL,
     customer_phone TEXT NOT NULL,
     shipping_address TEXT NOT NULL,
     total_amount REAL NOT NULL,
-    payment_method TEXT DEFAULT 'WhatsApp / COD',
-    order_status TEXT DEFAULT 'Processing',
-    items_json TEXT NOT NULL, -- JSON array of cart items
+    payment_status TEXT DEFAULT 'Payment Pending (QR Sent)',
+    items_json TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Wishlist Table
+-- 3. Create Wishlist Table
 CREATE TABLE IF NOT EXISTS wishlist (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT REFERENCES users(id),
+    user_id TEXT,
     product_id TEXT NOT NULL,
     product_title TEXT NOT NULL,
     product_price REAL NOT NULL,

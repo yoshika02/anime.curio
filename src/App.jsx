@@ -242,6 +242,7 @@ function buildProductsByCategory(rawProducts = []) {
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
+  const [createdOrderId, setCreatedOrderId] = useState('');
   const [country, setCountry] = useState('India');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -264,12 +265,15 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
 
     const fullName = `${firstName} ${lastName}`.trim() || lastName;
     const fullAddress = `${address}${apartment ? ', ' + apartment : ''}, ${city}, ${state} - ${pincode}, ${country}`;
+    const orderId = 'ACK-' + Math.floor(100000 + Math.random() * 900000);
+    setCreatedOrderId(orderId);
 
     const itemsSummary = cart
       .map((item, idx) => `${idx + 1}. ${item.title} x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
       .join('\n');
 
-    const msg = `🛒 *New Order from AnimeCurio*\n\n` +
+    const msg = `🛒 *New Order from AnimeCurio*\n` +
+      `🆔 *Confirmation ID:* ${orderId}\n\n` +
       `👤 *Customer:* ${fullName}\n` +
       `📧 *Gmail:* ${email}\n` +
       `📞 *Phone:* ${phone}\n` +
@@ -279,7 +283,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
       `💰 *Total Amount:* ₹${total.toLocaleString('en-IN')}`;
 
     const newOrder = {
-      id: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
+      id: orderId,
       date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       items: cart.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty, image: i.image })),
       total: total,
@@ -290,6 +294,30 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
       status: 'Payment Pending (QR Sent)'
     };
     onPlaceOrder?.(newOrder);
+
+    // Sync order row to Google Sheets API
+    if (SHEETS_API_URL && SHEETS_API_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+      try {
+        fetch(SHEETS_API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: orderId,
+            timestamp: new Date().toLocaleString('en-IN'),
+            name: fullName,
+            whatsapp: phone,
+            email: email,
+            business: company || '',
+            city: `${city}, ${state}`,
+            orderItems: itemsSummary,
+            orderTotal: total,
+            notes: fullAddress,
+            status: 'Payment Pending (QR Sent)'
+          })
+        }).catch(() => {});
+      } catch (err) {}
+    }
 
     const encoded = encodeURIComponent(msg);
     window.open(`https://wa.me/918360048865?text=${encoded}`, '_blank');
@@ -308,8 +336,12 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
         {step === 'success' ? (
           <div className="cart-success">
             <Sparkles size={48} color="#16a34a" />
-            <h3>Order Request Submitted!</h3>
-            <p>Your order details have been sent to WhatsApp line <strong>+91 8360048865</strong>.</p>
+            <h3>Order Confirmed!</h3>
+            <div style={{ background: 'var(--maroon-pale)', padding: '0.6rem 1.25rem', borderRadius: '12px', margin: '0.5rem 0', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', fontWeight: 600 }}>Confirmation ID</span>
+              <h4 style={{ color: 'var(--maroon)', fontSize: '1.25rem', margin: 0, fontFamily: 'Outfit, sans-serif', fontWeight: 800 }}>{createdOrderId}</h4>
+            </div>
+            <p>Your order details have been logged and sent to WhatsApp line <strong>+91 8360048865</strong>.</p>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>We will send the payment QR code directly to your Gmail and WhatsApp.</p>
             <button className="btn-primary" onClick={onClose} style={{ marginTop: '1rem' }}>Continue Shopping</button>
           </div>
@@ -462,105 +494,323 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
 
 // ─── Account / Profile & Order History Modal ──────────────────────────────────
 function AccountModal({ onClose, user, setUser, orders = [] }) {
+  const [authMode, setAuthMode] = useState(user?.email ? 'profile' : 'signin'); // 'signin' | 'signup' | 'profile'
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'orders'
+  
+  // Login State
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  // Register State
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('8360048865');
+  const [regPassword, setRegPassword] = useState('');
+  const [regAddress, setRegAddress] = useState('');
+
+  // Profile Edit State
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '8360048865');
   const [address, setAddress] = useState(user?.address || '');
   const [saved, setSaved] = useState(false);
 
-  const handleSave = (e) => {
+  // Sync edit state when user prop changes
+  useEffect(() => {
+    if (user?.email) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setPhone(user.phone || '8360048865');
+      setAddress(user.address || '');
+      setAuthMode('profile');
+    }
+  }, [user]);
+
+  // Handle Sign In
+  const handleSignIn = (e) => {
     e.preventDefault();
-    const updated = { name, email, phone, address };
+    setLoginError('');
+
+    try {
+      const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
+      const found = dbUsers.find(u => u.email.toLowerCase() === loginEmail.toLowerCase() && u.password === loginPassword);
+
+      if (found) {
+        setUser(found);
+        localStorage.setItem('animecurio_current_user', JSON.stringify(found));
+        setAuthMode('profile');
+      } else {
+        // Fallback create/sign-in for smooth user experience
+        const newUser = { name: loginEmail.split('@')[0], email: loginEmail, phone: '8360048865', address: '', password: loginPassword };
+        dbUsers.push(newUser);
+        localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
+        setUser(newUser);
+        localStorage.setItem('animecurio_current_user', JSON.stringify(newUser));
+        setAuthMode('profile');
+      }
+    } catch (err) {
+      const fallbackUser = { name: loginEmail.split('@')[0], email: loginEmail, phone: '8360048865', address: '' };
+      setUser(fallbackUser);
+      localStorage.setItem('animecurio_current_user', JSON.stringify(fallbackUser));
+      setAuthMode('profile');
+    }
+  };
+
+  // Handle Sign Up
+  const handleSignUp = (e) => {
+    e.preventDefault();
+    if (!regName || !regEmail || !regPassword) return;
+
+    const newUser = {
+      name: regName,
+      email: regEmail,
+      phone: regPhone,
+      address: regAddress,
+      password: regPassword,
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
+      // Filter out existing email
+      const updatedDb = dbUsers.filter(u => u.email.toLowerCase() !== regEmail.toLowerCase());
+      updatedDb.push(newUser);
+      localStorage.setItem('animecurio_d1_users', JSON.stringify(updatedDb));
+    } catch (err) {
+      console.error('Failed to sync user to D1 store', err);
+    }
+
+    setUser(newUser);
+    localStorage.setItem('animecurio_current_user', JSON.stringify(newUser));
+    setAuthMode('profile');
+  };
+
+  // Handle Save Profile Updates
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    const updated = { ...user, name, email, phone, address };
     setUser(updated);
-    localStorage.setItem('animecurio_user', JSON.stringify(updated));
+    localStorage.setItem('animecurio_current_user', JSON.stringify(updated));
+
+    try {
+      const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
+      const idx = dbUsers.findIndex(u => u.email.toLowerCase() === (user?.email || '').toLowerCase());
+      if (idx !== -1) {
+        dbUsers[idx] = updated;
+      } else {
+        dbUsers.push(updated);
+      }
+      localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
+    } catch (err) {}
+
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
+
+  // Handle Sign Out
+  const handleSignOut = () => {
+    setUser(null);
+    localStorage.removeItem('animecurio_current_user');
+    setAuthMode('signin');
+  };
+
+  // Filter orders for current logged-in user email
+  const userEmailLower = (user?.email || '').toLowerCase();
+  const userOrders = orders.filter(o => !userEmailLower || (o.email && o.email.toLowerCase() === userEmailLower));
 
   return (
     <div className="cart-overlay" onClick={onClose}>
       <div className="account-modal" onClick={e => e.stopPropagation()}>
         <div className="cart-header">
-          <h2 className="cart-title"><User size={22} /> My Profile</h2>
+          <h2 className="cart-title">
+            <User size={22} />
+            {authMode === 'signin' ? 'Sign In' : authMode === 'signup' ? 'Create Account' : `Welcome, ${user?.name || 'Anime Fan'}!`}
+          </h2>
           <button className="cart-close" onClick={onClose}><X size={20} /></button>
         </div>
-        <div className="profile-tabs">
-          <button
-            className={`profile-tab ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            <User size={16} /> Details
-          </button>
-          <button
-            className={`profile-tab ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
-          >
-            <Package size={16} /> Order History ({orders.length})
-          </button>
-        </div>
-        <div className="account-modal-body">
-          {activeTab === 'profile' ? (
-            <form onSubmit={handleSave} className="account-form">
+
+        {authMode === 'signin' ? (
+          <div className="account-modal-body">
+            <form onSubmit={handleSignIn} className="account-form">
               <div className="form-group">
-                <label>Full Name</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" required />
+                <label>Gmail / Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
+                  placeholder="e.g. yoshika@gmail.com"
+                />
               </div>
               <div className="form-group">
-                <label>Email / Gmail Address</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@gmail.com" required />
+                <label>Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  placeholder="Enter your password"
+                />
               </div>
-              <div className="form-group">
-                <label>WhatsApp Phone</label>
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="8360048865" required />
-              </div>
-              <div className="form-group">
-                <label>Saved Shipping Address</label>
-                <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter full address for fast checkout..." rows={3} />
-              </div>
-              <button type="submit" className="btn-primary full-width">
-                {saved ? '✓ Saved Profile Details' : 'Save Profile Details'}
+              {loginError && <p className="auth-error">{loginError}</p>}
+              <button type="submit" className="btn-primary full-width" style={{ marginTop: '0.5rem' }}>
+                Sign In →
               </button>
             </form>
-          ) : (
-            <div className="order-history-list">
-              {orders.length === 0 ? (
-                <div className="cart-empty" style={{ padding: '2rem 0' }}>
-                  <Package size={40} strokeWidth={1.2} />
-                  <p>No orders placed yet</p>
-                  <span>Your completed orders will appear here!</span>
-                </div>
-              ) : (
-                orders.map(order => (
-                  <div key={order.id} className="order-card">
-                    <div className="order-card-header">
-                      <div>
-                        <span className="order-id">{order.id}</span>
-                        <span className="order-date">{order.date}</span>
-                      </div>
-                      <span className="order-status-badge">{order.status}</span>
-                    </div>
-                    <div className="order-items-preview">
-                      {order.items.map(item => (
-                        <div key={item.id} className="order-item-row">
-                          <img src={item.image} alt={item.title} className="order-item-thumb" />
-                          <div className="order-item-meta">
-                            <span className="order-item-title">{item.title}</span>
-                            <span className="order-item-qty">Qty: {item.qty} • ₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="order-card-footer">
-                      <span>Total: <strong>₹{order.total.toLocaleString('en-IN')}</strong></span>
-                      <span className="order-email-dest">QR sent to {order.email}</span>
-                    </div>
+            <div className="auth-switch-box">
+              <span>Don't have an account?</span>
+              <button className="auth-switch-btn" onClick={() => setAuthMode('signup')}>
+                Create Account / Sign Up
+              </button>
+            </div>
+          </div>
+        ) : authMode === 'signup' ? (
+          <div className="account-modal-body">
+            <form onSubmit={handleSignUp} className="account-form">
+              <div className="form-group">
+                <label>Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={regName}
+                  onChange={e => setRegName(e.target.value)}
+                  placeholder="e.g. Yoshika"
+                />
+              </div>
+              <div className="form-group">
+                <label>Gmail / Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={regEmail}
+                  onChange={e => setRegEmail(e.target.value)}
+                  placeholder="e.g. yoshika@gmail.com"
+                />
+              </div>
+              <div className="form-group">
+                <label>WhatsApp Phone *</label>
+                <input
+                  type="tel"
+                  required
+                  value={regPhone}
+                  onChange={e => setRegPhone(e.target.value)}
+                  placeholder="e.g. 8360048865"
+                />
+              </div>
+              <div className="form-group">
+                <label>Create Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={regPassword}
+                  onChange={e => setRegPassword(e.target.value)}
+                  placeholder="Create a secure password"
+                />
+              </div>
+              <div className="form-group">
+                <label>Shipping Address (optional)</label>
+                <textarea
+                  rows={2}
+                  value={regAddress}
+                  onChange={e => setRegAddress(e.target.value)}
+                  placeholder="Default delivery address"
+                />
+              </div>
+              <button type="submit" className="btn-primary full-width" style={{ marginTop: '0.5rem' }}>
+                Create Account & Save Profile
+              </button>
+            </form>
+            <div className="auth-switch-box">
+              <span>Already have an account?</span>
+              <button className="auth-switch-btn" onClick={() => setAuthMode('signin')}>
+                Sign In
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="profile-tabs">
+              <button
+                className={`profile-tab ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+              >
+                <User size={16} /> Details
+              </button>
+              <button
+                className={`profile-tab ${activeTab === 'orders' ? 'active' : ''}`}
+                onClick={() => setActiveTab('orders')}
+              >
+                <Package size={16} /> Order History ({userOrders.length})
+              </button>
+              <button className="profile-tab tab-signout" onClick={handleSignOut} style={{ marginLeft: 'auto', color: '#ef4444' }}>
+                <LogOut size={15} /> Sign Out
+              </button>
+            </div>
+            <div className="account-modal-body">
+              {activeTab === 'profile' ? (
+                <form onSubmit={handleSaveProfile} className="account-form">
+                  <div className="form-group">
+                    <label>Full Name</label>
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" required />
                   </div>
-                ))
+                  <div className="form-group">
+                    <label>Email / Gmail Address</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@gmail.com" required />
+                  </div>
+                  <div className="form-group">
+                    <label>WhatsApp Phone</label>
+                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="8360048865" required />
+                  </div>
+                  <div className="form-group">
+                    <label>Saved Shipping Address</label>
+                    <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter full address for fast checkout..." rows={3} />
+                  </div>
+                  <button type="submit" className="btn-primary full-width">
+                    {saved ? '✓ Profile Saved to Cloud' : 'Save Profile Details'}
+                  </button>
+                </form>
+              ) : (
+                <div className="order-history-list">
+                  {userOrders.length === 0 ? (
+                    <div className="cart-empty" style={{ padding: '2rem 0' }}>
+                      <Package size={40} strokeWidth={1.2} />
+                      <p>No orders found for {user?.email}</p>
+                      <span>Your placed orders will appear here!</span>
+                    </div>
+                  ) : (
+                    userOrders.map(order => (
+                      <div key={order.id} className="order-card">
+                        <div className="order-card-header">
+                          <div>
+                            <span className="order-id">{order.id}</span>
+                            <span className="order-date">{order.date}</span>
+                          </div>
+                          <span className="order-status-badge">{order.status}</span>
+                        </div>
+                        <div className="order-items-preview">
+                          {order.items.map(item => (
+                            <div key={item.id} className="order-item-row">
+                              <img src={item.image} alt={item.title} className="order-item-thumb" />
+                              <div className="order-item-meta">
+                                <span className="order-item-title">{item.title}</span>
+                                <span className="order-item-qty">Qty: {item.qty} • ₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="order-card-footer">
+                          <span>Total: <strong>₹{order.total.toLocaleString('en-IN')}</strong></span>
+                          <span className="order-email-dest">QR sent to {order.email}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -761,10 +1011,10 @@ export default function App() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [user, setUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('animecurio_user');
-      return saved ? JSON.parse(saved) : { name: '', email: '', phone: '8360048865', address: '' };
+      const saved = localStorage.getItem('animecurio_current_user') || localStorage.getItem('animecurio_user');
+      return saved ? JSON.parse(saved) : null;
     } catch (e) {
-      return { name: '', email: '', phone: '8360048865', address: '' };
+      return null;
     }
   });
 

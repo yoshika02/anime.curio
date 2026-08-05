@@ -2364,3 +2364,36 @@ body {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+
+/* ── Auth Switch & Error Styling ──────────────────────────────────────────── */
+.auth-switch-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bg3);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.auth-switch-btn {
+  background: none;
+  border: none;
+  color: var(--maroon);
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.88rem;
+  text-decoration: underline;
+}
+
+.auth-error {
+  color: #ef4444;
+  font-size: 0.82rem;
+  margin-top: 0.25rem;
+}
+
+.profile-tab.tab-signout:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
