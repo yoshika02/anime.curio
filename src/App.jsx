@@ -181,7 +181,23 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
       ? rawProduct.features.split(',').map(s => s.trim()).filter(Boolean)
       : [];
 
-  const categoryId = Number(rawProduct?.category || rawProduct?.category_id || rawProduct?.categoryId || 0);
+  const categoryId = Number(rawProduct?.category_id || rawProduct?.categoryId || rawProduct?.category || 0);
+  const categoryNames = {
+    1: 'Anime Figurines',
+    2: 'Keychains & Accessories',
+    3: 'Action Figures',
+    4: 'Combos & Gift Sets',
+    5: 'Mystery & Surprise Balls',
+    6: 'Chibi & Mini Figures',
+    7: 'Statues & Displays',
+    8: 'Limited Editions',
+    9: 'Plush & Soft Items',
+    10: 'Combo Bundles',
+    11: 'Display Dioramas',
+    12: 'Cosplay & Merch',
+  };
+  const categoryName = categoryNames[categoryId] || (typeof rawProduct?.category === 'string' && rawProduct.category ? rawProduct.category : 'Anime Merchandise');
+  
   const categoryKey = {
     1: 'figurines',
     2: 'keychains',
@@ -217,7 +233,8 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     inStock,
     features,
     category: categoryKey,
-    categoryId,
+    categoryId: categoryId || 1,
+    categoryName,
   };
 }
 
@@ -358,13 +375,18 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
     };
     onPlaceOrder?.(newOrder);
 
-    // Post Order payload to Google Sheets Orders tab
+    // Open WhatsApp messaging redirect to 8360048865
+    try {
+      window.open(`https://wa.me/918360048865?text=${encodeURIComponent(msg)}`, '_blank');
+    } catch (err) {}
+
+    // Post Order payload to Google Sheets Orders tab & trigger Google Apps Script email
     if (ORDERS_API_URL) {
       try {
         fetch(ORDERS_API_URL, {
           method: 'POST',
           mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             orderId: orderNum,
             timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
