@@ -1,17 +1,15 @@
 /**
- * AnimeCurio – Google Sheets Orders & Inventory Apps Script
- * =========================================================
- * HOW TO USE IN YOUR GOOGLE SHEET:
- * 1. Open your Google Sheet (with "Inventory" tab and "Orders" tab)
- * 2. Go to Extensions → Apps Script
- * 3. Replace/Paste this entire script
- * 4. Click Deploy → New Deployment → Web App
- *    - Execute as: Me
- *    - Who has access: Anyone
- * 5. Copy the Web App URL and set it as SHEETS_API_URL in App.jsx!
- *
- * ORDERS SHEET COLUMN HEADERS (Row 1 of "Orders" tab):
- * Order ID | Timestamp | Name | WhatsApp | Email | Business | City | Order Items | Order Total | Notes | Status
+ * AnimeCurio – Google Sheets Orders & Automatic Email Dispatch Apps Script
+ * =========================================================================
+ * HOW TO UPDATE YOUR DEPLOYED SCRIPT:
+ * 1. Open your Google Sheet → Extensions → Apps Script
+ * 2. Paste this updated script (replaces existing content)
+ * 3. Click Deploy → Manage Deployments → Edit (Pencil Icon) → New Version → Deploy
+ * 
+ * FEATURES:
+ * - Appends every placed order into the "Orders" tab in Google Sheets
+ * - Automatically emails the Customer with their Confirmation ID & Payment Details
+ * - Automatically emails Store Owner (anime.curio.studio@gmail.com) with the new order alert
  */
 
 function doGet(e) {
@@ -53,7 +51,7 @@ function doPost(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName('Orders') || ss.getSheetByName('orders');
     
-    // Auto-create "Orders" tab with headers if it doesn't exist yet
+    // Auto-create "Orders" tab with headers if it doesn't exist
     if (!sheet) {
       sheet = ss.insertSheet('Orders');
       sheet.appendRow([
@@ -81,7 +79,7 @@ function doPost(e) {
     const notes = payload.notes || payload.address || '';
     const status = payload.status || 'Payment Pending (QR Sent)';
 
-    // Append new order row
+    // 1. Append new order row to Google Sheet
     sheet.appendRow([
       orderId,
       timestamp,
@@ -96,10 +94,77 @@ function doPost(e) {
       status
     ]);
 
+    // 2. Automatically Dispatch Confirmation & Payment QR Email
+    const storeEmail = 'anime.curio.studio@gmail.com';
+    const storePhone = '8360048865';
+
+    const emailSubject = "Payment QR & Order Confirmation: " + orderId + " - AnimeCurio";
+    const emailHtmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 16px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #c2485b; margin: 0; font-size: 26px;">AnimeCurio</h1>
+          <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Exclusive Merchandise & Figurines</p>
+        </div>
+
+        <div style="background-color: #fdf2f4; border-left: 4px solid #c2485b; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+          <h3 style="margin: 0 0 8px 0; color: #9f1239;">Order Confirmed!</h3>
+          <p style="margin: 0; font-size: 15px; color: #374151;">Hi <strong>${name}</strong>, your order has been received successfully.</p>
+          <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: bold; color: #c2485b;">Confirmation ID: ${orderId}</p>
+        </div>
+
+        <div style="background-color: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 12px 0; color: #111827; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">Order Details</h4>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Customer:</strong> ${name}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>WhatsApp:</strong> ${whatsapp}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Email:</strong> ${email}</p>
+          ${business ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Business:</strong> ${business}</p>` : ''}
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Shipping Address:</strong> ${notes}</p>
+          <p style="margin: 12px 0 4px 0; font-size: 14px; font-weight: bold;"><strong>Items:</strong></p>
+          <p style="margin: 4px 0; font-size: 14px; color: #4b5563; background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #e5e7eb;">${orderItems}</p>
+          <p style="margin: 12px 0 0 0; font-size: 16px; font-weight: bold; color: #c2485b;">Total Amount: ${orderTotal}</p>
+        </div>
+
+        <div style="text-align: center; background-color: #fff1f2; border: 1px dashed #f43f5e; padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+          <h3 style="color: #9f1239; margin: 0 0 8px 0;">💳 Complete Payment via UPI / Google Pay</h3>
+          <p style="margin: 0 0 12px 0; font-size: 14px; color: #4b5563;">Scan the QR code in your app or send payment for <strong>${orderTotal}</strong> to store line:</p>
+          <p style="margin: 4px 0; font-size: 15px; font-weight: bold; color: #111827;">WhatsApp Line: +91 ${storePhone}</p>
+          <p style="margin: 4px 0; font-size: 14px; color: #4b5563;">Store Support: ${storeEmail}</p>
+        </div>
+
+        <div style="text-align: center; color: #9ca3af; font-size: 12px; border-top: 1px solid #f3f4f6; padding-top: 16px;">
+          <p style="margin: 0;">Thank you for shopping at AnimeCurio!</p>
+        </div>
+      </div>
+    `;
+
+    // Send email to Customer
+    if (email) {
+      try {
+        MailApp.sendEmail({
+          to: email,
+          subject: emailSubject,
+          htmlBody: emailHtmlBody
+        });
+      } catch (err1) {
+        Logger.log("Customer email error: " + err1.message);
+      }
+    }
+
+    // Send email alert to Store Owner (anime.curio.studio@gmail.com)
+    try {
+      MailApp.sendEmail({
+        to: storeEmail,
+        subject: "[NEW ORDER] " + orderId + " - " + name + " (" + orderTotal + ")",
+        htmlBody: emailHtmlBody
+      });
+    } catch (err2) {
+      Logger.log("Store owner alert error: " + err2.message);
+    }
+
     return jsonResponse({
       success: true,
       orderId: orderId,
-      message: 'Order recorded in Google Sheets Orders tab'
+      message: 'Order recorded and emails dispatched successfully'
     });
 
   } catch (err) {

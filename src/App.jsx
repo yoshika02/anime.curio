@@ -344,13 +344,31 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
         {step === 'success' ? (
           <div className="cart-success">
             <Sparkles size={48} color="#16a34a" />
-            <h3>Order Confirmed!</h3>
-            <div className="confirmation-badge" style={{ background: 'var(--maroon-pale)', padding: '0.6rem 1.25rem', borderRadius: '12px', margin: '0.5rem 0', fontWeight: 'bold', color: 'var(--maroon)', fontSize: '1rem' }}>
-              Confirmation ID: {createdOrderId}
+            <h3>Order Received Successfully!</h3>
+            <div className="confirmation-badge" style={{ background: 'var(--maroon-pale)', padding: '0.75rem 1.25rem', borderRadius: '12px', margin: '0.5rem 0', fontWeight: 'bold', color: 'var(--maroon)', fontSize: '0.95rem', textAlign: 'center' }}>
+              <div>Confirmation ID: {createdOrderId}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text)', marginTop: '0.25rem', fontWeight: 600 }}>
+                Real-Time Tracking ID: TRACK-{createdOrderId}
+              </div>
             </div>
-            <p>Your order details and Confirmation ID <strong>{createdOrderId}</strong> have been sent to WhatsApp line <strong>+91 8360048865</strong>.</p>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>We will send the payment QR code directly to your Gmail and WhatsApp.</p>
-            <button className="btn-primary" onClick={onClose} style={{ marginTop: '1rem' }}>Continue Shopping</button>
+
+            <div className="trust-notice-box" style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '1rem', borderRadius: '14px', margin: '1rem 0', textAlign: 'left', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#0f172a', fontWeight: '700', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                <ShieldCheck size={20} color="#16a34a" /> 100% Secure Order & Payment Process
+              </div>
+              <p style={{ fontSize: '0.83rem', color: 'var(--text)', margin: '0 0 0.5rem 0', lineHeight: 1.4 }}>
+                For your complete trust and safety, we send your <strong>Payment QR Code</strong> and <strong>Invoice</strong> directly to your official email and WhatsApp line:
+              </p>
+              <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                <li>📧 <strong>Gmail:</strong> {email}</li>
+                <li>💬 <strong>WhatsApp:</strong> {phone}</li>
+              </ul>
+              <p style={{ fontSize: '0.8rem', color: '#16a34a', margin: '0.5rem 0 0 0', fontWeight: 600 }}>
+                ✓ Please check your Gmail inbox / WhatsApp to view payment details and track order live.
+              </p>
+            </div>
+
+            <button className="btn-primary" onClick={onClose} style={{ marginTop: '0.5rem', width: '100%' }}>Continue Shopping</button>
           </div>
         ) : cart.length === 0 ? (
           <div className="cart-empty">
@@ -364,7 +382,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
               {cart.map(item => (
                 <div key={item.id} className="cart-item">
                   <div className="cart-item-img-box">
-                    <img src={item.image} alt={item.title} className="cart-item-img" />
+                    <ImageWithFallback src={item.image} alt={item.title} className="cart-item-img" />
                   </div>
                   <div className="cart-item-info">
                     <p className="cart-item-name">{item.title}</p>
@@ -444,16 +462,42 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
               </div>
               <div className="form-group">
                 <select value={state} onChange={e => setState(e.target.value)}>
+                  <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                  <option value="Assam">Assam</option>
+                  <option value="Bihar">Bihar</option>
+                  <option value="Chandigarh">Chandigarh</option>
+                  <option value="Chhattisgarh">Chhattisgarh</option>
+                  <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
                   <option value="Delhi">Delhi</option>
-                  <option value="Punjab">Punjab</option>
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh</option>
-                  <option value="Haryana">Haryana</option>
+                  <option value="Goa">Goa</option>
                   <option value="Gujarat">Gujarat</option>
-                  <option value="West Bengal">West Bengal</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Himachal Pradesh">Himachal Pradesh</option>
+                  <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                  <option value="Jharkhand">Jharkhand</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Kerala">Kerala</option>
+                  <option value="Ladakh">Ladakh</option>
+                  <option value="Lakshadweep">Lakshadweep</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Manipur">Manipur</option>
+                  <option value="Meghalaya">Meghalaya</option>
+                  <option value="Mizoram">Mizoram</option>
+                  <option value="Nagaland">Nagaland</option>
+                  <option value="Odisha">Odisha</option>
+                  <option value="Puducherry">Puducherry</option>
+                  <option value="Punjab">Punjab</option>
                   <option value="Rajasthan">Rajasthan</option>
+                  <option value="Sikkim">Sikkim</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Tripura">Tripura</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Uttarakhand">Uttarakhand</option>
+                  <option value="West Bengal">West Bengal</option>
                 </select>
               </div>
               <div className="form-group">
@@ -792,6 +836,9 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                           <div>
                             <span className="order-id">{order.id}</span>
                             <span className="order-date">{order.date}</span>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--maroon)', fontWeight: 600, marginTop: '2px' }}>
+                              Tracking ID: TRACK-{order.id.replace('ACK-', '')}
+                            </div>
                           </div>
                           <span className="order-status-badge">{order.status}</span>
                         </div>
