@@ -494,6 +494,13 @@ export default function App() {
     );
   };
 
+  const [collectionCategory, setCollectionCategory] = useState('all');
+
+  const navigateToCollection = (categoryKey = 'all') => {
+    setCollectionCategory(categoryKey);
+    navigate('collection');
+  };
+
   const openQuickView = (product) => {
     setQuickViewProduct(product);
     setQuickViewImageIndex(0);
@@ -519,38 +526,38 @@ export default function App() {
           <div className="collection-dropdown">
             <button
               className="nav-link collection-toggle"
-              onClick={() => navigate('collection')}
+              onClick={() => navigateToCollection('all')}
             >
               Collection ▾
             </button>
             <div className="collection-menu">
               <button
                 className="nav-link"
-                onClick={() => navigate('collection')}
+                onClick={() => navigateToCollection('all')}
               >
                 All Products
               </button>
               <button
                 className="nav-link"
-                onClick={() => navigate('collection')}
+                onClick={() => navigateToCollection('figurines')}
               >
                 1. Anime Figurines
               </button>
               <button
                 className="nav-link"
-                onClick={() => navigate('collection')}
+                onClick={() => navigateToCollection('combos')}
               >
                 2. Exclusive Combos
               </button>
               <button
                 className="nav-link"
-                onClick={() => navigate('collection')}
+                onClick={() => navigateToCollection('mystery')}
               >
                 3. Mystery Gacha Balls
               </button>
               <button
                 className="nav-link"
-                onClick={() => navigate('collection')}
+                onClick={() => navigateToCollection('keychains')}
               >
                 4. Anime Key Chains
               </button>
@@ -634,7 +641,7 @@ export default function App() {
                 <button type="button" className="carousel-arrow left" onClick={() => collectionScrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</button>
                 <div className="collection-carousel" ref={collectionScrollRef}>
                   {(inventoryProducts.figurines || []).slice(0, 4).map((item) => (
-                    <div key={item.id} className="carousel-card">
+                    <div key={item.id} className="carousel-card" onClick={() => openQuickView(item)} style={{ cursor: 'pointer' }}>
                       <ImageWithFallback
                         src={item.image}
                         alt={item.title}
@@ -643,12 +650,13 @@ export default function App() {
                       <div className="carousel-meta">
                         <span className="carousel-name">{item.title}</span>
                         <div className="carousel-price-group">
-                          <span className="carousel-price">₹{item.price.toLocaleString('en-IN')}</span>
+                          <span className="carousel-price"><span className="currency-symbol">₹</span>{item.price.toLocaleString('en-IN')}</span>
                           {item.actualPrice > item.price && (
-                            <>
+                            <span className="carousel-mrp-group">
+                              <span className="carousel-mrp-label">M.R.P:</span>
                               <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
-                              {item.discountPercent > 0 && <span className="carousel-discount">-{item.discountPercent}%</span>}
-                            </>
+                              {item.discountPercent > 0 && <span className="carousel-discount">({item.discountPercent}% off)</span>}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -674,6 +682,7 @@ export default function App() {
           cart={cart}
           onBack={() => navigate('home')}
           onView={openQuickView}
+          initialCategory={collectionCategory}
         />
       )}
 

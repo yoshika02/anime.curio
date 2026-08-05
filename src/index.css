@@ -233,40 +233,49 @@ body {
 .collection-dropdown {
   position: relative;
   display: inline-block;
+  padding-bottom: 6px;
+  margin-bottom: -6px;
 }
 
 .collection-toggle {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
+  cursor: pointer;
 }
 
 .collection-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: 100%;
   left: 0;
-  background: rgba(40, 0, 0, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(14px);
+  background: rgba(45, 12, 18, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px);
   padding: 0.65rem 0.5rem;
-  border-radius: 16px;
+  border-radius: 14px;
   display: none;
-  min-width: 190px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+  min-width: 200px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
   z-index: 1001;
 }
 
 .collection-dropdown:hover .collection-menu,
 .collection-dropdown.open .collection-menu {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 .collection-menu .nav-link {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.55rem 0.75rem;
-  color: var(--white);
+  padding: 0.6rem 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .collection-menu .nav-link::after {
@@ -274,7 +283,9 @@ body {
 }
 
 .collection-menu .nav-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  transform: translateX(4px);
 }
 
 .header-actions {
@@ -1499,7 +1510,7 @@ body {
 
 .product-img-wrap {
   position: relative;
-  height: 270px;
+  height: 295px;
   overflow: hidden;
   border-bottom: 1px solid var(--maroon-pale);
   background: #ffffff;
@@ -1508,11 +1519,13 @@ body {
   justify-content: center;
 }
 
-.product-img {
+.product-img,
+.carousel-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 0.5rem;
+  object-position: center top;
+  padding: 0.4rem 0.4rem 0.2rem 0.4rem;
   transition: transform 0.4s ease;
   mix-blend-mode: multiply;
 }

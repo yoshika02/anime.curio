@@ -1,11 +1,18 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import ImageWithFallback from './imageUtils';
 
-export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView }) {
+export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all' }) {
     const scrollRef = useRef(null);
     const featured = inventoryProducts.figurines.slice(0, 4);
-    const [activeCategory, setActiveCategory] = useState('all');
+    const [activeCategory, setActiveCategory] = useState(initialCategory);
+
+    useEffect(() => {
+        if (initialCategory) {
+            setActiveCategory(initialCategory);
+        }
+    }, [initialCategory]);
+
     const allProducts = [
         ...inventoryProducts.figurines,
         ...inventoryProducts.combos,
@@ -45,7 +52,12 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                     </button>
                     <div className="collection-carousel" ref={scrollRef}>
                         {featured.map((item) => (
-                            <div key={item.id} className="carousel-card">
+                            <div
+                                key={item.id}
+                                className="carousel-card"
+                                onClick={() => onView?.(item)}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <ImageWithFallback
                                     src={item.image}
                                     alt={item.title}
