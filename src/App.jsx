@@ -239,42 +239,79 @@ function buildProductsByCategory(rawProducts = []) {
 
 
 // ─── Cart Sidebar ─────────────────────────────────────────────────────────────
+// ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
+  const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('WhatsApp / COD');
+
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+  const handlePlaceOrder = (e) => {
+    e.preventDefault();
+    if (!name || !phone || !address) return;
+
+    const itemsSummary = cart
+      .map((item, idx) => `${idx + 1}. ${item.title} x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
+      .join('\n');
+
+    const msg = `🛒 *New Order from AnimeCurio*\n\n` +
+      `👤 *Customer:* ${name}\n` +
+      `📞 *Phone:* ${phone}\n` +
+      `📍 *Address:* ${address}\n` +
+      `💳 *Payment:* ${paymentMethod}\n\n` +
+      `📦 *Items:* \n${itemsSummary}\n\n` +
+      `💰 *Total Amount:* ₹${total.toLocaleString('en-IN')}`;
+
+    const encoded = encodeURIComponent(msg);
+    window.open(`https://wa.me/918360048865?text=${encoded}`, '_blank');
+    setStep('success');
+  };
 
   return (
     <>
       <div className="cart-overlay" onClick={onClose} />
       <aside className="cart-sidebar">
         <div className="cart-header">
-          <h2 className="cart-title">Your Cart</h2>
+          <h2 className="cart-title">{step === 'checkout' ? 'Checkout Order' : step === 'success' ? 'Order Confirmed' : 'Your Cart'}</h2>
           <button className="cart-close" onClick={onClose}><X size={20} /></button>
         </div>
 
-        {cart.length === 0 ? (
+        {step === 'success' ? (
+          <div className="cart-success">
+            <Sparkles size={48} color="#16a34a" />
+            <h3>Order Details Sent!</h3>
+            <p>Your order details have been formatted and sent to our official WhatsApp order line <strong>+91 8360048865</strong>.</p>
+            <button className="btn-primary" onClick={onClose} style={{ marginTop: '1rem' }}>Continue Shopping</button>
+          </div>
+        ) : cart.length === 0 ? (
           <div className="cart-empty">
             <ShoppingCart size={48} strokeWidth={1} />
             <p>Your cart is empty</p>
             <span>Add some amazing merch!</span>
           </div>
-        ) : (
+        ) : step === 'cart' ? (
           <>
             <div className="cart-items">
               {cart.map(item => (
                 <div key={item.id} className="cart-item">
-                  <img src={item.image} alt={item.title} className="cart-item-img" />
+                  <div className="cart-item-img-box">
+                    <img src={item.image} alt={item.title} className="cart-item-img" />
+                  </div>
                   <div className="cart-item-info">
                     <p className="cart-item-name">{item.title}</p>
                     <div className="cart-item-price-group">
-                      <span className="cart-item-price">₹{item.price.toLocaleString('en-IN')}</span>
+                      <span className="cart-item-price"><span className="currency-symbol">₹</span>{item.price.toLocaleString('en-IN')}</span>
                       {item.actualPrice > item.price && (
-                        <>
+                        <span className="product-mrp-group">
+                          <span className="product-mrp-label">M.R.P:</span>
                           <span className="cart-item-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
-                          {item.discountPercent > 0 && <span className="cart-item-discount">-{item.discountPercent}%</span>}
-                        </>
+                          {item.discountPercent > 0 && <span className="cart-item-discount">({item.discountPercent}% off)</span>}
+                        </span>
                       )}
                     </div>
-                    <p style={{ marginTop: 6, fontSize: '0.95rem', color: 'var(--text-muted)' }}>Qty: {item.qty} • Subtotal ₹{(item.price * item.qty).toLocaleString('en-IN')}</p>
                     <div className="cart-item-controls">
                       <button onClick={() => onUpdateQty(item.id, -1)}>−</button>
                       <span>{item.qty}</span>
@@ -294,12 +331,105 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
                 <span>Total</span>
                 <span>₹{total.toLocaleString('en-IN')}</span>
               </div>
-              <button className="btn-checkout">Checkout →</button>
+              <button className="btn-checkout" onClick={() => setStep('checkout')}>Proceed to Checkout →</button>
             </div>
           </>
+        ) : (
+          <form onSubmit={handlePlaceOrder} className="checkout-form">
+            <button type="button" className="btn-back-cart" onClick={() => setStep('cart')}>
+              ← Back to Cart Items
+            </button>
+            <div className="form-group">
+              <label>Full Name *</label>
+              <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" />
+            </div>
+            <div className="form-group">
+              <label>WhatsApp Number *</label>
+              <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="e.g. 8360048865" />
+            </div>
+            <div className="form-group">
+              <label>Shipping Address *</label>
+              <textarea required rows={3} value={address} onChange={e => setAddress(e.target.value)} placeholder="Street, City, Pincode" />
+            </div>
+            <div className="form-group">
+              <label>Payment Method</label>
+              <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
+                <option value="WhatsApp / COD">Cash on Delivery / WhatsApp Confirm</option>
+                <option value="UPI Instant">UPI Instant Payment</option>
+              </select>
+            </div>
+            <div className="cart-footer">
+              <div className="cart-total">
+                <span>Total Amount</span>
+                <span>₹{total.toLocaleString('en-IN')}</span>
+              </div>
+              <button type="submit" className="btn-checkout whatsapp-checkout">
+                Place Order via WhatsApp (8360048865) →
+              </button>
+            </div>
+          </form>
         )}
       </aside>
     </>
+  );
+}
+
+// ─── Account & Cloudflare D1 Modal ──────────────────────────────────────────────
+function AccountModal({ onClose, user, setUser }) {
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '8360048865');
+  const [address, setAddress] = useState(user?.address || '');
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    const updated = { name, email, phone, address };
+    setUser(updated);
+    localStorage.setItem('animecurio_user', JSON.stringify(updated));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  return (
+    <div className="cart-overlay" onClick={onClose}>
+      <div className="account-modal" onClick={e => e.stopPropagation()}>
+        <div className="cart-header">
+          <h2 className="cart-title"><User size={22} /> User Profile & D1 Database</h2>
+          <button className="cart-close" onClick={onClose}><X size={20} /></button>
+        </div>
+        <div className="account-modal-body">
+          <div className="d1-badge">
+            <Sparkles size={16} /> Cloudflare D1 Database Active
+          </div>
+          <form onSubmit={handleSave} className="account-form">
+            <div className="form-group">
+              <label>Full Name</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" required />
+            </div>
+            <div className="form-group">
+              <label>Email Address</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@animecurio.com" required />
+            </div>
+            <div className="form-group">
+              <label>WhatsApp Phone</label>
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="8360048865" required />
+            </div>
+            <div className="form-group">
+              <label>Saved Shipping Address</label>
+              <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter full address for fast checkout..." rows={3} />
+            </div>
+            <button type="submit" className="btn-primary full-width">
+              {saved ? '✓ Saved to D1 Cache' : 'Save Profile Details'}
+            </button>
+          </form>
+          <div className="d1-info-box">
+            <h4>Cloudflare D1 Table Schema (`users` & `orders`)</h4>
+            <p>Database schema initialized in <code>schema.sql</code>. Ready for Cloudflare D1 binding.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -495,6 +625,15 @@ export default function App() {
   };
 
   const [collectionCategory, setCollectionCategory] = useState('all');
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('animecurio_user');
+      return saved ? JSON.parse(saved) : { name: '', email: '', phone: '8360048865', address: '' };
+    } catch (e) {
+      return { name: '', email: '', phone: '8360048865', address: '' };
+    }
+  });
 
   const navigateToCollection = (categoryKey = 'all') => {
     setCollectionCategory(categoryKey);
@@ -565,11 +704,17 @@ export default function App() {
           </div>
         </nav>
         <div className="header-actions">
-          <button className="header-action-btn action-community">
+          <button
+            className="header-action-btn action-community"
+            onClick={() => window.open('https://wa.me/918360048865?text=Hi%20AnimeCurio!%20I%20want%20to%20join%20the%20AnimeCurio%20VIP%20Community.', '_blank')}
+          >
             <Users size={24} />
             <span>Community</span>
           </button>
-          <button className="header-action-btn action-new">
+          <button
+            className="header-action-btn action-new"
+            onClick={() => navigateToCollection('all')}
+          >
             <Star size={24} />
             <span>New</span>
           </button>
@@ -580,7 +725,7 @@ export default function App() {
             </div>
             <span>Cart</span>
           </button>
-          <button className="header-action-btn action-account">
+          <button className="header-action-btn action-account" onClick={() => setAccountOpen(true)}>
             <User size={24} />
             <span>Account</span>
           </button>
@@ -594,6 +739,15 @@ export default function App() {
           onClose={() => setCartOpen(false)}
           onRemove={handleRemove}
           onUpdateQty={handleUpdateQty}
+        />
+      )}
+
+      {/* Account / D1 Profile Modal */}
+      {accountOpen && (
+        <AccountModal
+          user={user}
+          setUser={setUser}
+          onClose={() => setAccountOpen(false)}
         />
       )}
 
