@@ -5,7 +5,7 @@ import ImageWithFallback from './imageUtils';
 export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all', recentlyViewed = [] }) {
     const scrollRef = useRef(null);
     const recentScrollRef = useRef(null);
-    const featured = inventoryProducts.figurines.slice(0, 4);
+    const featured = (inventoryProducts?.figurines || []).slice(0, 4);
     const [activeCategory, setActiveCategory] = useState(initialCategory);
 
     useEffect(() => {
@@ -15,10 +15,10 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
     }, [initialCategory]);
 
     const allProducts = [
-        ...inventoryProducts.figurines,
-        ...inventoryProducts.combos,
-        ...inventoryProducts.mystery,
-        ...inventoryProducts.keychains,
+        ...(inventoryProducts?.figurines || []),
+        ...(inventoryProducts?.combos || []),
+        ...(inventoryProducts?.mystery || []),
+        ...(inventoryProducts?.keychains || []),
     ];
 
     const categories = [
