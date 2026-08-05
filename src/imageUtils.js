@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const DEFAULT_FALLBACK_IMAGE = '/placeholder.svg';
+const DEFAULT_FALLBACK_IMAGE = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="%23fff5f6" stroke="%23800000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" ry="3" fill="%23fff5f6"/><circle cx="8.5" cy="8.5" r="1.5" fill="%23800000"/><path d="M21 15l-5-5L5 21" stroke="%23800000"/></svg>';
 
 export function getImageCandidates(rawValue, fallbackImage = DEFAULT_FALLBACK_IMAGE) {
     if (!rawValue && rawValue !== 0) return [fallbackImage];
@@ -23,9 +23,9 @@ export function getImageCandidates(rawValue, fallbackImage = DEFAULT_FALLBACK_IM
     if (driveMatch) {
         const id = driveMatch[1];
         return [
-            `https://drive.google.com/uc?export=view&id=${id}`,
+            `https://lh3.googleusercontent.com/d/${id}=s1000`,
             `https://drive.google.com/thumbnail?id=${id}&sz=w1000`,
-            `https://drive.google.com/uc?export=download&id=${id}`,
+            `https://drive.google.com/uc?export=view&id=${id}`,
             fallbackImage,
         ];
     }
