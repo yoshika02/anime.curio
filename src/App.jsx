@@ -243,15 +243,15 @@ function buildProductsByCategory(rawProducts = []) {
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('WhatsApp / COD');
 
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
-    if (!name || !phone || !address) return;
+    if (!name || !email || !phone || !address) return;
 
     const itemsSummary = cart
       .map((item, idx) => `${idx + 1}. ${item.title} x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
@@ -259,9 +259,10 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
 
     const msg = `🛒 *New Order from AnimeCurio*\n\n` +
       `👤 *Customer:* ${name}\n` +
+      `📧 *Gmail:* ${email}\n` +
       `📞 *Phone:* ${phone}\n` +
       `📍 *Address:* ${address}\n` +
-      `💳 *Payment:* ${paymentMethod}\n\n` +
+      `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${phone})\n\n` +
       `📦 *Items:* \n${itemsSummary}\n\n` +
       `💰 *Total Amount:* ₹${total.toLocaleString('en-IN')}`;
 
@@ -282,8 +283,9 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
         {step === 'success' ? (
           <div className="cart-success">
             <Sparkles size={48} color="#16a34a" />
-            <h3>Order Details Sent!</h3>
-            <p>Your order details have been formatted and sent to our official WhatsApp order line <strong>+91 8360048865</strong>.</p>
+            <h3>Order Request Submitted!</h3>
+            <p>Your order details have been sent to WhatsApp line <strong>+91 8360048865</strong>.</p>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>We will send the payment QR code to your Gmail <strong>{email}</strong> shortly.</p>
             <button className="btn-primary" onClick={onClose} style={{ marginTop: '1rem' }}>Continue Shopping</button>
           </div>
         ) : cart.length === 0 ? (
@@ -344,19 +346,22 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
               <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" />
             </div>
             <div className="form-group">
+              <label>Gmail / Email Address *</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@gmail.com" />
+            </div>
+            <div className="form-group">
               <label>WhatsApp Number *</label>
               <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="e.g. 8360048865" />
             </div>
             <div className="form-group">
               <label>Shipping Address *</label>
-              <textarea required rows={3} value={address} onChange={e => setAddress(e.target.value)} placeholder="Street, City, Pincode" />
+              <textarea required rows={3} value={address} onChange={e => setAddress(e.target.value)} placeholder="House no, Street, City, Pincode" />
             </div>
-            <div className="form-group">
-              <label>Payment Method</label>
-              <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
-                <option value="WhatsApp / COD">Cash on Delivery / WhatsApp Confirm</option>
-                <option value="UPI Instant">UPI Instant Payment</option>
-              </select>
+            <div className="payment-qr-notice" style={{ background: 'var(--maroon-pale)', padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.85rem', color: 'var(--maroon)' }}>
+              <strong>💳 Payment via QR Code:</strong>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text)' }}>
+                We will send the payment QR code directly to your Gmail (<strong>{email || 'your email'}</strong>) and WhatsApp.
+              </p>
             </div>
             <div className="cart-footer">
               <div className="cart-total">
@@ -364,7 +369,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
                 <span>₹{total.toLocaleString('en-IN')}</span>
               </div>
               <button type="submit" className="btn-checkout whatsapp-checkout">
-                Place Order via WhatsApp (8360048865) →
+                Place Order & Get Payment QR →
               </button>
             </div>
           </form>
@@ -374,7 +379,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty }) {
   );
 }
 
-// ─── Account & Cloudflare D1 Modal ──────────────────────────────────────────────
+// ─── Account / Profile Modal ──────────────────────────────────────────────────
 function AccountModal({ onClose, user, setUser }) {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -395,21 +400,18 @@ function AccountModal({ onClose, user, setUser }) {
     <div className="cart-overlay" onClick={onClose}>
       <div className="account-modal" onClick={e => e.stopPropagation()}>
         <div className="cart-header">
-          <h2 className="cart-title"><User size={22} /> User Profile & D1 Database</h2>
+          <h2 className="cart-title"><User size={22} /> My Profile</h2>
           <button className="cart-close" onClick={onClose}><X size={20} /></button>
         </div>
         <div className="account-modal-body">
-          <div className="d1-badge">
-            <Sparkles size={16} /> Cloudflare D1 Database Active
-          </div>
           <form onSubmit={handleSave} className="account-form">
             <div className="form-group">
               <label>Full Name</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Yoshika" required />
             </div>
             <div className="form-group">
-              <label>Email Address</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@animecurio.com" required />
+              <label>Email / Gmail Address</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. yoshika@gmail.com" required />
             </div>
             <div className="form-group">
               <label>WhatsApp Phone</label>
@@ -420,13 +422,9 @@ function AccountModal({ onClose, user, setUser }) {
               <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter full address for fast checkout..." rows={3} />
             </div>
             <button type="submit" className="btn-primary full-width">
-              {saved ? '✓ Saved to D1 Cache' : 'Save Profile Details'}
+              {saved ? '✓ Saved Profile Details' : 'Save Profile Details'}
             </button>
           </form>
-          <div className="d1-info-box">
-            <h4>Cloudflare D1 Table Schema (`users` & `orders`)</h4>
-            <p>Database schema initialized in <code>schema.sql</code>. Ready for Cloudflare D1 binding.</p>
-          </div>
         </div>
       </div>
     </div>
