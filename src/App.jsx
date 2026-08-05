@@ -12,6 +12,8 @@ const EMPTY_PRODUCTS = {
   keychains: [],
 };
 
+const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbz6NairnvQc1ISUPhFywkJdEPMvGw5aRmDgnI3UFfYD7n8xVVZJWDNDVtJyNgkZ5nPs/exec';
+
 const resolveImageUrl = (rawValue) => getPrimaryImageUrl(rawValue, '/placeholder.svg');
 
 const getImageField = (rawProduct) => {
@@ -242,7 +244,6 @@ function buildProductsByCategory(rawProducts = []) {
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
-  const [createdOrderId, setCreatedOrderId] = useState('');
   const [country, setCountry] = useState('India');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -256,6 +257,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
   const [phone, setPhone] = useState('');
   const [saveInfo, setSaveInfo] = useState(true);
   const [textOffers, setTextOffers] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState('');
 
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
@@ -265,25 +267,31 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
 
     const fullName = `${firstName} ${lastName}`.trim() || lastName;
     const fullAddress = `${address}${apartment ? ', ' + apartment : ''}, ${city}, ${state} - ${pincode}, ${country}`;
-    const orderId = 'ACK-' + Math.floor(100000 + Math.random() * 900000);
-    setCreatedOrderId(orderId);
+    const orderNum = 'ACK-' + Math.floor(100000 + Math.random() * 900000);
+    setCreatedOrderId(orderNum);
 
     const itemsSummary = cart
+      .map((item, idx) => `${idx + 1}. ${item.title} x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
+      .join('; ');
+
+    const itemsSummaryFormatted = cart
       .map((item, idx) => `${idx + 1}. ${item.title} x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
       .join('\n');
 
     const msg = `🛒 *New Order from AnimeCurio*\n` +
-      `🆔 *Confirmation ID:* ${orderId}\n\n` +
+      `📋 *Confirmation ID:* ${orderNum}\n\n` +
       `👤 *Customer:* ${fullName}\n` +
       `📧 *Gmail:* ${email}\n` +
-      `📞 *Phone:* ${phone}\n` +
+      `📞 *WhatsApp:* ${phone}\n` +
+      (company ? `🏢 *Business:* ${company}\n` : '') +
+      `🏙️ *City:* ${city}\n` +
       `📍 *Address:* ${fullAddress}\n` +
       `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${phone})\n\n` +
-      `📦 *Items:* \n${itemsSummary}\n\n` +
+      `📦 *Items:* \n${itemsSummaryFormatted}\n\n` +
       `💰 *Total Amount:* ₹${total.toLocaleString('en-IN')}`;
 
     const newOrder = {
-      id: orderId,
+      id: orderNum,
       date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       items: cart.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty, image: i.image })),
       total: total,
@@ -295,27 +303,27 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
     };
     onPlaceOrder?.(newOrder);
 
-    // Sync order row to Google Sheets API
-    if (SHEETS_API_URL && SHEETS_API_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+    // Post Order payload to Google Sheets Orders tab
+    if (ORDERS_API_URL) {
       try {
-        fetch(SHEETS_API_URL, {
+        fetch(ORDERS_API_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            orderId: orderId,
-            timestamp: new Date().toLocaleString('en-IN'),
+            orderId: orderNum,
+            timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
             name: fullName,
             whatsapp: phone,
             email: email,
-            business: company || '',
-            city: `${city}, ${state}`,
+            business: company,
+            city: city,
             orderItems: itemsSummary,
-            orderTotal: total,
+            orderTotal: `₹${total.toLocaleString('en-IN')}`,
             notes: fullAddress,
             status: 'Payment Pending (QR Sent)'
           })
-        }).catch(() => {});
+        }).catch(err => console.log('Google Sheets Order sync note:', err));
       } catch (err) {}
     }
 
@@ -337,11 +345,10 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder }) {
           <div className="cart-success">
             <Sparkles size={48} color="#16a34a" />
             <h3>Order Confirmed!</h3>
-            <div style={{ background: 'var(--maroon-pale)', padding: '0.6rem 1.25rem', borderRadius: '12px', margin: '0.5rem 0', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', fontWeight: 600 }}>Confirmation ID</span>
-              <h4 style={{ color: 'var(--maroon)', fontSize: '1.25rem', margin: 0, fontFamily: 'Outfit, sans-serif', fontWeight: 800 }}>{createdOrderId}</h4>
+            <div className="confirmation-badge" style={{ background: 'var(--maroon-pale)', padding: '0.6rem 1.25rem', borderRadius: '12px', margin: '0.5rem 0', fontWeight: 'bold', color: 'var(--maroon)', fontSize: '1rem' }}>
+              Confirmation ID: {createdOrderId}
             </div>
-            <p>Your order details have been logged and sent to WhatsApp line <strong>+91 8360048865</strong>.</p>
+            <p>Your order details and Confirmation ID <strong>{createdOrderId}</strong> have been sent to WhatsApp line <strong>+91 8360048865</strong>.</p>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>We will send the payment QR code directly to your Gmail and WhatsApp.</p>
             <button className="btn-primary" onClick={onClose} style={{ marginTop: '1rem' }}>Continue Shopping</button>
           </div>
