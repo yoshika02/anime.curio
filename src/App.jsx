@@ -12,7 +12,10 @@ const EMPTY_PRODUCTS = {
   keychains: [],
 };
 
-const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbz6NairnvQc1ISUPhFywkJdEPMvGw5aRmDgnI3UFfYD7n8xVVZJWDNDVtJyNgkZ5nPs/exec';
+const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxu4FUgd5vYzqhhdJH7s-0anQ6pHyfysrRFm3hC_NsSFHmYLlSfJkLLo-e_k1-zOrakwA/exec';
+
+// Cloudflare D1 API (Pages Functions — relative URL works in production + preview)
+const D1_API = '/api';
 
 const resolveImageUrl = (rawValue) => getPrimaryImageUrl(rawValue, '/placeholder.svg');
 
@@ -697,6 +700,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'orders'
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [copiedTracking, setCopiedTracking] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
   
   // Login State
   const [loginEmail, setLoginEmail] = useState('');
@@ -733,70 +737,67 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
     }
   }, [user]);
 
-  // Handle Sign In
-  const handleSignIn = (e) => {
+  // ─── Handle Sign In via D1 ────────────────────────────────────────────────
+  const handleSignIn = async (e) => {
     e.preventDefault();
     setLoginError('');
-
+    setAuthLoading(true);
     try {
-      const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
-      const found = dbUsers.find(u => u.email.trim().toLowerCase() === loginEmail.trim().toLowerCase() && u.password === loginPassword);
-
-      if (found) {
-        setUser(found);
-        localStorage.setItem('animecurio_current_user', JSON.stringify(found));
+      const res = await fetch(`${D1_API}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email: loginEmail.trim(), password: loginPassword })
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        localStorage.setItem('animecurio_current_user', JSON.stringify(data.user));
         setAuthMode('profile');
       } else {
-        // Create user profile on sign in
-        const newUser = { name: loginEmail.split('@')[0], email: loginEmail.trim(), phone: '', address: '', password: loginPassword };
-        dbUsers.push(newUser);
-        localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
-        setUser(newUser);
-        localStorage.setItem('animecurio_current_user', JSON.stringify(newUser));
-        setAuthMode('profile');
+        setLoginError(data.error || 'Invalid email or password');
       }
     } catch (err) {
-      const fallbackUser = { name: loginEmail.split('@')[0], email: loginEmail.trim(), phone: '', address: '' };
-      setUser(fallbackUser);
-      localStorage.setItem('animecurio_current_user', JSON.stringify(fallbackUser));
-      setAuthMode('profile');
-    }
+      // Fallback to localStorage if D1 API is unreachable
+      try {
+        const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
+        const found = dbUsers.find(u => u.email.toLowerCase() === loginEmail.trim().toLowerCase() && u.password === loginPassword);
+        if (found) {
+          setUser(found); localStorage.setItem('animecurio_current_user', JSON.stringify(found)); setAuthMode('profile');
+        } else { setLoginError('Invalid email or password'); }
+      } catch (e) { setLoginError('Login failed. Please try again.'); }
+    } finally { setAuthLoading(false); }
   };
 
-  // Handle Forgot Password Recovery
-  const handleForgotPassword = (e) => {
+  // ─── Handle Forgot Password ───────────────────────────────────────────────
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
     setForgotMsg('');
     setRecoveredPassword('');
-
+    setAuthLoading(true);
     try {
-      const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
-      const found = dbUsers.find(u => u.email.trim().toLowerCase() === forgotEmail.trim().toLowerCase());
-      if (found && found.password) {
-        setRecoveredPassword(`Your password is: ${found.password}`);
-        setForgotMsg('✓ Account found! Password recovered.');
-      } else {
-        const tempPass = 'Anime' + Math.floor(1000 + Math.random() * 9000);
-        const newUser = { name: forgotEmail.split('@')[0], email: forgotEmail.trim(), phone: '', address: '', password: tempPass };
-        dbUsers.push(newUser);
-        localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
-        setRecoveredPassword(`Temporary password created: ${tempPass}`);
-        setForgotMsg('✓ Account created! Use this temporary password to sign in.');
-      }
+      const res = await fetch(`${D1_API}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'forgot', email: forgotEmail.trim() })
+      });
+      const data = await res.json();
+      setForgotMsg(data.success ? '✓ If this email is registered, a reset message will be sent on WhatsApp.' : (data.error || 'Email not found.'));
     } catch (err) {
-      setForgotMsg('Unable to recover password. Please create a new account.');
-    }
+      setForgotMsg('✓ If this email is registered, you will be contacted on WhatsApp.');
+    } finally { setAuthLoading(false); }
   };
 
-  // Handle Sign Up
-  const handleSignUp = (e) => {
+  // ─── Handle Sign Up via D1 ────────────────────────────────────────────────
+  const handleSignUp = async (e) => {
     e.preventDefault();
     const cleanPhone = regPhone.replace(/\D/g, '').slice(-10);
     if (!regName || !regEmail || !regPassword || cleanPhone.length < 10) return;
+    setAuthLoading(true);
 
     const newUser = {
+      id: 'U-' + Date.now(),
       name: regName,
-      email: regEmail.trim(),
+      email: regEmail.trim().toLowerCase(),
       phone: `+91 ${cleanPhone}`,
       address: regAddress,
       password: regPassword,
@@ -804,8 +805,24 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
     };
 
     try {
+      const res = await fetch(`${D1_API}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'register', ...newUser })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setLoginError(data.error || 'Registration failed');
+        setAuthLoading(false); return;
+      }
+    } catch (err) {
+      // Fallback: save to localStorage if D1 unreachable
+    }
+
+    // Always save to localStorage cache
+    try {
       const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
-      const updatedDb = dbUsers.filter(u => u.email.trim().toLowerCase() !== regEmail.trim().toLowerCase());
+      const updatedDb = dbUsers.filter(u => u.email.toLowerCase() !== newUser.email);
       updatedDb.push(newUser);
       localStorage.setItem('animecurio_d1_users', JSON.stringify(updatedDb));
     } catch (err) {}
@@ -813,10 +830,11 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
     setUser(newUser);
     localStorage.setItem('animecurio_current_user', JSON.stringify(newUser));
     setAuthMode('profile');
+    setAuthLoading(false);
   };
 
-  // Handle Save Profile Updates
-  const handleSaveProfile = (e) => {
+  // ─── Handle Save Profile via D1 ───────────────────────────────────────────
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
     const cleanPhone = phone.replace(/\D/g, '').slice(-10);
     const updated = { ...user, name, email: email.trim(), phone: `+91 ${cleanPhone}`, address };
@@ -824,13 +842,18 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
     localStorage.setItem('animecurio_current_user', JSON.stringify(updated));
 
     try {
+      await fetch(`${D1_API}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', email: updated.email, name: updated.name, phone: cleanPhone, address: updated.address })
+      });
+    } catch (err) {}
+
+    // Update localStorage cache too
+    try {
       const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
-      const idx = dbUsers.findIndex(u => u.email.trim().toLowerCase() === (user?.email || '').trim().toLowerCase());
-      if (idx !== -1) {
-        dbUsers[idx] = updated;
-      } else {
-        dbUsers.push(updated);
-      }
+      const idx = dbUsers.findIndex(u => u.email.toLowerCase() === (user?.email || '').toLowerCase());
+      if (idx !== -1) dbUsers[idx] = updated; else dbUsers.push(updated);
       localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
     } catch (err) {}
 
@@ -1440,20 +1463,34 @@ export default function App() {
   });
 
   const handlePlaceOrder = (newOrder) => {
+    // 1. Save to React state + localStorage
     setOrders(prev => {
       const updated = [newOrder, ...prev];
       localStorage.setItem('animecurio_orders', JSON.stringify(updated));
-      // Also key to user email for reliable retrieval
       if (newOrder.email) {
         const userKey = `animecurio_orders_${newOrder.email.toLowerCase()}`;
         const existing = JSON.parse(localStorage.getItem(userKey) || '[]');
-        const userUpdated = [newOrder, ...existing.filter(o => o.id !== newOrder.id)];
-        localStorage.setItem(userKey, JSON.stringify(userUpdated));
+        localStorage.setItem(userKey, JSON.stringify([newOrder, ...existing.filter(o => o.id !== newOrder.id)]));
       }
       return updated;
     });
-    // Clear cart after successful order
     setCart([]);
+
+    // 2. Write to Cloudflare D1 via Pages Function
+    fetch(`${D1_API}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: newOrder.id,
+        customerName: newOrder.name,
+        customerEmail: newOrder.email,
+        customerPhone: newOrder.phone,
+        shippingAddress: newOrder.address,
+        totalAmount: newOrder.total,
+        paymentStatus: newOrder.status,
+        itemsJson: JSON.stringify(newOrder.items)
+      })
+    }).catch(err => console.log('D1 order sync note:', err));
   };
 
   const [recentlyViewed, setRecentlyViewed] = useState(() => {
