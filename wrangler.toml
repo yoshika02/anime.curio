@@ -1,7 +1,14 @@
+# Cloudflare Pages + D1 configuration
+# This file is used for LOCAL development with wrangler dev only.
+# D1 bindings for production are set in the Cloudflare Dashboard:
+#   Pages → animecurio → Settings → Functions → D1 Database Bindings
+#   Variable name: DB
+#   D1 database: animecurio-db (or your database name)
+
 name = "animecurio"
 compatibility_date = "2024-01-01"
-pages_build_output_dir = "dist"
 
+# D1 binding for LOCAL wrangler pages dev only
 [[d1_databases]]
 binding = "DB"
 database_name = "animecurio-db"
