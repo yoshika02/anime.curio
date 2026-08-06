@@ -21,8 +21,28 @@ var STORE_TAGLINE  = 'Exclusive Anime Merchandise & Figurines';
 var STORE_WEBSITE  = 'https://animecurio.com';
 // UPI QR code — hosted publicly so it embeds in email
 // Replace this URL with your actual GPay/UPI QR image link
-var PAYMENT_QR_URL = 'https://drive.google.com/file/d/1luAmR0pS7uCUQSJE1fN6kGXOyIQSpud0/view?usp=sharing';
+var PAYMENT_QR_URL = 'https://lh3.googleusercontent.com/d/1luAmR0pS7uCUQSJE1fN6kGXOyIQSpud0=s600';
 var UPI_ID         = 'singhmandeep1722@oksbi';
+
+// ─── TEST: Run this from the Apps Script editor to verify email works ─────────
+// Select "testEmail" in the dropdown and click ▶ Run
+function testEmail() {
+  var testPayload = {
+    orderId:    'ACK-TEST123',
+    timestamp:  new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    name:       'Test Customer',
+    whatsapp:   '+91 9999999999',
+    email:      STORE_EMAIL,   // sends test to yourself first
+    business:   '',
+    city:       'Delhi',
+    orderItems: '1. Naruto Figurine x 1 - ₹149; 2. Sasuke Keychain x 2 - ₹79',
+    orderTotal: '₹307 (incl. ₹79 shipping)',
+    notes:      '38B, Test Street, Delhi 110001',
+    status:     'Payment Pending (QR Sent)'
+  };
+  var result = processOrder(testPayload);
+  Logger.log('Test result: ' + JSON.stringify(result));
+}
 
 // ─── GET: Inventory ──────────────────────────────────────────────────────────
 function doGet(e) {

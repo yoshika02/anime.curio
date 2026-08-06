@@ -59,11 +59,6 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
         >
             <div className="product-card-top-row">
                 <div className="product-badges-group">
-                    {product.categoryId && (
-                        <span className="product-scale-badge" style={{ background: '#fdf2f4', color: 'var(--maroon)', border: '1px solid #fecdd3', fontWeight: 600 }}>
-                            Cat ID {product.categoryId}: {product.categoryName || 'Merchandise'}
-                        </span>
-                    )}
                     {product.scale && <span className="product-scale-badge">{product.scale}</span>}
                     {product.badge && (
                         <span className="product-badge-item" style={{ background: product.badgeColor }}>

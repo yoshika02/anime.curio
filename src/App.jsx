@@ -259,7 +259,7 @@ function buildProductsByCategory(rawProducts = []) {
 
 // ─── Cart Sidebar ─────────────────────────────────────────────────────────────
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
-function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user, setUser }) {
+function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user, setUser, onOpenAccount }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
   const [country, setCountry] = useState('India');
   const [firstName, setFirstName] = useState('');
@@ -373,6 +373,17 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       address: fullAddress,
       status: 'Payment Pending (QR Sent)'
     };
+
+    // Save order to localStorage keyed by user email so it persists in Order History
+    try {
+      const storageKey = `animecurio_orders_${email.toLowerCase()}`;
+      const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const updatedOrders = [newOrder, ...existing];
+      localStorage.setItem(storageKey, JSON.stringify(updatedOrders));
+      // Also save to generic key for backward compat
+      localStorage.setItem('animecurio_orders', JSON.stringify(updatedOrders));
+    } catch (storageErr) {}
+
     onPlaceOrder?.(newOrder);
 
     // Open WhatsApp messaging redirect to 8360048865
@@ -511,7 +522,17 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                   <span>₹{grandTotal.toLocaleString('en-IN')}</span>
                 </div>
               </div>
-              <button className="btn-checkout" onClick={() => setStep('checkout')}>Proceed to Checkout →</button>
+              {user ? (
+                <button className="btn-checkout" onClick={() => setStep('checkout')}>Proceed to Checkout →</button>
+              ) : (
+                <div style={{ width: '100%' }}>
+                  <div style={{ background: '#fff5f6', border: '1px solid #fecdd3', borderRadius: '12px', padding: '0.9rem 1rem', marginBottom: '0.6rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--maroon)', marginBottom: '0.3rem' }}>🔐 Sign in to Place Your Order</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Create an account for order tracking & fast checkout</div>
+                  </div>
+                  <button className="btn-checkout" onClick={() => { onClose(); onOpenAccount?.(); }}>Sign In / Create Account →</button>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -824,12 +845,19 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
     setAuthMode('signin');
   };
 
-  // Filter orders for current logged-in user email
+  // Filter orders for current logged-in user — reads from both generic + email-keyed storage
   const userEmailLower = (user?.email || '').trim().toLowerCase();
-  const userOrders = orders.filter(o => {
-    if (!userEmailLower) return true;
-    return (o.email || '').trim().toLowerCase() === userEmailLower;
-  });
+  const userOrders = React.useMemo(() => {
+    if (!userEmailLower) return orders;
+    // Read from email-specific key (most reliable)
+    try {
+      const userKey = `animecurio_orders_${userEmailLower}`;
+      const stored = JSON.parse(localStorage.getItem(userKey) || '[]');
+      if (stored.length > 0) return stored;
+    } catch (e) {}
+    // Fallback: filter from generic orders prop
+    return orders.filter(o => (o.email || '').trim().toLowerCase() === userEmailLower);
+  }, [userEmailLower, orders]);
 
   return (
     <div className="account-modal-overlay" onClick={onClose}>
@@ -1415,8 +1443,17 @@ export default function App() {
     setOrders(prev => {
       const updated = [newOrder, ...prev];
       localStorage.setItem('animecurio_orders', JSON.stringify(updated));
+      // Also key to user email for reliable retrieval
+      if (newOrder.email) {
+        const userKey = `animecurio_orders_${newOrder.email.toLowerCase()}`;
+        const existing = JSON.parse(localStorage.getItem(userKey) || '[]');
+        const userUpdated = [newOrder, ...existing.filter(o => o.id !== newOrder.id)];
+        localStorage.setItem(userKey, JSON.stringify(userUpdated));
+      }
       return updated;
     });
+    // Clear cart after successful order
+    setCart([]);
   };
 
   const [recentlyViewed, setRecentlyViewed] = useState(() => {
@@ -1564,6 +1601,7 @@ export default function App() {
           onPlaceOrder={handlePlaceOrder}
           user={user}
           setUser={setUser}
+          onOpenAccount={() => setAccountOpen(true)}
         />
       )}
 
