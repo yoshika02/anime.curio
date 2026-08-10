@@ -6,7 +6,9 @@ main = "worker.js"
 directory = "./dist"
 binding = "ASSETS"
 
+# Set D1_DATABASE_ID in your Cloudflare deployment environment.
+# Example: `wrangler secret put D1_DATABASE_ID` or configure via Cloudflare dashboard.
 [[d1_databases]]
 binding = "DB"
 database_name = "animecurio-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "7956caa5-b517-4108-80d2-d20cf26d4a4f"

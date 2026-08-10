@@ -1520,9 +1520,25 @@ export default function App() {
     navigate('collection');
   };
 
+  const [productReviews, setProductReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewText, setNewReviewText] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
   const openQuickView = (product) => {
     setQuickViewProduct(product);
     setQuickViewImageIndex(0);
+    setProductReviews([]);
+    setReviewsLoading(true);
+    fetch(`${D1_API}/reviews?productId=${product.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setProductReviews(data.reviews || []);
+        setReviewsLoading(false);
+      })
+      .catch(() => setReviewsLoading(false));
+
     setRecentlyViewed(prev => {
       const filtered = prev.filter(p => p.id !== product.id);
       const updated = [product, ...filtered].slice(0, 8);
@@ -1531,7 +1547,41 @@ export default function App() {
     });
   };
 
-  const closeQuickView = () => setQuickViewProduct(null);
+  const closeQuickView = () => {
+    setQuickViewProduct(null);
+    setNewReviewText('');
+    setNewReviewRating(5);
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!user) return alert('Please sign in to leave a review.');
+    if (!newReviewText.trim()) return;
+
+    setSubmittingReview(true);
+    try {
+      const res = await fetch(`${D1_API}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: quickViewProduct.id,
+          userId: user.id || user.email,
+          userName: user.name,
+          rating: newReviewRating,
+          comment: newReviewText
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProductReviews([{ id: data.reviewId, userName: user.name, rating: newReviewRating, comment: newReviewText, date: new Date().toLocaleDateString('en-IN') }, ...productReviews]);
+        setNewReviewText('');
+        setNewReviewRating(5);
+      }
+    } catch (err) {
+      alert('Failed to submit review');
+    }
+    setSubmittingReview(false);
+  };
 
   const allFlattenedProducts = Object.values(inventoryProducts).flat();
   const similarProducts = quickViewProduct
@@ -1833,6 +1883,91 @@ export default function App() {
                   >
                     Buy Now
                   </button>
+                </div>
+              </div>
+              </div>
+
+              {/* Reviews Section */}
+              <div className="product-reviews-section" style={{ gridColumn: '1 / -1', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--bg3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '1.05rem', color: 'var(--text)', margin: 0, fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Star size={18} color="var(--maroon)" /> Customer Reviews ({productReviews.length})
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }}>
+                  {/* Reviews List */}
+                  <div>
+                    {reviewsLoading ? (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading reviews...</div>
+                    ) : productReviews.length === 0 ? (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', background: 'var(--bg2)', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>No reviews yet. Be the first to review!</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                        {productReviews.map(review => (
+                          <div key={review.id} style={{ background: '#fff', border: '1px solid var(--bg3)', borderRadius: '12px', padding: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--text)' }}>{review.userName}</strong>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{review.date}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.15rem', marginBottom: '0.5rem', color: '#fbbf24' }}>
+                              {[1, 2, 3, 4, 5].map(star => (
+                                <Star key={star} size={14} fill={star <= review.rating ? 'currentColor' : 'none'} strokeWidth={star <= review.rating ? 0 : 2} />
+                              ))}
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>{review.comment}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add Review Form */}
+                  <div style={{ background: 'var(--bg2)', padding: '1.25rem', borderRadius: '12px' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text)' }}>Write a Review</h4>
+                    {!user ? (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>
+                        Please sign in from your account to leave a review.
+                      </div>
+                    ) : (
+                      <form onSubmit={handleSubmitReview}>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.4rem' }}>Rating</label>
+                          <div style={{ display: 'flex', gap: '0.25rem' }}>
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setNewReviewRating(star)}
+                                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: star <= newReviewRating ? '#fbbf24' : '#cbd5e1' }}
+                              >
+                                <Star size={24} fill={star <= newReviewRating ? 'currentColor' : 'none'} strokeWidth={star <= newReviewRating ? 0 : 2} />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.4rem' }}>Your Review</label>
+                          <textarea
+                            value={newReviewText}
+                            onChange={(e) => setNewReviewText(e.target.value)}
+                            required
+                            rows={3}
+                            placeholder="What did you think about this product?"
+                            style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--bg3)', fontSize: '0.85rem', resize: 'vertical' }}
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={submittingReview || !newReviewText.trim()}
+                          className="btn-primary"
+                          style={{ width: '100%', padding: '0.75rem' }}
+                        >
+                          {submittingReview ? 'Submitting...' : 'Submit Review'}
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </div>
               </div>
 

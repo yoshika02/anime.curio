@@ -101,6 +101,41 @@ export default {
           }
         }
 
+        // --- REVIEWS API ---
+        if (url.pathname === '/api/reviews') {
+          if (request.method === 'POST') {
+            const body = await request.json();
+            const { productId, userId, userName, rating, comment } = body;
+            
+            if (!productId || !userId || !rating || !comment) {
+              return new Response(JSON.stringify({ success: false, error: 'Missing required review fields' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+
+            const reviewId = 'REV-' + Date.now();
+            await env.DB.prepare(`INSERT INTO reviews (id, product_id, user_id, user_name, rating, comment) VALUES (?, ?, ?, ?, ?, ?)`)
+              .bind(reviewId, String(productId), userId, userName || 'Anonymous User', parseInt(rating), comment).run();
+            
+            return new Response(JSON.stringify({ success: true, reviewId }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+
+          if (request.method === 'GET') {
+            const productId = url.searchParams.get('productId');
+            if (!productId) return new Response(JSON.stringify({ success: false, error: 'productId param required' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+            const result = await env.DB.prepare('SELECT id, user_name, rating, comment, created_at FROM reviews WHERE product_id = ? ORDER BY created_at DESC').bind(String(productId)).all();
+            
+            const reviews = (result.results || []).map(row => ({
+              id: row.id,
+              userName: row.user_name,
+              rating: row.rating,
+              comment: row.comment,
+              date: new Date(row.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+            }));
+            
+            return new Response(JSON.stringify({ success: true, reviews }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+        }
+
         return new Response(JSON.stringify({ success: false, error: 'Endpoint not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } catch (err) {
         return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
