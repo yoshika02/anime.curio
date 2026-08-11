@@ -1885,7 +1885,6 @@ export default function App() {
                   </button>
                 </div>
               </div>
-              </div>
 
               {/* Reviews Section */}
               <div className="product-reviews-section" style={{ gridColumn: '1 / -1', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--bg3)' }}>
