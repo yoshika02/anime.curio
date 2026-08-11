@@ -26,8 +26,8 @@ export default {
               const existing = await env.DB.prepare('SELECT id, email FROM users WHERE email = ?').bind(email.toLowerCase()).first();
               if (existing) return new Response(JSON.stringify({ success: false, error: 'Email already registered' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-              await env.DB.prepare(`INSERT INTO users (id, name, email, phone, password, address) VALUES (?, ?, ?, ?, ?, ?)`)
-                .bind(id, name, email.toLowerCase(), phone || '', password, address || '').run();
+              await env.DB.prepare(`INSERT INTO users (id, name, email, phone, password, address, city, state, pincode, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'India')`)
+                .bind(id, name, email.toLowerCase(), phone || '', password, address || '', city || '', state || '', pincode || '').run();
               
               const newUser = { id, name, email: email.toLowerCase(), phone, address, city, state, pincode };
               return new Response(JSON.stringify({ success: true, user: newUser }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -42,9 +42,9 @@ export default {
             }
 
             if (action === 'update') {
-              const { email, name, phone, address } = body;
-              await env.DB.prepare(`UPDATE users SET name=?, phone=?, address=? WHERE email=?`)
-                .bind(name || '', phone || '', address || '', email.toLowerCase()).run();
+              const { email, name, phone, address, city, state, pincode } = body;
+              await env.DB.prepare(`UPDATE users SET name=?, phone=?, address=?, city=?, state=?, pincode=? WHERE email=?`)
+                .bind(name || '', phone || '', address || '', city || '', state || '', pincode || '', email.toLowerCase()).run();
               return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
             }
 

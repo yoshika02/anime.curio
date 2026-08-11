@@ -303,33 +303,51 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
   const grandTotal = subtotal + shippingFee;
   const amountForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
 
-  const handleDirectOrder = () => {
-    if (!user) {
-      onClose();
-      onOpenAccount?.();
-      return;
-    }
+  const handleSubmitOrder = (e) => {
+    e.preventDefault();
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    if (!lastName || !email || cleanPhone.length < 10 || !address || !city || !pincode) return;
 
-    if (!user.phone || !user.address) {
-      alert("Please complete your profile (WhatsApp Phone & Address) in My Account before placing an order.");
-      onClose();
-      onOpenAccount?.();
-      return;
-    }
-
-    const cleanPhone = String(user.phone).replace(/\D/g, '').slice(-10);
-    if (cleanPhone.length < 10) {
-      alert("Please enter a valid 10-digit WhatsApp number in your profile.");
-      onClose();
-      onOpenAccount?.();
-      return;
-    }
-
-    const fullName = user.name || 'Valued Customer';
-    const email = user.email;
-    const fullAddress = user.address;
+    const formattedPhone = `+91 ${cleanPhone}`;
+    const fullName = `${firstName} ${lastName}`.trim() || lastName;
+    const fullAddress = `${address}${apartment ? ', ' + apartment : ''}, ${city}, ${state} - ${pincode}, ${country}`;
     const orderNum = 'ACK-' + Math.floor(100000 + Math.random() * 900000);
     setCreatedOrderId(orderNum);
+
+    // Save shipping details to logged-in profile if saveInfo checked
+    if (saveInfo && user) {
+      const updatedUser = {
+        ...user,
+        name: fullName,
+        email: email,
+        phone: cleanPhone,
+        address: address,
+        city: city,
+        state: state,
+        pincode: pincode
+      };
+      setUser?.(updatedUser);
+      localStorage.setItem('animecurio_current_user', JSON.stringify(updatedUser));
+
+      try {
+        const dbUsers = JSON.parse(localStorage.getItem('animecurio_d1_users') || '[]');
+        const idx = dbUsers.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+        if (idx !== -1) {
+          dbUsers[idx] = updatedUser;
+        } else {
+          dbUsers.push(updatedUser);
+        }
+        localStorage.setItem('animecurio_d1_users', JSON.stringify(dbUsers));
+      } catch (err) {}
+      
+      if (typeof D1_API !== 'undefined') {
+        fetch(`${D1_API}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update', email: email, name: fullName, phone: cleanPhone, address, city, state, pincode })
+        }).catch(() => {});
+      }
+    }
 
     const itemsSummary = cart
       .map((item, idx) => `${idx + 1}. ${item.title} x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
@@ -343,9 +361,11 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       `📋 *Confirmation ID:* ${orderNum}\n\n` +
       `👤 *Customer:* ${fullName}\n` +
       `📧 *Gmail:* ${email}\n` +
-      `📞 *WhatsApp:* +91 ${cleanPhone}\n` +
+      `📞 *WhatsApp:* ${formattedPhone}\n` +
+      (company ? `🏢 *Business:* ${company}\n` : '') +
+      `🏙️ *City:* ${city}\n` +
       `📍 *Address:* ${fullAddress}\n` +
-      `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (+91 ${cleanPhone})\n\n` +
+      `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${formattedPhone})\n\n` +
       `📦 *Items:* \n${itemsSummaryFormatted}\n\n` +
       `💵 *Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
       `🚚 *Shipping Charges:* ${isFreeShipping ? 'FREE (Orders ₹999+)' : '₹79'}\n` +
@@ -360,10 +380,20 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       shippingFee: shippingFee,
       name: fullName,
       email: email,
-      phone: `+91 ${cleanPhone}`,
+      phone: formattedPhone,
       address: fullAddress,
       status: 'Payment Pending (QR Sent)'
     };
+
+    // Save order to localStorage keyed by user email so it persists in Order History
+    try {
+      const storageKey = `animecurio_orders_${email.toLowerCase()}`;
+      const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const updatedOrders = [newOrder, ...existing];
+      localStorage.setItem(storageKey, JSON.stringify(updatedOrders));
+      // Also save to generic key for backward compat
+      localStorage.setItem('animecurio_orders', JSON.stringify(updatedOrders));
+    } catch (storageErr) {}
 
     onPlaceOrder?.(newOrder);
 
@@ -379,10 +409,10 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
             orderId: orderNum,
             timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
             name: fullName,
-            whatsapp: `+91 ${cleanPhone}`,
+            whatsapp: formattedPhone,
             email: email,
-            business: '',
-            city: '',
+            business: company,
+            city: city,
             orderItems: itemsSummary,
             orderTotal: `₹${grandTotal.toLocaleString('en-IN')} (${isFreeShipping ? 'FREE Shipping' : 'incl. ₹79 shipping'})`,
             notes: fullAddress,
@@ -407,7 +437,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       <div className="cart-overlay" onClick={onClose} />
       <aside className="cart-sidebar">
         <div className="cart-header">
-          <h2 className="cart-title">{step === 'success' ? 'Order Confirmed' : 'Your Cart'}</h2>
+          <h2 className="cart-title">{step === 'checkout' ? 'Shipping Address' : step === 'success' ? 'Order Confirmed' : 'Your Cart'}</h2>
           <button className="cart-close" onClick={onClose}><X size={20} /></button>
         </div>
 
@@ -507,7 +537,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                 </div>
               </div>
               {user ? (
-                <button className="btn-checkout" onClick={handleDirectOrder}>Place Order Directly →</button>
+                <button className="btn-checkout" onClick={() => setStep('checkout')}>Proceed to Checkout →</button>
               ) : (
                 <div style={{ width: '100%' }}>
                   <div style={{ background: '#fff5f6', border: '1px solid #fecdd3', borderRadius: '12px', padding: '0.9rem 1rem', marginBottom: '0.6rem', textAlign: 'center' }}>
@@ -519,6 +549,156 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
               )}
             </div>
           </>
+        ) : (
+          <form onSubmit={handleSubmitOrder} className="checkout-form">
+            <button type="button" className="btn-back-cart" onClick={() => setStep('cart')}>
+              ← Back to Cart Items
+            </button>
+
+            <div className="shipping-progress-banner" style={{ background: isFreeShipping ? '#f0fdf4' : '#fff5f6', border: `1px solid ${isFreeShipping ? '#86efac' : '#fecdd3'}`, padding: '0.5rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', color: isFreeShipping ? '#166534' : 'var(--maroon)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
+              <Truck size={16} color={isFreeShipping ? '#16a34a' : 'var(--maroon)'} />
+              {isFreeShipping ? '🎉 FREE Shipping Unlocked!' : `Add ₹${amountForFreeShipping} more for FREE Shipping`}
+            </div>
+
+            <div className="form-group">
+              <label>Country/Region</label>
+              <select value={country} onChange={e => setCountry(e.target.value)}>
+                <option value="India">India</option>
+              </select>
+            </div>
+
+            <div className="form-row two-col">
+              <div className="form-group">
+                <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First name (optional)" />
+              </div>
+              <div className="form-group">
+                <input type="text" required value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name *" />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Gmail / Email Address *" />
+            </div>
+
+            <div className="form-group">
+              <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Company (optional)" />
+            </div>
+
+            <div className="form-group">
+              <input type="text" required value={address} onChange={e => setAddress(e.target.value)} placeholder="Address *" />
+            </div>
+
+            <div className="form-group">
+              <input type="text" value={apartment} onChange={e => setApartment(e.target.value)} placeholder="Apartment, suite, etc. (optional)" />
+            </div>
+
+            <div className="form-row three-col">
+              <div className="form-group">
+                <input type="text" required value={city} onChange={e => setCity(e.target.value)} placeholder="City *" />
+              </div>
+              <div className="form-group">
+                <select value={state} onChange={e => setState(e.target.value)}>
+                  <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                  <option value="Assam">Assam</option>
+                  <option value="Bihar">Bihar</option>
+                  <option value="Chandigarh">Chandigarh</option>
+                  <option value="Chhattisgarh">Chhattisgarh</option>
+                  <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Goa">Goa</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Himachal Pradesh">Himachal Pradesh</option>
+                  <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                  <option value="Jharkhand">Jharkhand</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Kerala">Kerala</option>
+                  <option value="Ladakh">Ladakh</option>
+                  <option value="Lakshadweep">Lakshadweep</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Manipur">Manipur</option>
+                  <option value="Meghalaya">Meghalaya</option>
+                  <option value="Mizoram">Mizoram</option>
+                  <option value="Nagaland">Nagaland</option>
+                  <option value="Odisha">Odisha</option>
+                  <option value="Puducherry">Puducherry</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Sikkim">Sikkim</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Tripura">Tripura</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Uttarakhand">Uttarakhand</option>
+                  <option value="West Bengal">West Bengal</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <input type="text" required value={pincode} onChange={e => setPincode(e.target.value)} placeholder="PIN code *" />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block', fontWeight: 600 }}>WhatsApp Mobile Number *</label>
+              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                <span style={{ background: 'var(--bg2)', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid var(--bg3)', fontWeight: 'bold', fontSize: '0.85rem', color: 'var(--maroon)' }}>
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  required
+                  maxLength={10}
+                  value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="10-digit mobile number"
+                  style={{ flex: 1 }}
+                />
+              </div>
+            </div>
+
+            <div className="checkbox-group">
+              <label className="form-checkbox">
+                <input type="checkbox" checked={saveInfo} onChange={e => setSaveInfo(e.target.checked)} />
+                <span>Save this information for next time</span>
+              </label>
+              <label className="form-checkbox">
+                <input type="checkbox" checked={textOffers} onChange={e => setTextOffers(e.target.checked)} />
+                <span>Text me with news and offers</span>
+              </label>
+            </div>
+
+            <div className="payment-qr-notice" style={{ background: 'var(--maroon-pale)', padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.85rem', color: 'var(--maroon)' }}>
+              <strong>💳 Payment via QR Code:</strong>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text)' }}>
+                We will send the payment QR code directly to your Gmail and WhatsApp.
+              </p>
+            </div>
+
+            <div className="cart-footer">
+              <div className="cart-total-breakdown" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '100%', marginBottom: '0.75rem', fontSize: '0.88rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                  <span>Subtotal</span>
+                  <span>₹{subtotal.toLocaleString('en-IN')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                  <span>Shipping Charges</span>
+                  <span style={{ color: isFreeShipping ? '#16a34a' : 'var(--text)', fontWeight: isFreeShipping ? 600 : 'normal' }}>
+                    {isFreeShipping ? 'FREE (Waved Off 🎉)' : '₹79'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1rem', color: 'var(--text)', borderTop: '1px solid var(--bg3)', paddingTop: '0.35rem' }}>
+                  <span>Total Amount</span>
+                  <span>₹{grandTotal.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+              <button type="submit" className="btn-checkout whatsapp-checkout">
+                Place Order & Get Payment QR →
+              </button>
+            </div>
+          </form>
         )}
       </aside>
     </>
@@ -549,12 +729,18 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regAddress, setRegAddress] = useState('');
+  const [regCity, setRegCity] = useState('');
+  const [regState, setRegState] = useState('');
+  const [regPincode, setRegPincode] = useState('');
 
   // Profile Edit State
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone ? String(user.phone).replace(/\D/g, '').slice(-10) : '');
   const [address, setAddress] = useState(user?.address || '');
+  const [city, setCity] = useState(user?.city || '');
+  const [state, setState] = useState(user?.state || '');
+  const [pincode, setPincode] = useState(user?.pincode || '');
   const [saved, setSaved] = useState(false);
 
   // Sync edit state when user prop changes
@@ -564,6 +750,9 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
       setEmail(user.email || '');
       setPhone(user.phone ? String(user.phone).replace(/\D/g, '').slice(-10) : '');
       setAddress(user.address || '');
+      setCity(user.city || '');
+      setState(user.state || '');
+      setPincode(user.pincode || '');
       setAuthMode('profile');
     }
   }, [user]);
@@ -631,6 +820,9 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
       email: regEmail.trim().toLowerCase(),
       phone: `+91 ${cleanPhone}`,
       address: regAddress,
+      city: regCity,
+      state: regState,
+      pincode: regPincode,
       password: regPassword,
       created_at: new Date().toISOString()
     };
@@ -668,7 +860,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     const cleanPhone = phone.replace(/\D/g, '').slice(-10);
-    const updated = { ...user, name, email: email.trim(), phone: `+91 ${cleanPhone}`, address };
+    const updated = { ...user, name, email: email.trim(), phone: `+91 ${cleanPhone}`, address, city, state, pincode };
     setUser(updated);
     localStorage.setItem('animecurio_current_user', JSON.stringify(updated));
 
@@ -676,7 +868,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
       await fetch(`${D1_API}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update', email: updated.email, name: updated.name, phone: cleanPhone, address: updated.address })
+        body: JSON.stringify({ action: 'update', email: updated.email, name: updated.name, phone: cleanPhone, address: updated.address, city: updated.city, state: updated.state, pincode: updated.pincode })
       });
     } catch (err) {}
 
@@ -868,6 +1060,17 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                   placeholder="Default delivery address"
                 />
               </div>
+              <div className="form-row three-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.65rem' }}>
+                <div className="form-group">
+                  <input type="text" value={regCity} onChange={e => setRegCity(e.target.value)} placeholder="City" />
+                </div>
+                <div className="form-group">
+                  <input type="text" value={regState} onChange={e => setRegState(e.target.value)} placeholder="State" />
+                </div>
+                <div className="form-group">
+                  <input type="text" value={regPincode} onChange={e => setRegPincode(e.target.value)} placeholder="PIN code" />
+                </div>
+              </div>
               <button type="submit" className="btn-primary full-width" style={{ marginTop: '0.5rem' }}>
                 Create Account & Save Profile
               </button>
@@ -929,6 +1132,17 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                   <div className="form-group">
                     <label>Saved Shipping Address</label>
                     <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter full address for fast checkout..." rows={3} />
+                  </div>
+                  <div className="form-row three-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.65rem', marginTop: '-0.2rem' }}>
+                    <div className="form-group">
+                      <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="City" />
+                    </div>
+                    <div className="form-group">
+                      <input type="text" value={state} onChange={e => setState(e.target.value)} placeholder="State" />
+                    </div>
+                    <div className="form-group">
+                      <input type="text" value={pincode} onChange={e => setPincode(e.target.value)} placeholder="PIN code" />
+                    </div>
                   </div>
                   <button type="submit" className="btn-primary full-width">
                     {saved ? '✓ Profile Saved to Cloud' : 'Save Profile Details'}
