@@ -389,17 +389,13 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
 
     onPlaceOrder?.(newOrder);
 
-    // Open WhatsApp messaging redirect to 8360048865
-    try {
-      window.open(`https://wa.me/918360048865?text=${encodeURIComponent(msg)}`, '_blank');
-    } catch (err) {}
-
     // Post Order payload to Google Sheets Orders tab & trigger Google Apps Script email
     if (ORDERS_API_URL) {
       try {
         fetch(ORDERS_API_URL, {
           method: 'POST',
           mode: 'no-cors',
+          keepalive: true,
           headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             orderId: orderNum,
@@ -419,6 +415,13 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
     }
 
     setStep('success');
+
+    // Delay WhatsApp redirect to ensure network requests dispatch first
+    setTimeout(() => {
+      try {
+        window.open(`https://wa.me/918360048865?text=${encodeURIComponent(msg)}`, '_blank');
+      } catch (err) {}
+    }, 600);
   };
 
   return (
@@ -1479,6 +1482,7 @@ export default function App() {
     // 2. Write to Cloudflare D1 via Pages Function
     fetch(`${D1_API}/orders`, {
       method: 'POST',
+      keepalive: true,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         orderId: newOrder.id,
