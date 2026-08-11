@@ -191,10 +191,10 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     badge = 'NEW';
     badgeColor = '#ef4444';
   } else if (badge.toUpperCase() === 'NEW' && !isNew) {
-    badge = stockQuantity > 0 && stockQuantity < 5 ? `Low Stock (${stockQuantity})` : (inStock ? '' : 'Sold Out');
+    badge = stockQuantity > 0 && stockQuantity < 5 ? 'Rare Available' : (inStock ? '' : 'Sold Out');
     badgeColor = stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : (inStock ? '' : '#666666');
   } else if (!badge) {
-    badge = stockQuantity > 0 && stockQuantity < 5 ? `Low Stock (${stockQuantity})` : (inStock ? '' : 'Sold Out');
+    badge = stockQuantity > 0 && stockQuantity < 5 ? 'Rare Available' : (inStock ? '' : 'Sold Out');
     badgeColor = stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : (inStock ? '' : '#666666');
   }
   const galleryImages = collectProductGallery(rawProduct);
@@ -251,6 +251,7 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     review: reviews,
     badge,
     badgeColor,
+    isNew,
     image,
     galleryImages,
     stockQuantity,
@@ -1415,18 +1416,21 @@ export default function App() {
   const collectionScrollRef = useRef(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    let intervalId = setInterval(() => {
       if (collectionScrollRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = collectionScrollRef.current;
+        // Check if we've reached the end
         if (scrollLeft + clientWidth >= scrollWidth - 10) {
           collectionScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
-          collectionScrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+          // Scroll exactly one card width
+          const cardWidth = collectionScrollRef.current.querySelector('.carousel-card')?.offsetWidth || 320;
+          collectionScrollRef.current.scrollBy({ left: cardWidth + 24, behavior: 'smooth' }); // 24 is gap
         }
       }
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
+    }, 3000);
+    return () => clearInterval(intervalId);
+  }, [inventoryProducts]);
 
   const navigate = (target) => {
     if (target === 'collection') {
@@ -1748,7 +1752,7 @@ export default function App() {
           </button>
           <button
             className="header-action-btn action-new"
-            onClick={() => navigateToCollection('all')}
+            onClick={() => navigateToCollection('new')}
           >
             <Star size={24} />
             <span>New</span>

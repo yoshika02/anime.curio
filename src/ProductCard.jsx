@@ -65,11 +65,6 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
                             {product.badge}
                         </span>
                     )}
-                    {product.stockQuantity !== undefined && (
-                        <span className={`product-stock-badge ${product.inStock ? 'in-stock' : 'sold-out'}`}>
-                            {product.inStock ? `Stock: ${product.stockQuantity}` : 'Sold Out'}
-                        </span>
-                    )}
                 </div>
             </div>
             <button className={`product-like ${liked ? 'liked' : ''}`} onClick={(event) => { event.stopPropagation(); setLiked(!liked); }}>

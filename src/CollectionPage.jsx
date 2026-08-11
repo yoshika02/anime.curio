@@ -23,6 +23,7 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
 
     const categories = [
         { key: 'all', label: 'All Products' },
+        { key: 'new', label: '✨ New Arrivals' },
         { key: 'figurines', label: '1. Anime Figurines' },
         { key: 'combos', label: '2. Combo Packs' },
         { key: 'mystery', label: '3. Mystery Balls' },
@@ -31,7 +32,9 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
 
     const visibleProducts = activeCategory === 'all'
         ? allProducts
-        : allProducts.filter(p => p.category === activeCategory);
+        : activeCategory === 'new'
+            ? allProducts.filter(p => p.isNew)
+            : allProducts.filter(p => p.category === activeCategory);
 
     const scrollCarousel = (direction) => {
         if (!scrollRef.current) return;
