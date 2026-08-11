@@ -84,6 +84,14 @@ const collectProductGallery = (rawProduct) => {
     ['image 3', '3'],
     ['image4', '4'],
     ['image 4', '4'],
+    ['image5', '5'],
+    ['image 5', '5'],
+    ['image6', '6'],
+    ['image 6', '6'],
+    ['image7', '7'],
+    ['image 7', '7'],
+    ['image8', '8'],
+    ['image 8', '8'],
   ];
 
   orderedFields.forEach(([key, label]) => push(rawProduct?.[key], label));
@@ -172,10 +180,23 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     ? String(rawProduct?.inStock).toLowerCase() === 'yes' || rawProduct?.inStock === true
     : stockQuantity > 0;
 
-  const badge = stockQuantity > 0 && stockQuantity < 5
-    ? 'Rare Available'
-    : String(rawProduct?.badge || (inStock ? 'In Stock' : 'Sold Out')).trim();
-  const badgeColor = String(rawProduct?.badgeColor || (stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : inStock ? '#a31a1a' : '#666666')).trim();
+  const addedDateStr = rawProduct?.date || rawProduct?.['added date'] || rawProduct?.added_date || rawProduct?.['upload date'] || rawProduct?.upload_date || rawProduct?.created_at;
+  const addedDate = addedDateStr ? new Date(addedDateStr) : null;
+  const isNew = addedDate && !isNaN(addedDate) && (new Date() - addedDate) <= 3 * 24 * 60 * 60 * 1000 && (new Date() - addedDate) >= 0;
+
+  let badge = String(rawProduct?.badge || '').trim();
+  let badgeColor = String(rawProduct?.badgeColor || '').trim();
+
+  if (isNew) {
+    badge = 'NEW';
+    badgeColor = '#ef4444';
+  } else if (badge.toUpperCase() === 'NEW' && !isNew) {
+    badge = stockQuantity > 0 && stockQuantity < 5 ? `Low Stock (${stockQuantity})` : (inStock ? '' : 'Sold Out');
+    badgeColor = stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : (inStock ? '' : '#666666');
+  } else if (!badge) {
+    badge = stockQuantity > 0 && stockQuantity < 5 ? `Low Stock (${stockQuantity})` : (inStock ? '' : 'Sold Out');
+    badgeColor = stockQuantity > 0 && stockQuantity < 5 ? '#f59e0b' : (inStock ? '' : '#666666');
+  }
   const galleryImages = collectProductGallery(rawProduct);
   const image = galleryImages[0]?.url || resolveImageUrl(getImageField(rawProduct));
   const features = Array.isArray(rawProduct?.features)
@@ -381,7 +402,10 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       name: fullName,
       email: email,
       phone: formattedPhone,
-      address: fullAddress,
+      address: address,
+      city: city,
+      state: state,
+      pincode: pincode,
       status: 'Payment Pending (QR Sent)'
     };
 
@@ -412,10 +436,12 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
             whatsapp: formattedPhone,
             email: email,
             business: company,
+            address: address,
             city: city,
+            state: state,
+            pincode: pincode,
             orderItems: itemsSummary,
             orderTotal: `₹${grandTotal.toLocaleString('en-IN')} (${isFreeShipping ? 'FREE Shipping' : 'incl. ₹79 shipping'})`,
-            notes: fullAddress,
             status: 'Payment Pending (QR Sent)'
           })
         }).catch(err => console.log('Google Sheets Order sync note:', err));
@@ -1388,6 +1414,20 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('all');
   const collectionScrollRef = useRef(null);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (collectionScrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = collectionScrollRef.current;
+        if (scrollLeft + clientWidth >= scrollWidth - 10) {
+          collectionScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          collectionScrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+        }
+      }
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
+
   const navigate = (target) => {
     if (target === 'collection') {
       window.location.hash = '#collection';
@@ -1531,7 +1571,10 @@ export default function App() {
         customerName: newOrder.name,
         customerEmail: newOrder.email,
         customerPhone: newOrder.phone,
-        shippingAddress: newOrder.address,
+        address: newOrder.address,
+        city: newOrder.city,
+        state: newOrder.state,
+        pincode: newOrder.pincode,
         totalAmount: newOrder.total,
         paymentStatus: newOrder.status,
         itemsJson: JSON.stringify(newOrder.items)
@@ -1791,7 +1834,7 @@ export default function App() {
               <div className="collection-carousel-wrap">
                 <button type="button" className="carousel-arrow left" onClick={() => collectionScrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</button>
                 <div className="collection-carousel" ref={collectionScrollRef}>
-                  {(inventoryProducts.figurines || []).slice(0, 4).map((item) => (
+                  {[...(inventoryProducts.figurines || [])].reverse().slice(0, 7).map((item) => (
                     <div key={item.id} className="carousel-card" onClick={() => openQuickView(item)} style={{ cursor: 'pointer' }}>
                       <ImageWithFallback
                         src={item.image}

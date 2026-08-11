@@ -115,7 +115,7 @@ function doPost(e) {
       sheet = ss.insertSheet(ORDER_SHEET_NAME);
       sheet.appendRow([
         'Order ID','Timestamp','Name','WhatsApp','Email',
-        'Business','City','Order Items','Order Total','Shipping Address','Status'
+        'Business','Address','City','State','Pincode','Order Items','Order Total','Status'
       ]);
       Logger.log('Created orders sheet: ' + ORDER_SHEET_NAME);
     }
@@ -142,10 +142,12 @@ function doPost(e) {
     var whatsapp   = payload.whatsapp   || payload.phone || '';
     var email      = payload.email      || '';
     var business   = payload.business   || payload.company || '';
+    var address    = payload.address    || payload.notes || '';
     var city       = payload.city       || '';
+    var state      = payload.state      || '';
+    var pincode    = payload.pincode    || '';
     var orderItems = payload.orderItems || payload.itemsSummary || '';
     var orderTotal = payload.orderTotal || payload.total || '';
-    var address    = payload.notes      || payload.address || '';
     var status     = payload.status     || 'Payment Pending (QR Sent)';
 
     Logger.log('Recording order: ' + orderId + ' | customer: ' + name + ' | email: ' + email);
@@ -153,7 +155,7 @@ function doPost(e) {
     // 1. Write to Google Sheet
     sheet.appendRow([
       orderId, timestamp, name, whatsapp, email,
-      business, city, orderItems, orderTotal, address, status
+      business, address, city, state, pincode, orderItems, orderTotal, status
     ]);
     Logger.log('Row written to sheet successfully');
 

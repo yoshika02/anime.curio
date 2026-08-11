@@ -90,11 +90,10 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
                                 <button
                                     key={`${item.label}-${index}`}
                                     type="button"
-                                    className={`product-view-btn ${index === activeView ? 'active' : ''}`}
+                                    className={`product-view-dot ${index === activeView ? 'active' : ''}`}
                                     onClick={() => setActiveView(index)}
-                                >
-                                    {item.label}
-                                </button>
+                                    aria-label={item.label}
+                                />
                             ))}
                         </div>
                     </>

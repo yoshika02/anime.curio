@@ -1203,12 +1203,14 @@ body {
 
 .collection-carousel {
   display: flex;
-  gap: 1rem;
-  width: 100%;
+  gap: 1.5rem;
   overflow-x: auto;
-  padding-bottom: 0.5rem;
+  padding: 2rem 1rem;
+  margin: 0 -1rem;
+  scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
   justify-content: flex-start;
+  align-items: stretch;
 }
 
 .carousel-card {
@@ -1218,6 +1220,9 @@ body {
   overflow: hidden;
   background: var(--white);
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .collection-title {
@@ -1245,9 +1250,10 @@ body {
 
 .carousel-image {
   width: 100%;
-  height: 280px;
+  aspect-ratio: 1 / 1;
+  height: auto;
   object-fit: contain;
-  background: var(--bg2);
+  background: var(--white);
   display: block;
 }
 
@@ -1541,25 +1547,22 @@ body {
   z-index: 2;
 }
 
-.product-view-btn {
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--maroon);
-  padding: 0.32rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.product-view-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 0;
   cursor: pointer;
   transition: all 0.25s ease;
 }
 
-.product-view-btn.active,
-.product-view-btn:hover {
+.product-view-dot.active,
+.product-view-dot:hover {
   background: var(--maroon);
-  color: white;
   border-color: var(--maroon);
+  transform: scale(1.3);
 }
 
 .product-nav {
@@ -2087,10 +2090,6 @@ body {
     bottom: 0.5rem;
   }
 
-  .product-view-btn {
-    font-size: 0.65rem;
-    padding: 0.24rem 0.45rem;
-  }
 
   .product-footer {
     flex-direction: column;

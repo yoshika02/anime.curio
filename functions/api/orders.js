@@ -17,7 +17,7 @@ export async function onRequestPost(context) {
     const body = await request.json();
     const {
       orderId, customerName, customerEmail, customerPhone,
-      shippingAddress, totalAmount, itemsJson, paymentStatus
+      address, city, state, pincode, totalAmount, itemsJson, paymentStatus
     } = body;
 
     if (!orderId || !customerEmail) {
@@ -29,15 +29,18 @@ export async function onRequestPost(context) {
     const userId = userRow ? userRow.id : null;
 
     await env.DB.prepare(
-      `INSERT INTO orders (id, user_id, customer_name, customer_email, customer_phone, shipping_address, total_amount, payment_status, items_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO orders (id, user_id, customer_name, customer_email, customer_phone, address, city, state, pincode, country, total_amount, payment_status, items_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'India', ?, ?, ?)`
     ).bind(
       orderId,
       userId,
       customerName || '',
       customerEmail.toLowerCase(),
       customerPhone || '',
-      shippingAddress || '',
+      address || '',
+      city || '',
+      state || '',
+      pincode || '',
       parseFloat(totalAmount) || 0,
       paymentStatus || 'Payment Pending (QR Sent)',
       typeof itemsJson === 'string' ? itemsJson : JSON.stringify(itemsJson || [])
@@ -75,7 +78,10 @@ export async function onRequestGet(context) {
       name: row.customer_name,
       email: row.customer_email,
       phone: row.customer_phone,
-      address: row.shipping_address,
+      address: row.address,
+      city: row.city,
+      state: row.state,
+      pincode: row.pincode,
       total: row.total_amount,
       status: row.payment_status,
       items: (() => { try { return JSON.parse(row.items_json); } catch(e) { return []; } })(),
