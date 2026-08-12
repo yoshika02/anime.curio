@@ -299,7 +299,8 @@ body {
 
 /* ── Mobile Bottom Navigation Bar ─────────────────────────────────── */
 .mobile-bottom-nav {
-  display: none !important; /* hidden on desktop — shown only via mobile media query */
+  display: none !important;
+  /* hidden on desktop — shown only via mobile media query */
 }
 
 @media (max-width: 768px) {
@@ -459,8 +460,14 @@ body {
 }
 
 @media (max-width: 768px) {
-  .modal-nav-prev { left: 0.25rem; }
-  .modal-nav-next { right: 0.25rem; }
+  .modal-nav-prev {
+    left: 0.25rem;
+  }
+
+  .modal-nav-next {
+    right: 0.25rem;
+  }
+
   .modal-nav-btn {
     width: 36px;
     height: 60px;
@@ -1306,8 +1313,8 @@ body {
 .carousel-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 48px rgba(125, 26, 42, 0.18),
-              0 0 0 2px var(--maroon),
-              0 0 24px 4px rgba(194, 72, 91, 0.25);
+    0 0 0 2px var(--maroon),
+    0 0 24px 4px rgba(194, 72, 91, 0.25);
 }
 
 /* All carousel cards stay white — glow comes from hover box-shadow only */
@@ -1340,8 +1347,10 @@ body {
 }
 
 .collection-carousel {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE */
 }
 
 .carousel-image {
@@ -1495,9 +1504,17 @@ body {
 }
 
 .collection-products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
   gap: 1.4rem;
   min-width: 0;
   width: 100%;
+}
+
+@media (max-width: 900px) {
+  .collection-products-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Card Glow Wrapper — Lavender sweep ─────────────────────────── */
@@ -1986,7 +2003,7 @@ body {
   background: var(--maroon);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 
 .pc-status-badge {
@@ -1999,7 +2016,7 @@ body {
   color: white;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 
 /* Size + price inline row */
@@ -2284,7 +2301,8 @@ body {
   }
 
   .header-actions {
-    display: none; /* replaced by mobile-bottom-nav */
+    display: none;
+    /* replaced by mobile-bottom-nav */
   }
 
   .header-action-btn {
