@@ -122,22 +122,25 @@
 html {
   scroll-behavior: smooth;
   min-height: 100%;
-  width: 100%;
+  width: 100vw;
+  overflow-x: hidden;
 }
 
 body {
   font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
-  overflow-x: hidden;
   min-height: 100%;
-  width: 100%;
+  width: 100vw;
+  overflow-x: hidden;
 }
 
 #root,
 .app {
   min-height: 100%;
   width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .app {
@@ -1235,6 +1238,7 @@ body {
 
 .collection-copy {
   max-width: 560px;
+  width: 100%;
   color: var(--text-muted);
   line-height: 1.8;
 }
@@ -1347,6 +1351,7 @@ body {
 
 .collection-all-products {
   margin-top: 3rem;
+  min-width: 0;
 }
 
 .collection-all-header {
@@ -1755,7 +1760,7 @@ body {
 
 .btn-add {
   flex: 1;
-  min-width: 170px;
+  min-width: 0;
   padding: 0.65rem 1rem;
   display: inline-flex;
   justify-content: center;
@@ -1985,16 +1990,26 @@ body {
     order: 2;
     justify-content: flex-start;
     gap: 1rem;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow: visible;
     padding-bottom: 0.5rem;
   }
 
   .header-actions {
-    order: 1;
-    margin-left: auto;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    padding: 0.6rem 1rem 0.8rem;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
     display: flex;
+    justify-content: space-around;
     align-items: center;
-    gap: 0.65rem;
+    z-index: 2000;
+    order: initial;
+    margin: 0;
+    border-radius: 20px 20px 0 0;
   }
 
   .header-action-btn {
@@ -2002,24 +2017,25 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    padding: 0.15rem 0.2rem;
+    gap: 4px;
+    padding: 0.4rem;
   }
 
   .header-action-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .header-action-btn span {
     display: block;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 700;
     line-height: 1.1;
   }
 
   .app {
-    padding-top: 120px;
+    padding-top: 110px;
+    padding-bottom: 85px;
   }
 
   .hero {
@@ -2058,6 +2074,20 @@ body {
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
+  }
+
+  .collection-copy {
+    max-width: 100%;
+  }
+
+  .collection-carousel-wrap {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+
+  .collection-page {
+    padding: 2rem 4%;
   }
 
   .product-card-top-row {
@@ -2116,18 +2146,21 @@ body {
 
   .btn-add {
     width: 100%;
+    min-width: 0;
     margin-top: 0.2rem;
-    padding: 0.45rem 0.6rem;
-    min-height: 32px;
-    font-size: 0.75rem;
+    padding: 0.5rem 0.6rem;
+    min-height: 36px;
+    font-size: 0.72rem;
     border-radius: 999px;
+    letter-spacing: 0.5px;
   }
 
   .btn-details {
     width: 100%;
-    padding: 0.45rem 0.6rem;
-    min-height: 32px;
-    font-size: 0.75rem;
+    min-width: 0;
+    padding: 0.5rem 0.6rem;
+    min-height: 36px;
+    font-size: 0.72rem;
     border-radius: 999px;
   }
 
@@ -2266,22 +2299,23 @@ body {
   .form-row.three-col {
     grid-template-columns: 1fr;
   }
+}
 
-  .header-actions {
-    gap: 0.25rem;
+/* ── Very small phones: single-column product grid ─────────────────── */
+@media (max-width: 420px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
-  .header-action-btn {
-    padding: 0.1rem;
+  .product-info {
+    padding: 1rem 1rem 1.1rem;
   }
 
-  .header-action-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .header-action-btn span {
-    font-size: 0.55rem;
+  .btn-add {
+    padding: 0.6rem 1rem;
+    font-size: 0.78rem;
+    min-height: 40px;
   }
 }
 
