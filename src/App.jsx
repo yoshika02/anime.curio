@@ -1742,34 +1742,36 @@ export default function App() {
             </div>
           </div>
         </nav>
-        <div className="header-actions">
-          <button
-            className="header-action-btn action-community"
-            onClick={() => window.open('https://wa.me/918360048865?text=Hi%20AnimeCurio!%20I%20want%20to%20join%20the%20AnimeCurio%20VIP%20Community.', '_blank')}
-          >
-            <Users size={24} />
-            <span>Community</span>
-          </button>
-          <button
-            className="header-action-btn action-new"
-            onClick={() => navigateToCollection('new')}
-          >
-            <Star size={24} />
-            <span>New</span>
-          </button>
-          <button className="header-action-btn action-cart" onClick={() => setCartOpen(true)}>
-            <div className="cart-icon-wrapper">
-              <ShoppingCart size={24} />
-              {cartTotal > 0 && <span className="cart-badge">{cartTotal}</span>}
-            </div>
-            <span>Cart</span>
-          </button>
-          <button className="header-action-btn action-account" onClick={() => setAccountOpen(true)}>
-            <User size={24} />
-            <span>Account</span>
-          </button>
-        </div>
       </header>
+
+      {/* Mobile Bottom Nav — separate from header so position:fixed works correctly */}
+      <nav className="mobile-bottom-nav">
+        <button
+          className="header-action-btn action-community"
+          onClick={() => window.open('https://wa.me/918360048865?text=Hi%20AnimeCurio!%20I%20want%20to%20join%20the%20AnimeCurio%20VIP%20Community.', '_blank')}
+        >
+          <Users size={24} />
+          <span>Community</span>
+        </button>
+        <button
+          className="header-action-btn action-new"
+          onClick={() => navigateToCollection('new')}
+        >
+          <Star size={24} />
+          <span>New</span>
+        </button>
+        <button className="header-action-btn action-cart" onClick={() => setCartOpen(true)}>
+          <div className="cart-icon-wrapper">
+            <ShoppingCart size={24} />
+            {cartTotal > 0 && <span className="cart-badge">{cartTotal}</span>}
+          </div>
+          <span>Cart</span>
+        </button>
+        <button className="header-action-btn action-account" onClick={() => setAccountOpen(true)}>
+          <User size={24} />
+          <span>Account</span>
+        </button>
+      </nav>
 
       {/* Cart */}
       {cartOpen && (

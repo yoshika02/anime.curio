@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Heart, Eye, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ShoppingCart, Eye, Star, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import ImageWithFallback from './imageUtils';
 
 function Stars({ rating }) {
@@ -8,7 +8,7 @@ function Stars({ rating }) {
             {[1, 2, 3, 4, 5].map((i) => (
                 <Star
                     key={i}
-                    size={12}
+                    size={11}
                     fill={i <= Math.round(rating) ? '#f59e0b' : 'none'}
                     stroke="#f59e0b"
                 />
@@ -42,45 +42,38 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
         setTimeout(() => setAdded(false), 1200);
     };
 
-    const prevImage = (event) => {
-        event.stopPropagation();
+    const prevImage = (e) => {
+        e.stopPropagation();
         setActiveView((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
     };
 
-    const nextImage = (event) => {
-        event.stopPropagation();
+    const nextImage = (e) => {
+        e.stopPropagation();
         setActiveView((prev) => (prev + 1) % galleryItems.length);
     };
 
     return (
-        <div
-            className="product-card"
-            onClick={() => onView?.(product)}
-        >
-            <div className="product-card-top-row">
-                <div className="product-badges-group">
-                    {product.scale && <span className="product-scale-badge">{product.scale}</span>}
-                    {product.badge && (
-                        <span className="product-badge-item" style={{ background: product.badgeColor }}>
-                            {product.badge}
-                        </span>
-                    )}
-                </div>
-            </div>
-            <button className={`product-like ${liked ? 'liked' : ''}`} onClick={(event) => { event.stopPropagation(); setLiked(!liked); }}>
-                <Heart size={16} fill={liked ? '#800000' : 'none'} stroke={liked ? '#800000' : '#800000'} />
-            </button>
+        <div className="product-card" onClick={() => onView?.(product)}>
+
+            {/* ── Image area ── */}
             <div className="product-img-wrap">
-                <ImageWithFallback src={activeImage} alt={`${product.title} ${galleryItems[activeView]?.label || ''}`} className="product-img" fallbackImage={fallbackImage} />
+                <ImageWithFallback
+                    src={activeImage}
+                    alt={`${product.title} ${galleryItems[activeView]?.label || ''}`}
+                    className="product-img"
+                    fallbackImage={fallbackImage}
+                />
+
+                {/* Gallery arrows */}
                 {galleryItems.length > 1 && (
                     <>
                         <button type="button" className="product-nav product-nav-left" onClick={prevImage} onMouseDown={(e) => e.stopPropagation()}>
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={18} />
                         </button>
                         <button type="button" className="product-nav product-nav-right" onClick={nextImage} onMouseDown={(e) => e.stopPropagation()}>
-                            <ChevronRight size={20} />
+                            <ChevronRight size={18} />
                         </button>
-                        <div className="product-view-switcher" onClick={(event) => event.stopPropagation()}>
+                        <div className="product-view-switcher" onClick={(e) => e.stopPropagation()}>
                             {galleryItems.map((item, index) => (
                                 <button
                                     key={`${item.label}-${index}`}
@@ -93,42 +86,66 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
                         </div>
                     </>
                 )}
+
+                {/* Badges overlaid on image — bottom corners */}
+                <div className="pc-badge-row">
+                    {product.scale && (
+                        <span className="pc-size-badge">{product.scale}</span>
+                    )}
+                    {product.badge && (
+                        <span className="pc-status-badge" style={{ background: product.badgeColor || '#f59e0b' }}>
+                            {product.badge}
+                        </span>
+                    )}
+                </div>
+
+                {/* Quick view overlay */}
                 <div className="product-overlay">
-                    <Eye size={18} /> Quick View
+                    <Eye size={16} /> Quick View
                 </div>
             </div>
+
+            {/* ── Card body ── */}
             <div className="product-info">
-                {product.subtitle && <p className="product-subtitle">{product.subtitle}</p>}
                 <h3 className="product-title">{product.title}</h3>
                 <Stars rating={product.rating} />
-                <p className="product-reviews">{product.reviews} reviews</p>
-                {product.features?.length > 0 && (
-                    <div className="product-features">
-                        {product.features.slice(0, 3).map((feature, index) => (
-                            <span key={index} className="product-feature">
-                                {feature}
-                            </span>
-                        ))}
-                    </div>
-                )}
-                <div className="product-footer">
-                    <div className="product-price-group">
-                        <span className="product-price"><span className="currency-symbol">₹</span>{product.price.toLocaleString('en-IN')}</span>
-                        {product.actualPrice > product.price && (
-                            <span className="product-mrp-group">
-                                <span className="product-mrp-label">M.R.P:</span>
-                                <span className="product-price-old">₹{product.actualPrice.toLocaleString('en-IN')}</span>
-                                {product.discountPercent > 0 && <span className="product-discount">({product.discountPercent}% off)</span>}
-                            </span>
+
+                {/* Size & Price row */}
+                <div className="pc-meta-row">
+                    <span className="pc-size-text">Size: {product.scale}</span>
+                    <span className="pc-price-text">
+                        <span className="currency-symbol">₹</span>{product.price.toLocaleString('en-IN')}
+                    </span>
+                </div>
+
+                {/* MRP / discount */}
+                {product.actualPrice > product.price && (
+                    <div className="pc-mrp-row">
+                        <span className="product-mrp-label">M.R.P:</span>
+                        <span className="product-price-old">₹{product.actualPrice.toLocaleString('en-IN')}</span>
+                        {product.discountPercent > 0 && (
+                            <span className="product-discount">({product.discountPercent}% off)</span>
                         )}
                     </div>
+                )}
+
+                {/* Buttons */}
+                <div className="pc-btn-group">
                     <button
                         type="button"
-                        className={`btn-add ${added ? 'added' : ''}`}
-                        onClick={(event) => { event.stopPropagation(); handleAdd(); }}
+                        className={`pc-add-btn ${added ? 'added' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); handleAdd(); }}
                         disabled={!inStock || maxReached}
                     >
-                        {!inStock ? 'Sold Out' : maxReached ? 'Max Added' : added ? '✓ Added' : 'Add to Cart'}
+                        <ShoppingCart size={15} />
+                        {!inStock ? 'Sold Out' : maxReached ? 'Max Added' : added ? '✓ Added!' : 'Add to Cart'}
+                    </button>
+                    <button
+                        type="button"
+                        className="pc-details-btn"
+                        onClick={(e) => { e.stopPropagation(); onView?.(product); }}
+                    >
+                        Details
                     </button>
                 </div>
             </div>

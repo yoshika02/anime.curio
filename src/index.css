@@ -297,6 +297,29 @@ body {
   gap: 1.5rem;
 }
 
+/* ── Mobile Bottom Navigation Bar ─────────────────────────────────── */
+.mobile-bottom-nav {
+  display: none; /* hidden on desktop */
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--white);
+    padding: 0.55rem 0.5rem calc(0.55rem + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 24px rgba(125, 26, 42, 0.1);
+    border-top: 1px solid var(--maroon-pale);
+    border-radius: 20px 20px 0 0;
+    z-index: 3000;
+  }
+}
+
 .header-action-btn {
   background: none;
   border: none;
@@ -1816,6 +1839,151 @@ body {
   border-color: var(--maroon);
 }
 
+/* ── New ProductCard Styles ─────────────────────────────────────────── */
+
+/* Badges overlaid on image bottom */
+.pc-badge-row {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.pc-size-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: white;
+  background: var(--maroon);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+.pc-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+/* Size + price inline row */
+.pc-meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.1rem;
+}
+
+.pc-size-text {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.pc-price-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f1111;
+  line-height: 1;
+}
+
+/* MRP / discount row */
+.pc-mrp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  margin-top: -0.3rem;
+}
+
+/* Button group */
+.pc-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.pc-add-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-dark) 100%);
+  border: none;
+  color: white;
+  border-radius: 999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 3px 10px rgba(125, 26, 42, 0.25);
+}
+
+.pc-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(125, 26, 42, 0.35);
+}
+
+.pc-add-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background: #999;
+  box-shadow: none;
+  transform: none;
+}
+
+.pc-add-btn.added {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.35);
+}
+
+.pc-details-btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--maroon);
+  border: 1.5px solid rgba(125, 26, 42, 0.3);
+  border-radius: 999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.pc-details-btn:hover {
+  background: var(--maroon-pale);
+  border-color: var(--maroon);
+  color: var(--maroon-dark);
+}
+
 /* ── Footer & Footer Cards ────────────────────────────────────────── */
 .site-footer {
   text-align: center;
@@ -1996,20 +2164,7 @@ body {
   }
 
   .header-actions {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--white);
-    padding: 0.6rem 1rem 0.8rem;
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 2000;
-    order: initial;
-    margin: 0;
-    border-radius: 20px 20px 0 0;
+    display: none; /* replaced by mobile-bottom-nav */
   }
 
   .header-action-btn {
@@ -2162,6 +2317,43 @@ body {
     min-height: 36px;
     font-size: 0.72rem;
     border-radius: 999px;
+  }
+
+  /* New ProductCard mobile overrides */
+  .pc-badge-row {
+    bottom: 0.4rem;
+    left: 0.4rem;
+    right: 0.4rem;
+  }
+
+  .pc-size-badge,
+  .pc-status-badge {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .pc-price-text {
+    font-size: 1rem;
+  }
+
+  .pc-size-text {
+    font-size: 0.7rem;
+  }
+
+  .pc-add-btn {
+    font-size: 0.72rem;
+    padding: 0.5rem 0.75rem;
+    gap: 0.3rem;
+  }
+
+  .pc-add-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .pc-details-btn {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.75rem;
   }
 
   .product-price {
