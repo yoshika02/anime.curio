@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, Eye, Star, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { ShoppingCart, Eye, Star, ChevronLeft, ChevronRight, Info, Heart } from 'lucide-react';
 import ImageWithFallback from './imageUtils';
 
 function Stars({ rating }) {
@@ -18,7 +18,7 @@ function Stars({ rating }) {
     );
 }
 
-export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) {
+export default function ProductCard({ product, onAdd, onView, currentQty = 0, wishlist = [], onToggleWishlist }) {
     const fallbackImage = '/placeholder.svg';
     const [added, setAdded] = useState(false);
     const [liked, setLiked] = useState(false);
@@ -63,6 +63,21 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
                     className="product-img"
                     fallbackImage={fallbackImage}
                 />
+                
+                {/* Wishlist Button */}
+                {onToggleWishlist && (
+                    <button 
+                        className="wishlist-btn"
+                        onClick={(e) => { e.stopPropagation(); onToggleWishlist(product); }}
+                        title="Toggle Wishlist"
+                    >
+                        <Heart 
+                            size={18} 
+                            fill={wishlist.find(p => p.id === product.id) ? "var(--maroon)" : "none"} 
+                            color={wishlist.find(p => p.id === product.id) ? "var(--maroon)" : "#475569"} 
+                        />
+                    </button>
+                )}
 
                 {/* Gallery arrows */}
                 {galleryItems.length > 1 && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe } from 'lucide-react';
+import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
@@ -282,7 +282,58 @@ function buildProductsByCategory(rawProducts = []) {
 }
 
 
-// ─── Cart Sidebar ─────────────────────────────────────────────────────────────
+// ─── Wishlist Sidebar ─────────────────────────────────────────────────────────
+function WishlistSidebar({ wishlist, onClose, onAdd, onToggleWishlist }) {
+  return (
+    <>
+      <div className="cart-overlay" onClick={onClose} />
+      <aside className="cart-sidebar">
+        <div className="cart-header">
+          <h2>My Wishlist ({wishlist.length})</h2>
+          <button className="cart-close" onClick={onClose}><X size={24} /></button>
+        </div>
+
+        <div className="cart-items">
+          {wishlist.length === 0 ? (
+            <div className="empty-cart">
+              <Heart size={48} color="#cbd5e1" strokeWidth={1} style={{ marginBottom: '1rem' }} />
+              <p>Your wishlist is empty.</p>
+              <button className="btn-continue" onClick={onClose} style={{ marginTop: '1rem', width: 'auto', padding: '0.75rem 2rem' }}>Explore Products</button>
+            </div>
+          ) : (
+            wishlist.map(item => (
+              <div key={item.id} className="cart-item">
+                <div className="cart-item-img-box">
+                  <ImageWithFallback src={item.image} alt={item.title} className="cart-item-img" />
+                </div>
+                <div className="cart-item-info">
+                  <div className="cart-item-title-row">
+                    <h4>{item.title}</h4>
+                    <button className="btn-remove" onClick={() => onToggleWishlist(item)} title="Remove">
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="cart-item-price">₹{item.price.toLocaleString('en-IN')}</div>
+                  <div className="cart-qty-row" style={{ marginTop: '0.75rem' }}>
+                    <button 
+                      className="btn-checkout" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', minHeight: 'auto' }}
+                      onClick={() => { onAdd(item); onClose(); }}
+                    >
+                      <ShoppingCart size={14} style={{ marginRight: '4px', display: 'inline' }} />
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </aside>
+    </>
+  );
+}
+
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user, setUser, onOpenAccount }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
@@ -1406,6 +1457,8 @@ function FeaturesSection() {
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const [wishlistOpen, setWishlistOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [page, setPage] = useState(window.location.hash === '#collection' ? 'collection' : 'home');
   const [scrolled, setScrolled] = useState(false);
@@ -1515,6 +1568,14 @@ export default function App() {
 
       if (maxAvailable <= 0) return prev;
       return [...prev, { ...product, qty: 1 }];
+    });
+  };
+
+  const handleToggleWishlist = (product) => {
+    setWishlist(prev => {
+      const exists = prev.find(p => p.id === product.id);
+      if (exists) return prev.filter(p => p.id !== product.id);
+      return [...prev, product];
     });
   };
 
@@ -1758,6 +1819,13 @@ export default function App() {
             <Star size={24} />
             <span>New</span>
           </button>
+          <button className="header-action-btn action-wishlist" onClick={() => setWishlistOpen(true)}>
+            <div className="cart-icon-wrapper">
+              <Heart size={24} />
+              {wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
+            </div>
+            <span>Wishlist</span>
+          </button>
           <button className="header-action-btn action-cart" onClick={() => setCartOpen(true)}>
             <div className="cart-icon-wrapper">
               <ShoppingCart size={24} />
@@ -1788,6 +1856,13 @@ export default function App() {
           <Star size={24} />
           <span>New</span>
         </button>
+        <button className="header-action-btn action-wishlist" onClick={() => setWishlistOpen(true)}>
+          <div className="cart-icon-wrapper">
+            <Heart size={24} />
+            {wishlist.length > 0 && <span className="cart-badge">{wishlist.length}</span>}
+          </div>
+          <span>Wishlist</span>
+        </button>
         <button className="header-action-btn action-cart" onClick={() => setCartOpen(true)}>
           <div className="cart-icon-wrapper">
             <ShoppingCart size={24} />
@@ -1800,6 +1875,16 @@ export default function App() {
           <span>Account</span>
         </button>
       </nav>
+
+      {/* Wishlist Sidebar */}
+      {wishlistOpen && (
+        <WishlistSidebar
+          wishlist={wishlist}
+          onClose={() => setWishlistOpen(false)}
+          onAdd={handleAdd}
+          onToggleWishlist={handleToggleWishlist}
+        />
+      )}
 
       {/* Cart */}
       {cartOpen && (
@@ -1912,6 +1997,8 @@ export default function App() {
           onView={openQuickView}
           initialCategory={collectionCategory}
           recentlyViewed={recentlyViewed}
+          wishlist={wishlist}
+          onToggleWishlist={handleToggleWishlist}
         />
       )}
 
