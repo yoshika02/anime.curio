@@ -8,6 +8,11 @@
   box-sizing: border-box;
 }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 :root {
   --bg: #faefef;
   --bg2: #f5e4e7;
@@ -262,7 +267,6 @@ body {
   z-index: 1001;
 }
 
-.collection-dropdown:hover .collection-menu,
 .collection-dropdown.open .collection-menu {
   display: flex;
   flex-direction: column;
@@ -1254,7 +1258,7 @@ body {
   width: 100%;
   max-width: 100%;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.8rem;
   align-items: start;
   margin-bottom: 3rem;
@@ -1506,7 +1510,7 @@ body {
 .collection-products-grid,
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.8rem;
   min-width: 0;
   width: 100%;
@@ -2674,6 +2678,13 @@ body {
 
   .product-info {
     padding: 1rem 1rem 1.1rem;
+  }
+
+  .pc-meta-row,
+  .pc-mrp-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
   }
 
   .btn-add {

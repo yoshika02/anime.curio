@@ -1459,6 +1459,7 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [wishlistOpen, setWishlistOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [page, setPage] = useState(window.location.hash === '#collection' ? 'collection' : 'home');
   const [scrolled, setScrolled] = useState(false);
@@ -1671,6 +1672,7 @@ export default function App() {
 
   const navigateToCollection = (categoryKey = 'all') => {
     setCollectionCategory(categoryKey);
+    setDropdownOpen(false);
     navigate('collection');
   };
 
@@ -1762,10 +1764,17 @@ export default function App() {
         </div>
         <nav className="site-nav">
           <button className="nav-link" onClick={() => navigate('home')}>Home</button>
-          <div className="collection-dropdown">
+          <div 
+            className={`collection-dropdown ${dropdownOpen ? 'open' : ''}`}
+            onMouseEnter={() => setDropdownOpen(true)}
+            onMouseLeave={() => setDropdownOpen(false)}
+          >
             <button
               className="nav-link collection-toggle"
-              onClick={() => navigateToCollection('all')}
+              onClick={(e) => {
+                e.preventDefault();
+                setDropdownOpen(!dropdownOpen);
+              }}
             >
               Collection ▾
             </button>
