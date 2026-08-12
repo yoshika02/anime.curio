@@ -1,11 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { Heart } from 'lucide-react';
 import ProductCard from './ProductCard';
 import ImageWithFallback from './imageUtils';
+import { CATEGORIES } from './App';
 
-export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all', recentlyViewed = [] }) {
+export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all', recentlyViewed = [], wishlist = [], onToggleWishlist }) {
     const scrollRef = useRef(null);
     const recentScrollRef = useRef(null);
-    const featured = (inventoryProducts?.figurines || []).slice(0, 4);
+    const featured = (inventoryProducts?.['anime-figures'] || []).slice(0, 4);
     const [activeCategory, setActiveCategory] = useState(initialCategory);
 
     useEffect(() => {
@@ -14,20 +16,12 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
         }
     }, [initialCategory]);
 
-    const allProducts = [
-        ...(inventoryProducts?.figurines || []),
-        ...(inventoryProducts?.combos || []),
-        ...(inventoryProducts?.mystery || []),
-        ...(inventoryProducts?.keychains || []),
-    ];
+    const allProducts = Object.values(inventoryProducts || {}).flat();
 
     const categories = [
         { key: 'all', label: 'All Products' },
         { key: 'new', label: '✨ New Arrivals' },
-        { key: 'figurines', label: '1. Anime Figurines' },
-        { key: 'combos', label: '2. Combo Packs' },
-        { key: 'mystery', label: '3. Mystery Balls' },
-        { key: 'keychains', label: '4. Key Chains' },
+        ...CATEGORIES
     ];
 
     const visibleProducts = activeCategory === 'all'
@@ -62,8 +56,21 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                                 key={item.id}
                                 className={`carousel-card carousel-card-color-${(idx % 5) + 1}`}
                                 onClick={() => onView?.(item)}
-                                style={{ cursor: 'pointer' }}
+                                style={{ cursor: 'pointer', position: 'relative' }}
                             >
+                                <button 
+                                    className={`wishlist-btn ${wishlist.find(p => p.id === item.id) ? 'active' : ''}`}
+                                    style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', zIndex: 10 }}
+                                    onClick={(e) => { e.stopPropagation(); onToggleWishlist(item); }}
+                                    title="Toggle Wishlist"
+                                >
+                                    <Heart 
+                                        // Simple Heart inline rendering, import Heart or use SVG. Let's import Heart from lucide-react at the top!
+                                        size={18} 
+                                        fill={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#ffe4e6"} 
+                                        color={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#c2485b"} 
+                                    />
+                                </button>
                                 <ImageWithFallback
                                     src={item.image}
                                     alt={item.title}
@@ -138,7 +145,14 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                     ) : visibleProducts.map((product, index) => (
                         <div key={`${product.id}-${index}`} className="card-animate" style={{ animationDelay: `${index * 0.08}s` }}>
                             <div className="card-glow-wrap">
-                                <ProductCard product={product} currentQty={cart.find((item) => item.id === product.id)?.qty || 0} onAdd={onAdd} onView={onView} />
+                                <ProductCard 
+                                    product={product} 
+                                    currentQty={cart.find((item) => item.id === product.id)?.qty || 0} 
+                                    onAdd={onAdd} 
+                                    onView={onView} 
+                                    wishlist={wishlist}
+                                    onToggleWishlist={onToggleWishlist}
+                                />
                             </div>
                         </div>
                     ))}

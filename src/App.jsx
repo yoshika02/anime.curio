@@ -1,16 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home } from 'lucide-react';
+import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
 
-// ─── Product Data ────────────────────────────────────────────────────────────
-const EMPTY_PRODUCTS = {
-  figurines: [],
-  combos: [],
-  mystery: [],
-  keychains: [],
-};
+export const CATEGORIES = [
+  { key: 'anime-figures', label: 'Anime Figures', backend: '1. anime figures' },
+  { key: 'key-chains', label: 'Key Chains', backend: '2. key chains' },
+  { key: 'mouse-pads', label: 'Mouse Pads', backend: '3. mouse pads' },
+  { key: 'stationary', label: 'Stationary', backend: '4. stationary' },
+  { key: 'cosplay-accessories', label: 'Cosplay Accessories', backend: '5. cosplay accessories' },
+  { key: 'apparel', label: 'Apparel', backend: '6. appearl' },
+  { key: 'manga', label: 'Manga', backend: '7. manga' },
+  { key: 'bagpacks', label: 'Bagpacks', backend: '8. bagpacks' },
+  { key: 'cups', label: 'Cups', backend: '9. cups' },
+  { key: 'phone-cases', label: 'Phone Cases', backend: '10. phone cases' },
+  { key: 'magnets', label: 'Magnets', backend: '11. magnets' },
+  { key: 'mystery-collection', label: 'Mystery Collection', backend: '12. mystry collection' },
+  { key: 'combos', label: 'Combos', backend: '13. combos' },
+];
+
+const EMPTY_PRODUCTS = CATEGORIES.reduce((acc, cat) => {
+  acc[cat.key] = [];
+  return acc;
+}, {});
 
 const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxu4FUgd5vYzqhhdJH7s-0anQ6pHyfysrRFm3hC_NsSFHmYLlSfJkLLo-e_k1-zOrakwA/exec';
 
@@ -205,37 +218,24 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
       ? rawProduct.features.split(',').map(s => s.trim()).filter(Boolean)
       : [];
 
-  const categoryId = Number(rawProduct?.category_id || rawProduct?.categoryId || rawProduct?.category || 0);
-  const categoryNames = {
-    1: 'Anime Figurines',
-    2: 'Keychains & Accessories',
-    3: 'Action Figures',
-    4: 'Combos & Gift Sets',
-    5: 'Mystery & Surprise Balls',
-    6: 'Chibi & Mini Figures',
-    7: 'Statues & Displays',
-    8: 'Limited Editions',
-    9: 'Plush & Soft Items',
-    10: 'Combo Bundles',
-    11: 'Display Dioramas',
-    12: 'Cosplay & Merch',
-  };
-  const categoryName = categoryNames[categoryId] || (typeof rawProduct?.category === 'string' && rawProduct.category ? rawProduct.category : 'Anime Merchandise');
-  
-  const categoryKey = {
-    1: 'figurines',
-    2: 'keychains',
-    3: 'figurines',
-    4: 'combos',
-    5: 'mystery',
-    6: 'figurines',
-    7: 'figurines',
-    8: 'figurines',
-    9: 'figurines',
-    10: 'combos',
-    11: 'figurines',
-    12: 'figurines',
-  }[categoryId] || 'figurines';
+  const categoryId = Number(rawProduct?.category_id || rawProduct?.categoryId || 0);
+  let matchedCategory = null;
+  if (categoryId >= 1 && categoryId <= 13) {
+    matchedCategory = CATEGORIES[categoryId - 1];
+  } else {
+    const rawCat = String(rawProduct?.category || '').trim().toLowerCase();
+    matchedCategory = CATEGORIES.find(c => {
+      const backendClean = c.backend.toLowerCase().trim();
+      const backendNameOnly = backendClean.replace(/^\d+\.\s*/, '').trim();
+      const cleanRawCat = rawCat.replace(/\s+/g, ' ');
+      const cleanBackendClean = backendClean.replace(/\s+/g, ' ');
+      const cleanBackendNameOnly = backendNameOnly.replace(/\s+/g, ' ');
+      return cleanRawCat === cleanBackendClean || cleanRawCat === cleanBackendNameOnly || cleanRawCat.includes(cleanBackendNameOnly);
+    });
+  }
+
+  const categoryKey = matchedCategory ? matchedCategory.key : 'anime-figures';
+  const categoryName = matchedCategory ? matchedCategory.label : 'Anime Figures';
 
   return {
     id: Number(rawProduct?.id) || fallbackIndex + 1,
@@ -264,17 +264,20 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
 }
 
 function buildProductsByCategory(rawProducts = []) {
-  const grouped = {
-    figurines: [],
-    combos: [],
-    mystery: [],
-    keychains: [],
-  };
+  const grouped = CATEGORIES.reduce((acc, cat) => {
+    acc[cat.key] = [];
+    return acc;
+  }, {});
 
   rawProducts.forEach((product, index) => {
     const normalized = normalizeProduct(product, index);
     if (grouped[normalized.category]) {
       grouped[normalized.category].push(normalized);
+    } else {
+      if (!grouped['anime-figures']) {
+        grouped['anime-figures'] = [];
+      }
+      grouped['anime-figures'].push(normalized);
     }
   });
 
@@ -1785,30 +1788,15 @@ export default function App() {
               >
                 All Products
               </button>
-              <button
-                className="nav-link"
-                onClick={() => navigateToCollection('figurines')}
-              >
-                1. Anime Figurines
-              </button>
-              <button
-                className="nav-link"
-                onClick={() => navigateToCollection('combos')}
-              >
-                2. Exclusive Combos
-              </button>
-              <button
-                className="nav-link"
-                onClick={() => navigateToCollection('mystery')}
-              >
-                3. Mystery Gacha Balls
-              </button>
-              <button
-                className="nav-link"
-                onClick={() => navigateToCollection('keychains')}
-              >
-                4. Anime Key Chains
-              </button>
+              {CATEGORIES.map(cat => (
+                <button
+                  key={cat.key}
+                  className="nav-link"
+                  onClick={() => navigateToCollection(cat.key)}
+                >
+                  {cat.label}
+                </button>
+              ))}
             </div>
           </div>
         </nav>
@@ -1962,8 +1950,20 @@ export default function App() {
               <div className="collection-carousel-wrap">
                 <button type="button" className="carousel-arrow left" onClick={() => collectionScrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</button>
                 <div className="collection-carousel" ref={collectionScrollRef}>
-                  {[...(inventoryProducts.figurines || [])].reverse().slice(0, 7).map((item, idx) => (
-                    <div key={item.id} className={`carousel-card carousel-card-color-${(idx % 5) + 1}`} onClick={() => openQuickView(item)} style={{ cursor: 'pointer' }}>
+                  {[...(inventoryProducts['anime-figures'] || [])].reverse().slice(0, 7).map((item, idx) => (
+                    <div key={item.id} className={`carousel-card carousel-card-color-${(idx % 5) + 1}`} onClick={() => openQuickView(item)} style={{ cursor: 'pointer', position: 'relative' }}>
+                      <button 
+                          className={`wishlist-btn ${wishlist.find(p => p.id === item.id) ? 'active' : ''}`}
+                          style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', zIndex: 10 }}
+                          onClick={(e) => { e.stopPropagation(); handleToggleWishlist(item); }}
+                          title="Toggle Wishlist"
+                      >
+                          <Heart 
+                              size={18} 
+                              fill={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#ffe4e6"} 
+                              color={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#c2485b"} 
+                          />
+                      </button>
                       <ImageWithFallback
                         src={item.image}
                         alt={item.title}
@@ -2047,12 +2047,48 @@ export default function App() {
               <X size={24} />
             </button>
             <div className="product-modal-grid">
-              <div className="product-modal-left">
+              <div className="product-modal-left" style={{ position: 'relative' }}>
                 <ImageWithFallback
                   src={quickViewProduct.galleryImages?.[quickViewImageIndex]?.url || quickViewProduct.image}
                   alt={quickViewProduct.title}
                   className="product-modal-main-img"
                 />
+                <button 
+                    className={`wishlist-btn ${wishlist.find(p => p.id === quickViewProduct.id) ? 'active' : ''}`}
+                    style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}
+                    onClick={(e) => { e.stopPropagation(); handleToggleWishlist(quickViewProduct); }}
+                    title="Toggle Wishlist"
+                >
+                    <Heart 
+                        size={20} 
+                        fill={wishlist.find(p => p.id === quickViewProduct.id) ? "#ef4444" : "#ffe4e6"} 
+                        color={wishlist.find(p => p.id === quickViewProduct.id) ? "#ef4444" : "#c2485b"} 
+                    />
+                </button>
+                {quickViewProduct.galleryImages?.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="product-nav product-nav-left"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuickViewImageIndex((prev) => (prev - 1 + quickViewProduct.galleryImages.length) % quickViewProduct.galleryImages.length);
+                      }}
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button
+                      type="button"
+                      className="product-nav product-nav-right"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuickViewImageIndex((prev) => (prev + 1) % quickViewProduct.galleryImages.length);
+                      }}
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
                 {quickViewProduct.galleryImages?.length > 1 && (
                   <div className="product-modal-thumbs">
                     {quickViewProduct.galleryImages.map((item, index) => (

@@ -67,14 +67,14 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0, wi
                 {/* Wishlist Button */}
                 {onToggleWishlist && (
                     <button 
-                        className="wishlist-btn"
+                        className={`wishlist-btn ${wishlist.find(p => p.id === product.id) ? 'active' : ''}`}
                         onClick={(e) => { e.stopPropagation(); onToggleWishlist(product); }}
                         title="Toggle Wishlist"
                     >
                         <Heart 
                             size={18} 
-                            fill={wishlist.find(p => p.id === product.id) ? "var(--maroon)" : "none"} 
-                            color={wishlist.find(p => p.id === product.id) ? "var(--maroon)" : "#475569"} 
+                            fill={wishlist.find(p => p.id === product.id) ? "#ef4444" : "#ffe4e6"} 
+                            color={wishlist.find(p => p.id === product.id) ? "#ef4444" : "#c2485b"} 
                         />
                     </button>
                 )}
