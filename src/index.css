@@ -299,7 +299,7 @@ body {
 
 /* ── Mobile Bottom Navigation Bar ─────────────────────────────────── */
 .mobile-bottom-nav {
-  display: none; /* hidden on desktop */
+  display: none !important; /* hidden on desktop — shown only via mobile media query */
 }
 
 @media (max-width: 768px) {
@@ -1310,12 +1310,14 @@ body {
               0 0 24px 4px rgba(194, 72, 91, 0.25);
 }
 
-/* 5 rotating card background tones — all warm within AnimeCurio palette */
-.carousel-card-color-1 { background: linear-gradient(145deg, #fff5f6 0%, #fce8ec 100%); }
-.carousel-card-color-2 { background: linear-gradient(145deg, #fff8f0 0%, #fce8d8 100%); }
-.carousel-card-color-3 { background: linear-gradient(145deg, #f8f0ff 0%, #ede0f8 100%); }
-.carousel-card-color-4 { background: linear-gradient(145deg, #f0f8ff 0%, #ddeef8 100%); }
-.carousel-card-color-5 { background: linear-gradient(145deg, #f0fff4 0%, #d4f0e0 100%); }
+/* All carousel cards stay white — glow comes from hover box-shadow only */
+.carousel-card-color-1,
+.carousel-card-color-2,
+.carousel-card-color-3,
+.carousel-card-color-4,
+.carousel-card-color-5 {
+  background: var(--white);
+}
 
 .collection-title {
   font-family: 'Outfit', sans-serif;
@@ -1704,20 +1706,63 @@ body {
 .product-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(194, 72, 91, 0.35);
+  background: rgba(125, 26, 42, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 700;
   color: white;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.25s ease;
+  z-index: 5;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .product-card:hover .product-overlay {
   opacity: 1;
+}
+
+/* Desktop-only floating Quick View pill that slides up on hover */
+.product-quick-view-btn {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .product-quick-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    position: absolute;
+    bottom: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    opacity: 0;
+    background: var(--maroon);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    z-index: 6;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(125, 26, 42, 0.35);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    pointer-events: none;
+  }
+
+  .product-img-wrap:hover .product-quick-view-btn {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
 }
 
 .product-info {

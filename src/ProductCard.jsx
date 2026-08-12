@@ -99,10 +99,19 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0 }) 
                     )}
                 </div>
 
-                {/* Quick view overlay */}
+                {/* Quick view overlay — full image tint on hover */}
                 <div className="product-overlay">
                     <Eye size={16} /> Quick View
                 </div>
+
+                {/* Desktop-only pill button that slides up on hover */}
+                <button
+                    type="button"
+                    className="product-quick-view-btn"
+                    onClick={(e) => { e.stopPropagation(); onView?.(product); }}
+                >
+                    <Eye size={13} /> Quick View
+                </button>
             </div>
 
             {/* ── Card body ── */}
