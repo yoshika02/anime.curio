@@ -1467,6 +1467,22 @@ export default function App() {
   const [page, setPage] = useState(window.location.hash === '#collection' ? 'collection' : 'home');
   const [scrolled, setScrolled] = useState(false);
   const [inventoryProducts, setInventoryProducts] = useState(EMPTY_PRODUCTS);
+  const [carouselPaused, setCarouselPaused] = useState(false);
+
+  useEffect(() => {
+    if (carouselPaused) return;
+    const interval = setInterval(() => {
+      const el = collectionScrollRef.current;
+      if (!el) return;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (el.scrollLeft >= maxScroll - 10) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: 320, behavior: 'smooth' });
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [inventoryProducts, carouselPaused]);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [quickViewImageIndex, setQuickViewImageIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -1948,44 +1964,65 @@ export default function App() {
                 <p className="collection-copy">Browse the latest premium figures front and center, then explore every product in the collection.</p>
               </div>
               <div className="collection-carousel-wrap">
-                <button type="button" className="carousel-arrow left" onClick={() => collectionScrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</button>
-                <div className="collection-carousel" ref={collectionScrollRef}>
+                <button type="button" className="carousel-arrow left" onClick={() => collectionScrollRef.current?.scrollBy({ left: -320, behavior: 'smooth' })}>‹</button>
+                <div 
+                  className="collection-carousel" 
+                  ref={collectionScrollRef}
+                  onMouseEnter={() => setCarouselPaused(true)}
+                  onMouseLeave={() => setCarouselPaused(false)}
+                >
                   {[...(inventoryProducts['anime-figures'] || [])].reverse().slice(0, 7).map((item, idx) => (
-                    <div key={item.id} className={`carousel-card carousel-card-color-${(idx % 5) + 1}`} onClick={() => openQuickView(item)} style={{ cursor: 'pointer', position: 'relative' }}>
-                      <button 
-                          className={`wishlist-btn ${wishlist.find(p => p.id === item.id) ? 'active' : ''}`}
-                          style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', zIndex: 10 }}
-                          onClick={(e) => { e.stopPropagation(); handleToggleWishlist(item); }}
-                          title="Toggle Wishlist"
-                      >
-                          <Heart 
-                              size={18} 
-                              fill={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#ffe4e6"} 
-                              color={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#c2485b"} 
+                    <div 
+                      key={item.id} 
+                      className="card-animate" 
+                      style={{ 
+                        flex: '0 0 min(320px, 100%)', 
+                        scrollSnapAlign: 'center',
+                        padding: '4px'
+                      }}
+                    >
+                      <div className="card-glow-wrap">
+                        <div 
+                          className={`carousel-card carousel-card-color-${(idx % 5) + 1}`} 
+                          onClick={() => openQuickView(item)} 
+                          style={{ cursor: 'pointer', position: 'relative', border: 'none' }}
+                        >
+                          <button 
+                              className={`wishlist-btn ${wishlist.find(p => p.id === item.id) ? 'active' : ''}`}
+                              style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', zIndex: 10 }}
+                              onClick={(e) => { e.stopPropagation(); handleToggleWishlist(item); }}
+                              title="Toggle Wishlist"
+                          >
+                              <Heart 
+                                  size={18} 
+                                  fill={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#ffe4e6"} 
+                                  color={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#c2485b"} 
+                              />
+                          </button>
+                          <ImageWithFallback
+                            src={item.image}
+                            alt={item.title}
+                            className="carousel-image"
                           />
-                      </button>
-                      <ImageWithFallback
-                        src={item.image}
-                        alt={item.title}
-                        className="carousel-image"
-                      />
-                      <div className="carousel-meta">
-                        <span className="carousel-name">{item.title}</span>
-                        <div className="carousel-price-group">
-                          <span className="carousel-price"><span className="currency-symbol">₹</span>{item.price.toLocaleString('en-IN')}</span>
-                          {item.actualPrice > item.price && (
-                            <span className="carousel-mrp-group">
-                              <span className="carousel-mrp-label">M.R.P:</span>
-                              <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
-                              {item.discountPercent > 0 && <span className="carousel-discount">({item.discountPercent}% off)</span>}
-                            </span>
-                          )}
+                          <div className="carousel-meta">
+                            <span className="carousel-name">{item.title}</span>
+                            <div className="carousel-price-group">
+                              <span className="carousel-price"><span className="currency-symbol">₹</span>{item.price.toLocaleString('en-IN')}</span>
+                              {item.actualPrice > item.price && (
+                                <span className="carousel-mrp-group">
+                                  <span className="carousel-mrp-label">M.R.P:</span>
+                                  <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
+                                  {item.discountPercent > 0 && <span className="carousel-discount">({item.discountPercent}% off)</span>}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <button type="button" className="carousel-arrow right" onClick={() => collectionScrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>›</button>
+                <button type="button" className="carousel-arrow right" onClick={() => collectionScrollRef.current?.scrollBy({ left: 320, behavior: 'smooth' })}>›</button>
               </div>
             </div>
 

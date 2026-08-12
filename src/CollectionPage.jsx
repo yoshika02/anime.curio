@@ -30,9 +30,26 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
             ? allProducts.filter(p => p.isNew)
             : allProducts.filter(p => p.category === activeCategory);
 
+    const [paused, setPaused] = useState(false);
+
+    useEffect(() => {
+        if (paused) return;
+        const interval = setInterval(() => {
+            const el = scrollRef.current;
+            if (!el) return;
+            const maxScroll = el.scrollWidth - el.clientWidth;
+            if (el.scrollLeft >= maxScroll - 10) {
+                el.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                el.scrollBy({ left: 320, behavior: 'smooth' });
+            }
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [featured, paused]);
+
     const scrollCarousel = (direction) => {
         if (!scrollRef.current) return;
-        scrollRef.current.scrollBy({ left: direction * 300, behavior: 'smooth' });
+        scrollRef.current.scrollBy({ left: direction * 320, behavior: 'smooth' });
     };
 
     return (
@@ -50,43 +67,58 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                     <button type="button" className="carousel-arrow left" onClick={() => scrollCarousel(-1)}>
                         ‹
                     </button>
-                    <div className="collection-carousel" ref={scrollRef}>
+                    <div 
+                        className="collection-carousel" 
+                        ref={scrollRef}
+                        onMouseEnter={() => setPaused(true)}
+                        onMouseLeave={() => setPaused(false)}
+                    >
                         {featured.map((item, idx) => (
-                            <div
-                                key={item.id}
-                                className={`carousel-card carousel-card-color-${(idx % 5) + 1}`}
-                                onClick={() => onView?.(item)}
-                                style={{ cursor: 'pointer', position: 'relative' }}
+                            <div 
+                                key={item.id} 
+                                className="card-animate" 
+                                style={{ 
+                                    flex: '0 0 min(320px, 100%)', 
+                                    scrollSnapAlign: 'center',
+                                    padding: '4px'
+                                }}
                             >
-                                <button 
-                                    className={`wishlist-btn ${wishlist.find(p => p.id === item.id) ? 'active' : ''}`}
-                                    style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', zIndex: 10 }}
-                                    onClick={(e) => { e.stopPropagation(); onToggleWishlist(item); }}
-                                    title="Toggle Wishlist"
-                                >
-                                    <Heart 
-                                        // Simple Heart inline rendering, import Heart or use SVG. Let's import Heart from lucide-react at the top!
-                                        size={18} 
-                                        fill={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#ffe4e6"} 
-                                        color={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#c2485b"} 
-                                    />
-                                </button>
-                                <ImageWithFallback
-                                    src={item.image}
-                                    alt={item.title}
-                                    className="carousel-image"
-                                />
-                                <div className="carousel-meta">
-                                    <span className="carousel-name">{item.title}</span>
-                                    <div className="carousel-price-group">
-                                        <span className="carousel-price"><span className="currency-symbol">₹</span>{item.price.toLocaleString('en-IN')}</span>
-                                        {item.actualPrice > item.price && (
-                                            <span className="carousel-mrp-group">
-                                                <span className="carousel-mrp-label">M.R.P:</span>
-                                                <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
-                                                {item.discountPercent > 0 && <span className="carousel-discount">({item.discountPercent}% off)</span>}
-                                            </span>
-                                        )}
+                                <div className="card-glow-wrap">
+                                    <div
+                                        className={`carousel-card carousel-card-color-${(idx % 5) + 1}`}
+                                        onClick={() => onView?.(item)}
+                                        style={{ cursor: 'pointer', position: 'relative', border: 'none' }}
+                                    >
+                                        <button 
+                                            className={`wishlist-btn ${wishlist.find(p => p.id === item.id) ? 'active' : ''}`}
+                                            style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', zIndex: 10 }}
+                                            onClick={(e) => { e.stopPropagation(); onToggleWishlist(item); }}
+                                            title="Toggle Wishlist"
+                                        >
+                                            <Heart 
+                                                size={18} 
+                                                fill={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#ffe4e6"} 
+                                                color={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#c2485b"} 
+                                            />
+                                        </button>
+                                        <ImageWithFallback
+                                            src={item.image}
+                                            alt={item.title}
+                                            className="carousel-image"
+                                        />
+                                        <div className="carousel-meta">
+                                            <span className="carousel-name">{item.title}</span>
+                                            <div className="carousel-price-group">
+                                                <span className="carousel-price"><span className="currency-symbol">₹</span>{item.price.toLocaleString('en-IN')}</span>
+                                                {item.actualPrice > item.price && (
+                                                    <span className="carousel-mrp-group">
+                                                        <span className="carousel-mrp-label">M.R.P:</span>
+                                                        <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
+                                                        {item.discountPercent > 0 && <span className="carousel-discount">({item.discountPercent}% off)</span>}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
