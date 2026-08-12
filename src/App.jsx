@@ -1741,6 +1741,7 @@ export default function App() {
               </button>
             </div>
           </div>
+        </nav>
         {/* Desktop header action buttons */}
         <div className="header-actions">
           <button
