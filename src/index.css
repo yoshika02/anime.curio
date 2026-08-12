@@ -1494,17 +1494,25 @@ body {
 
 .collection-products-grid {
   gap: 1.4rem;
+  min-width: 0;
+  width: 100%;
 }
 
 /* ── Card Glow Wrapper — Lavender sweep ─────────────────────────── */
 .card-animate {
   animation: cardIn 0.5s ease both;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .card-glow-wrap {
   position: relative;
   border-radius: calc(var(--radius) + 2px);
   padding: 2px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
   background: conic-gradient(from var(--angle), var(--maroon), var(--maroon-pale), var(--maroon-light), var(--maroon), var(--white), var(--maroon));
   animation: borderSpin 4s linear infinite, glowPulse 3s ease-in-out infinite;
 }
