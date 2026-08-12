@@ -1840,8 +1840,8 @@ export default function App() {
               <div className="collection-carousel-wrap">
                 <button type="button" className="carousel-arrow left" onClick={() => collectionScrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</button>
                 <div className="collection-carousel" ref={collectionScrollRef}>
-                  {[...(inventoryProducts.figurines || [])].reverse().slice(0, 7).map((item) => (
-                    <div key={item.id} className="carousel-card" onClick={() => openQuickView(item)} style={{ cursor: 'pointer' }}>
+                  {[...(inventoryProducts.figurines || [])].reverse().slice(0, 7).map((item, idx) => (
+                    <div key={item.id} className={`carousel-card carousel-card-color-${(idx % 5) + 1}`} onClick={() => openQuickView(item)} style={{ cursor: 'pointer' }}>
                       <ImageWithFallback
                         src={item.image}
                         alt={item.title}
@@ -1891,6 +1891,34 @@ export default function App() {
         <>
           <div className="cart-overlay" onClick={closeQuickView} />
           <div className="product-modal">
+            {/* Prev / Next product navigation */}
+            {(() => {
+              const idx = allFlattenedProducts.findIndex(p => p.id === quickViewProduct.id);
+              const hasPrev = idx > 0;
+              const hasNext = idx < allFlattenedProducts.length - 1;
+              return (
+                <>
+                  {hasPrev && (
+                    <button
+                      className="modal-nav-btn modal-nav-prev"
+                      onClick={(e) => { e.stopPropagation(); openQuickView(allFlattenedProducts[idx - 1]); }}
+                      title="Previous product"
+                    >
+                      ‹
+                    </button>
+                  )}
+                  {hasNext && (
+                    <button
+                      className="modal-nav-btn modal-nav-next"
+                      onClick={(e) => { e.stopPropagation(); openQuickView(allFlattenedProducts[idx + 1]); }}
+                      title="Next product"
+                    >
+                      ›
+                    </button>
+                  )}
+                </>
+              );
+            })()}
             <button className="product-modal-close" onClick={closeQuickView}>
               <X size={24} />
             </button>

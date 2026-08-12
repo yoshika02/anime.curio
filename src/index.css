@@ -420,6 +420,55 @@ body {
   max-height: 93vh;
 }
 
+/* Prev / Next navigation buttons on the product modal */
+.modal-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  font-weight: 300;
+  color: var(--maroon);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(194, 72, 91, 0.18);
+  border-radius: 14px;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(125, 26, 42, 0.12);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.modal-nav-btn:hover {
+  background: var(--maroon-pale);
+  border-color: var(--maroon);
+  box-shadow: 0 6px 24px rgba(125, 26, 42, 0.22);
+  transform: translateY(-50%) scale(1.04);
+}
+
+.modal-nav-prev {
+  left: -24px;
+}
+
+.modal-nav-next {
+  right: -24px;
+}
+
+@media (max-width: 768px) {
+  .modal-nav-prev { left: 0.25rem; }
+  .modal-nav-next { right: 0.25rem; }
+  .modal-nav-btn {
+    width: 36px;
+    height: 60px;
+    font-size: 1.8rem;
+    border-radius: 10px;
+  }
+}
+
 .product-modal-grid {
   display: grid;
   grid-template-columns: minmax(220px, 1.1fr) 0.9fr;
@@ -1245,11 +1294,28 @@ body {
   border-radius: 28px;
   overflow: hidden;
   background: var(--white);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(125, 26, 42, 0.1);
   display: flex;
   flex-direction: column;
   height: 100%;
+  border: 2px solid transparent;
+  transition: box-shadow 0.3s ease, transform 0.25s ease;
+  position: relative;
 }
+
+.carousel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(125, 26, 42, 0.18),
+              0 0 0 2px var(--maroon),
+              0 0 24px 4px rgba(194, 72, 91, 0.25);
+}
+
+/* 5 rotating card background tones — all warm within AnimeCurio palette */
+.carousel-card-color-1 { background: linear-gradient(145deg, #fff5f6 0%, #fce8ec 100%); }
+.carousel-card-color-2 { background: linear-gradient(145deg, #fff8f0 0%, #fce8d8 100%); }
+.carousel-card-color-3 { background: linear-gradient(145deg, #f8f0ff 0%, #ede0f8 100%); }
+.carousel-card-color-4 { background: linear-gradient(145deg, #f0f8ff 0%, #ddeef8 100%); }
+.carousel-card-color-5 { background: linear-gradient(145deg, #f0fff4 0%, #d4f0e0 100%); }
 
 .collection-title {
   font-family: 'Outfit', sans-serif;
@@ -1267,12 +1333,13 @@ body {
 }
 
 .collection-carousel::-webkit-scrollbar {
-  height: 8px;
+  height: 0;
+  display: none;
 }
 
-.collection-carousel::-webkit-scrollbar-thumb {
-  background: rgba(125, 94, 201, 0.25);
-  border-radius: 999px;
+.collection-carousel {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE */
 }
 
 .carousel-image {

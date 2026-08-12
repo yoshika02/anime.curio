@@ -57,10 +57,10 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                         ‹
                     </button>
                     <div className="collection-carousel" ref={scrollRef}>
-                        {featured.map((item) => (
+                        {featured.map((item, idx) => (
                             <div
                                 key={item.id}
-                                className="carousel-card"
+                                className={`carousel-card carousel-card-color-${(idx % 5) + 1}`}
                                 onClick={() => onView?.(item)}
                                 style={{ cursor: 'pointer' }}
                             >
