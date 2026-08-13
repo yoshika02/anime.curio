@@ -340,6 +340,7 @@ function WishlistSidebar({ wishlist, onClose, onAdd, onToggleWishlist }) {
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user, setUser, onOpenAccount }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
+  const [customNote, setCustomNote] = useState('');
   const [country, setCountry] = useState('India');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -441,6 +442,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       (company ? `🏢 *Business:* ${company}\n` : '') +
       `🏙️ *City:* ${city}\n` +
       `📍 *Address:* ${fullAddress}\n` +
+      (customNote.trim() ? `📝 *Custom Note:* ${customNote.trim()}\n` : '') +
       `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${formattedPhone})\n\n` +
       `📦 *Items:* \n${itemsSummaryFormatted}\n\n` +
       `💵 *Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
@@ -496,6 +498,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
             state: state,
             pincode: pincode,
             orderItems: itemsSummary,
+            customNote: customNote.trim() || '',
             orderTotal: `₹${grandTotal.toLocaleString('en-IN')} (${isFreeShipping ? 'FREE Shipping' : 'incl. ₹79 shipping'})`,
             status: 'Payment Pending (QR Sent)'
           })
@@ -749,6 +752,17 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                 <input type="checkbox" checked={textOffers} onChange={e => setTextOffers(e.target.checked)} />
                 <span>Text me with news and offers</span>
               </label>
+            </div>
+
+            <div className="form-group">
+              <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block', fontWeight: 600 }}>📝 Custom Note (optional)</label>
+              <textarea
+                value={customNote}
+                onChange={e => setCustomNote(e.target.value)}
+                placeholder="Any special instructions, gift message, or customization request..."
+                rows={3}
+                style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid var(--bg3)', background: '#ffffff', fontFamily: "'Inter', sans-serif", fontSize: '0.85rem', color: 'var(--text)', resize: 'vertical', transition: 'border-color 0.2s' }}
+              />
             </div>
 
             <div className="payment-qr-notice" style={{ background: 'var(--maroon-pale)', padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.85rem', color: 'var(--maroon)' }}>
@@ -1779,6 +1793,7 @@ export default function App() {
       {/* Header */}
       <header className={`site-header ${scrolled ? 'header-scrolled' : ''}`}>
         <div className="logo" onClick={() => navigate('home')}>
+          <img src="/logo.jpeg" alt="AnimeCurio Logo" className="header-logo-img" />
           AnimeCurio
         </div>
         <nav className="site-nav">
@@ -1847,8 +1862,8 @@ export default function App() {
             <span>Cart</span>
           </button>
           <button className="header-action-btn action-account" onClick={() => setAccountOpen(true)}>
-            <User size={24} />
-            <span>Account</span>
+            {user ? <User size={24} /> : <KeyRound size={24} />}
+            <span>{user ? 'Account' : 'Sign In'}</span>
           </button>
         </div>
       </header>
@@ -1884,8 +1899,8 @@ export default function App() {
           <span>Cart</span>
         </button>
         <button className="header-action-btn action-account" onClick={() => setAccountOpen(true)}>
-          <User size={24} />
-          <span>Account</span>
+          {user ? <User size={24} /> : <KeyRound size={24} />}
+          <span>{user ? 'Account' : 'Sign In'}</span>
         </button>
       </nav>
 
@@ -2178,6 +2193,48 @@ export default function App() {
                     <p>{quickViewProduct.features.slice(0, 3).join(' | ')}</p>
                   </div>
                 )}
+
+                {/* Combo Character Swap — lets user choose alternative figures at the same price */}
+                {quickViewProduct.category === 'combos' && (() => {
+                  const comboPrice = quickViewProduct.price;
+                  const swapOptions = (inventoryProducts['anime-figures'] || [])
+                    .filter(p => p.price === comboPrice && p.id !== quickViewProduct.id && p.inStock);
+                  if (swapOptions.length === 0) return null;
+                  return (
+                    <div className="combo-swap-section" style={{ marginTop: '0.5rem' }}>
+                      <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--maroon)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Sparkles size={16} /> Swap Character — Same Price (₹{comboPrice.toLocaleString('en-IN')})
+                      </h4>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
+                        You can choose any of these characters instead at the same price:
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
+                        {swapOptions.map(alt => (
+                          <div
+                            key={alt.id}
+                            onClick={() => openQuickView(alt)}
+                            style={{
+                              background: '#fff',
+                              border: '1.5px solid var(--bg3)',
+                              borderRadius: '12px',
+                              padding: '0.4rem',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s ease',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg3)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                          >
+                            <ImageWithFallback src={alt.image} alt={alt.title} style={{ width: '100%', height: '60px', objectFit: 'contain', borderRadius: '6px' }} />
+                            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alt.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="product-modal-actions">
                   <button
                     type="button"
@@ -2349,7 +2406,10 @@ export default function App() {
 
         </div>
 
-        <div className="footer-logo">AnimeCurio</div>
+        <div className="footer-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
+          <img src="/logo.jpeg" alt="AnimeCurio Logo" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.3)' }} />
+          AnimeCurio
+        </div>
         <p className="footer-copy">© 2026 AnimeCurio. All rights reserved. | Made with ❤️ in India</p>
         <p className="footer-sub">Proudly serving anime fans across Bharat 🇮🇳</p>
       </footer>
