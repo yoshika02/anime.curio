@@ -1867,10 +1867,9 @@ export default function App() {
             <span>{user ? 'Account' : 'Sign In'}</span>
           </button>
         </div>
-        <div className="header-right-brand" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="search-btn-header" onClick={() => setSearchOpen(true)} style={{ background: 'var(--white)', border: '1px solid rgba(194,72,91,0.2)', padding: '0.4rem 0.9rem', borderRadius: '999px', cursor: 'pointer', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(194,72,91,0.08)' }}>
-            <Search size={18} />
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, display: window.innerWidth > 480 ? 'block' : 'none' }}>Search</span>
+        <div className="header-right-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button className="search-btn-header" onClick={() => setSearchOpen(true)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: scrolled ? '#000' : 'var(--text)', display: 'flex', alignItems: 'center', transition: 'all 0.2s', padding: '0.2rem' }}>
+            <Search size={22} />
           </button>
           <img src="/logo.jpeg" alt="AnimeCurio Logo" className="header-logo-img" />
         </div>
@@ -2001,15 +2000,9 @@ export default function App() {
                 <button className="btn-primary" onClick={() => navigate('collection')}>
                   <Zap size={16} /> Start Collecting
                 </button>
-                {!user ? (
-                  <button className="btn-secondary" onClick={() => setAccountOpen(true)} style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.4)', color: 'white' }}>
-                    <KeyRound size={16} /> Login / Sign Up
-                  </button>
-                ) : (
-                  <button className="btn-secondary" onClick={() => scrollTo('mystery')}>
-                    <Package size={16} /> Mystery Balls
-                  </button>
-                )}
+                <button className="btn-secondary" onClick={() => setAccountOpen(true)} style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.4)', color: 'white' }}>
+                  <KeyRound size={16} /> Login / Sign Up
+                </button>
               </div>
             </div>
             <button className="scroll-hint" onClick={() => scrollTo('figurines')}>
@@ -2246,7 +2239,7 @@ export default function App() {
 
                 {/* Combo Character Swap — lets user choose alternative figures at the same price */}
                 {quickViewProduct.categoryId == 13 && (() => {
-                  const targetSwapPrice = quickViewProduct.swap_price ? Number(quickViewProduct.swap_price) : quickViewProduct.price;
+                  const targetSwapPrice = quickViewProduct.swap_price ? Number(quickViewProduct.swap_price) : 149;
                   const swapOptions = Object.values(inventoryProducts).flat()
                     .filter(p => p.categoryId == 1 && p.price === targetSwapPrice && p.id !== quickViewProduct.id && p.inStock);
                   
