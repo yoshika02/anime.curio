@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home } from 'lucide-react';
+import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
@@ -1793,7 +1793,6 @@ export default function App() {
       {/* Header */}
       <header className={`site-header ${scrolled ? 'header-scrolled' : ''}`}>
         <div className="logo" onClick={() => navigate('home')}>
-          <img src="/logo.jpeg" alt="AnimeCurio Logo" className="header-logo-img" />
           AnimeCurio
         </div>
         <nav className="site-nav">
@@ -1865,6 +1864,12 @@ export default function App() {
             {user ? <User size={24} /> : <KeyRound size={24} />}
             <span>{user ? 'Account' : 'Sign In'}</span>
           </button>
+        </div>
+        <div className="header-right-brand" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <button className="search-btn-header" onClick={() => alert('Search functionality coming soon!')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: scrolled ? '#000' : 'var(--text)', display: 'flex', transition: 'transform 0.2s' }}>
+            <Search size={24} />
+          </button>
+          <img src="/logo.jpeg" alt="AnimeCurio Logo" className="header-logo-img" />
         </div>
       </header>
 
@@ -1960,6 +1965,11 @@ export default function App() {
                 <button className="btn-secondary" onClick={() => scrollTo('mystery')}>
                   <Package size={16} /> Mystery Balls
                 </button>
+                {!user && (
+                  <button className="btn-secondary" onClick={() => setAccountOpen(true)} style={{ background: 'rgba(255, 255, 255, 0.1)', borderColor: 'rgba(255, 255, 255, 0.4)', color: 'white' }}>
+                    <KeyRound size={16} /> Login / Sign Up
+                  </button>
+                )}
               </div>
             </div>
             <button className="scroll-hint" onClick={() => scrollTo('figurines')}>

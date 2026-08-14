@@ -17,7 +17,8 @@ var STORE_PHONE    = '+91 83600 48865';
 var STORE_NAME     = 'AnimeCurio';
 var STORE_TAGLINE  = 'Exclusive Anime Merchandise & Figurines';
 var STORE_WEBSITE  = 'https://animecurio.com';
-var PAYMENT_QR_URL = 'https://lh3.googleusercontent.com/d/1luAmR0pS7uCUQSJE1fN6kGXOyIQSpud0=s600';
+var PAYMENT_QR_URL = 'https://lh3.googleusercontent.com/d/1BFBF4fsq-jw2YG3HEg24dpuDSn-Qq5Ty=s600';
+var PAYMENT_LINK   = 'https://drive.google.com/file/d/1BFBF4fsq-jw2YG3HEg24dpuDSn-Qq5Ty/view?usp=drive_link';
 var UPI_ID         = 'singhmandeep1722@oksbi';
 var ORDER_SHEET_NAME = 'order sheet anime curio';  // ← your exact sheet tab name
 
@@ -205,6 +206,7 @@ function doPost(e) {
       + '<p style="margin:0 0 4px;font-size:16px;font-weight:700;color:#9f1239;">💳 Complete Your Payment</p>'
       + '<p style="margin:0 0 16px;font-size:13px;color:#6b7280;">Scan QR below using Google Pay, PhonePe, or any UPI app</p>'
       + '<img src="' + PAYMENT_QR_URL + '" alt="Payment QR" width="180" height="180" style="border-radius:12px;border:3px solid #fff;box-shadow:0 4px 16px rgba(163,26,26,0.15);">'
+      + '<p style="margin:8px 0 16px;font-size:12px;"><a href="' + PAYMENT_LINK + '" target="_blank" style="color:#a31a1a;text-decoration:underline;">Click to view/download QR Code</a></p>'
       + '<p style="margin:14px 0 4px;font-size:13px;color:#4b5563;">Or pay directly via UPI ID:</p>'
       + '<p style="margin:0 0 12px;font-size:15px;font-weight:900;color:#a31a1a;background:#fff;padding:8px 20px;border-radius:8px;display:inline-block;border:1px solid #fecdd3;">' + UPI_ID + '</p>'
       + '<p style="margin:8px 0 0;font-size:14px;font-weight:700;color:#111827;">📞 ' + STORE_PHONE + '</p>'
