@@ -237,6 +237,9 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const categoryKey = matchedCategory ? matchedCategory.key : 'anime-figures';
   const categoryName = matchedCategory ? matchedCategory.label : 'Anime Figures';
 
+  // Carry swap_price from inventory (used by combos to find swappable figures)
+  const swapPrice = Number(rawProduct?.swap_price || rawProduct?.swapPrice || 0);
+
   return {
     id: Number(rawProduct?.id) || fallbackIndex + 1,
     name: title,
@@ -260,6 +263,7 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     category: categoryKey,
     categoryId: categoryId || 1,
     categoryName,
+    swap_price: swapPrice,
   };
 }
 
@@ -2237,88 +2241,74 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Combo Character Swap — lets user choose alternative figures at the same price */}
+                {/* ── Combo Detail: Select Character + Browse Other Combos ── */}
                 {quickViewProduct.categoryId == 13 && (() => {
-                  const targetSwapPrice = quickViewProduct.swap_price ? Number(quickViewProduct.swap_price) : 149;
-                  const swapOptions = Object.values(inventoryProducts).flat()
-                    .filter(p => p.categoryId == 1 && p.price === targetSwapPrice && p.id !== quickViewProduct.id && p.inStock);
-                  
-                  if (swapOptions.length === 0) return null;
-                  return (
-                    <div className="combo-swap-section" style={{ marginTop: '0.8rem', padding: '0.8rem', background: '#fdf2f4', borderRadius: '12px', border: '1px solid #fce7eb' }}>
-                      <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--maroon)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Sparkles size={16} /> Swap Character — (₹{targetSwapPrice.toLocaleString('en-IN')})
-                      </h4>
-                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
-                        You can choose any of these characters instead for this combo:
-                      </p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
-                        {swapOptions.map(alt => (
-                          <div
-                            key={alt.id}
-                            onClick={() => openQuickView(alt)}
-                            style={{
-                              background: '#fff',
-                              border: '1.5px solid var(--bg3)',
-                              borderRadius: '12px',
-                              padding: '0.4rem',
-                              cursor: 'pointer',
-                              textAlign: 'center',
-                              transition: 'all 0.2s ease',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg3)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                          >
-                            <ImageWithFallback src={alt.image} alt={alt.title} style={{ width: '100%', height: '60px', objectFit: 'contain', borderRadius: '6px' }} />
-                            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alt.title}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
+                  const swapPrice = quickViewProduct.swap_price > 0 ? quickViewProduct.swap_price : 0;
+                  const allProducts = Object.values(inventoryProducts).flat();
 
-                {/* Figure -> Combo Upsell */}
-                {quickViewProduct.categoryId == 1 && (() => {
-                  const figurePrice = quickViewProduct.price;
-                  const availableCombos = Object.values(inventoryProducts).flat()
-                    .filter(c => c.categoryId == 13 && (c.swap_price ? Number(c.swap_price) : c.price) === figurePrice && c.inStock);
-                  
-                  if (availableCombos.length === 0) return null;
+                  // Figures at the swap_price so customer can pick which character
+                  const figureOptions = swapPrice > 0
+                    ? allProducts.filter(p => p.categoryId == 1 && p.price === swapPrice && p.inStock)
+                    : [];
+
+                  // Other combos (so customer can browse between combos)
+                  const otherCombos = allProducts
+                    .filter(p => p.categoryId == 13 && p.id !== quickViewProduct.id && p.inStock);
+
+                  if (figureOptions.length === 0 && otherCombos.length === 0) return null;
+
                   return (
-                    <div className="combo-upsell-section" style={{ marginTop: '0.8rem', padding: '0.8rem', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #dcfce7' }}>
-                      <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#166534', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Package size={16} /> Available in a Combo!
-                      </h4>
-                      <p style={{ fontSize: '0.78rem', color: '#14532d', marginBottom: '0.6rem' }}>
-                        Get this figure bundled in one of these premium combos:
-                      </p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
-                        {availableCombos.map(alt => (
-                          <div
-                            key={alt.id}
-                            onClick={() => openQuickView(alt)}
-                            style={{
-                              background: '#fff',
-                              border: '1.5px solid #bbf7d0',
-                              borderRadius: '12px',
-                              padding: '0.4rem',
-                              cursor: 'pointer',
-                              textAlign: 'center',
-                              transition: 'all 0.2s ease',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#bbf7d0'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                          >
-                            <ImageWithFallback src={alt.image} alt={alt.title} style={{ width: '100%', height: '60px', objectFit: 'contain', borderRadius: '6px' }} />
-                            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alt.title}</div>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534' }}>₹{alt.price}</div>
+                    <>
+                      {/* Select Character section */}
+                      {figureOptions.length > 0 && (
+                        <div style={{ marginTop: '0.8rem', padding: '0.8rem', background: '#fdf2f4', borderRadius: '12px', border: '1px solid #fce7eb' }}>
+                          <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--maroon)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Sparkles size={16} /> Select Character (₹{swapPrice.toLocaleString('en-IN')} figures)
+                          </h4>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
+                            Choose any character you want in this combo:
+                          </p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
+                            {figureOptions.map(fig => (
+                              <div
+                                key={fig.id}
+                                onClick={() => openQuickView(fig)}
+                                style={{ background: '#fff', border: '2px solid #fce7eb', borderRadius: '10px', padding: '0.35rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s ease' }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.transform = 'scale(1.05)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#fce7eb'; e.currentTarget.style.transform = 'scale(1)'; }}
+                              >
+                                <ImageWithFallback src={fig.image} alt={fig.title} style={{ width: '100%', height: '55px', objectFit: 'contain', borderRadius: '6px' }} />
+                                <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fig.title}</div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </div>
+                        </div>
+                      )}
+
+                      {/* Other Combos section */}
+                      {otherCombos.length > 0 && (
+                        <div style={{ marginTop: '0.6rem', padding: '0.8rem', background: '#f5f3ff', borderRadius: '12px', border: '1px solid #e9e5ff' }}>
+                          <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#5b21b6', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Package size={16} /> More Combos
+                          </h4>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.5rem', maxHeight: '160px', overflowY: 'auto' }}>
+                            {otherCombos.map(c => (
+                              <div
+                                key={c.id}
+                                onClick={() => openQuickView(c)}
+                                style={{ background: '#fff', border: '2px solid #e9e5ff', borderRadius: '10px', padding: '0.35rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s ease' }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#5b21b6'; e.currentTarget.style.transform = 'scale(1.05)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9e5ff'; e.currentTarget.style.transform = 'scale(1)'; }}
+                              >
+                                <ImageWithFallback src={c.image} alt={c.title} style={{ width: '100%', height: '55px', objectFit: 'contain', borderRadius: '6px' }} />
+                                <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</div>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#5b21b6' }}>₹{c.price}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
 
