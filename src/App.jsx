@@ -1867,9 +1867,10 @@ export default function App() {
             <span>{user ? 'Account' : 'Sign In'}</span>
           </button>
         </div>
-        <div className="header-right-brand" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <button className="search-btn-header" onClick={() => setSearchOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: scrolled ? '#000' : 'var(--text)', display: 'flex', transition: 'transform 0.2s' }}>
-            <Search size={24} />
+        <div className="header-right-brand" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button className="search-btn-header" onClick={() => setSearchOpen(true)} style={{ background: 'var(--white)', border: '1px solid rgba(194,72,91,0.2)', padding: '0.4rem 0.9rem', borderRadius: '999px', cursor: 'pointer', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(194,72,91,0.08)' }}>
+            <Search size={18} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, display: window.innerWidth > 480 ? 'block' : 'none' }}>Search</span>
           </button>
           <img src="/logo.jpeg" alt="AnimeCurio Logo" className="header-logo-img" />
         </div>
@@ -2000,12 +2001,13 @@ export default function App() {
                 <button className="btn-primary" onClick={() => navigate('collection')}>
                   <Zap size={16} /> Start Collecting
                 </button>
-                <button className="btn-secondary" onClick={() => scrollTo('mystery')}>
-                  <Package size={16} /> Mystery Balls
-                </button>
-                {!user && (
-                  <button className="btn-secondary" onClick={() => setAccountOpen(true)} style={{ background: 'rgba(255, 255, 255, 0.1)', borderColor: 'rgba(255, 255, 255, 0.4)', color: 'white' }}>
+                {!user ? (
+                  <button className="btn-secondary" onClick={() => setAccountOpen(true)} style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.4)', color: 'white' }}>
                     <KeyRound size={16} /> Login / Sign Up
+                  </button>
+                ) : (
+                  <button className="btn-secondary" onClick={() => scrollTo('mystery')}>
+                    <Package size={16} /> Mystery Balls
                   </button>
                 )}
               </div>
@@ -2243,13 +2245,14 @@ export default function App() {
                 )}
 
                 {/* Combo Character Swap — lets user choose alternative figures at the same price */}
-                {quickViewProduct.category === 'combos' && (() => {
+                {quickViewProduct.categoryId == 13 && (() => {
                   const targetSwapPrice = quickViewProduct.swap_price ? Number(quickViewProduct.swap_price) : quickViewProduct.price;
-                  const swapOptions = (inventoryProducts['anime-figures'] || [])
-                    .filter(p => p.price === targetSwapPrice && p.id !== quickViewProduct.id && p.inStock);
+                  const swapOptions = Object.values(inventoryProducts).flat()
+                    .filter(p => p.categoryId == 1 && p.price === targetSwapPrice && p.id !== quickViewProduct.id && p.inStock);
+                  
                   if (swapOptions.length === 0) return null;
                   return (
-                    <div className="combo-swap-section" style={{ marginTop: '0.5rem' }}>
+                    <div className="combo-swap-section" style={{ marginTop: '0.8rem', padding: '0.8rem', background: '#fdf2f4', borderRadius: '12px', border: '1px solid #fce7eb' }}>
                       <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--maroon)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <Sparkles size={16} /> Swap Character — (₹{targetSwapPrice.toLocaleString('en-IN')})
                       </h4>
@@ -2276,6 +2279,49 @@ export default function App() {
                           >
                             <ImageWithFallback src={alt.image} alt={alt.title} style={{ width: '100%', height: '60px', objectFit: 'contain', borderRadius: '6px' }} />
                             <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alt.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Figure -> Combo Upsell */}
+                {quickViewProduct.categoryId == 1 && (() => {
+                  const figurePrice = quickViewProduct.price;
+                  const availableCombos = Object.values(inventoryProducts).flat()
+                    .filter(c => c.categoryId == 13 && (c.swap_price ? Number(c.swap_price) : c.price) === figurePrice && c.inStock);
+                  
+                  if (availableCombos.length === 0) return null;
+                  return (
+                    <div className="combo-upsell-section" style={{ marginTop: '0.8rem', padding: '0.8rem', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #dcfce7' }}>
+                      <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#166534', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Package size={16} /> Available in a Combo!
+                      </h4>
+                      <p style={{ fontSize: '0.78rem', color: '#14532d', marginBottom: '0.6rem' }}>
+                        Get this figure bundled in one of these premium combos:
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
+                        {availableCombos.map(alt => (
+                          <div
+                            key={alt.id}
+                            onClick={() => openQuickView(alt)}
+                            style={{
+                              background: '#fff',
+                              border: '1.5px solid #bbf7d0',
+                              borderRadius: '12px',
+                              padding: '0.4rem',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s ease',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#bbf7d0'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                          >
+                            <ImageWithFallback src={alt.image} alt={alt.title} style={{ width: '100%', height: '60px', objectFit: 'contain', borderRadius: '6px' }} />
+                            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alt.title}</div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534' }}>₹{alt.price}</div>
                           </div>
                         ))}
                       </div>
