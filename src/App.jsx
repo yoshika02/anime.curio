@@ -1478,6 +1478,8 @@ export default function App() {
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchResult, setSearchResult] = useState([]);
   const [page, setPage] = useState(window.location.hash === '#collection' ? 'collection' : 'home');
   const [scrolled, setScrolled] = useState(false);
   const [inventoryProducts, setInventoryProducts] = useState(EMPTY_PRODUCTS);
@@ -1866,7 +1868,7 @@ export default function App() {
           </button>
         </div>
         <div className="header-right-brand" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <button className="search-btn-header" onClick={() => alert('Search functionality coming soon!')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: scrolled ? '#000' : 'var(--text)', display: 'flex', transition: 'transform 0.2s' }}>
+          <button className="search-btn-header" onClick={() => setSearchOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: scrolled ? '#000' : 'var(--text)', display: 'flex', transition: 'transform 0.2s' }}>
             <Search size={24} />
           </button>
           <img src="/logo.jpeg" alt="AnimeCurio Logo" className="header-logo-img" />
@@ -1941,6 +1943,42 @@ export default function App() {
           orders={orders}
           onClose={() => setAccountOpen(false)}
         />
+      )}
+
+      {/* Search Modal */}
+      {searchOpen && (
+        <div className="account-modal-overlay" onClick={() => setSearchOpen(false)}>
+          <div className="account-modal" onClick={e => e.stopPropagation()} style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '80vh', maxWidth: '500px', width: '90%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', color: 'var(--maroon)', margin: 0 }}>Search Products</h2>
+              <button onClick={() => setSearchOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
+            </div>
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search by name or category..."
+              style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc', fontSize: '1rem', fontFamily: 'inherit' }}
+              onChange={e => {
+                const query = e.target.value.toLowerCase();
+                if (!query) return setSearchResult([]);
+                const all = Object.values(inventoryProducts).flat();
+                setSearchResult(all.filter(p => p.title.toLowerCase().includes(query) || (p.category && p.category.toLowerCase().includes(query))));
+              }}
+            />
+            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {searchResult.slice(0, 20).map(p => (
+                <div key={p.id} onClick={() => { setQuickViewProduct(p); setSearchOpen(false); }} style={{ display: 'flex', gap: '1rem', padding: '0.5rem', cursor: 'pointer', borderRadius: '8px', alignItems: 'center', borderBottom: '1px solid #eee', background: '#fff' }} onMouseOver={e => e.currentTarget.style.background='#fdf2f4'} onMouseOut={e => e.currentTarget.style.background='#fff'}>
+                  <ImageWithFallback src={p.image} alt={p.title} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px' }} />
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--text)' }}>{p.title}</div>
+                    <div style={{ color: 'var(--maroon)', fontSize: '0.85rem', fontWeight: 'bold' }}>₹{p.price.toLocaleString('en-IN')}</div>
+                  </div>
+                </div>
+              ))}
+              {searchResult.length === 0 && <div style={{ textAlign: 'center', color: '#999', marginTop: '2rem', fontSize: '0.9rem' }}>Start typing to find products...</div>}
+            </div>
+          </div>
+        </div>
       )}
 
       {page === 'home' ? (
@@ -2206,17 +2244,17 @@ export default function App() {
 
                 {/* Combo Character Swap — lets user choose alternative figures at the same price */}
                 {quickViewProduct.category === 'combos' && (() => {
-                  const comboPrice = quickViewProduct.price;
+                  const targetSwapPrice = quickViewProduct.swap_price ? Number(quickViewProduct.swap_price) : quickViewProduct.price;
                   const swapOptions = (inventoryProducts['anime-figures'] || [])
-                    .filter(p => p.price === comboPrice && p.id !== quickViewProduct.id && p.inStock);
+                    .filter(p => p.price === targetSwapPrice && p.id !== quickViewProduct.id && p.inStock);
                   if (swapOptions.length === 0) return null;
                   return (
                     <div className="combo-swap-section" style={{ marginTop: '0.5rem' }}>
                       <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--maroon)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Sparkles size={16} /> Swap Character — Same Price (₹{comboPrice.toLocaleString('en-IN')})
+                        <Sparkles size={16} /> Swap Character — (₹{targetSwapPrice.toLocaleString('en-IN')})
                       </h4>
                       <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
-                        You can choose any of these characters instead at the same price:
+                        You can choose any of these characters instead for this combo:
                       </p>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
                         {swapOptions.map(alt => (

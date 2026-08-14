@@ -82,7 +82,7 @@ function doGet(e) {
     }
 
     var headers = data[0].map(function(h) { return String(h).trim(); });
-    var numericFields = ['id','price','actualPrice','originalPrice','mrp','MRP','rating','reviews','stock','category_id','categoryId'];
+    var numericFields = ['id','price','actualPrice','originalPrice','mrp','MRP','rating','reviews','stock','category_id','categoryId','swap_price'];
     var products = data
       .slice(1)
       .filter(function(row) { return row[0] !== '' && row[0] !== null && row[0] !== undefined; })
@@ -153,9 +153,9 @@ function doPost(e) {
 
     Logger.log('Recording order: ' + orderId + ' | customer: ' + name + ' | email: ' + email);
 
-    // 1. Write to Google Sheet
+    // 1. Write to Google Sheet (prepend quote to whatsapp to avoid formula #ERROR!)
     sheet.appendRow([
-      orderId, timestamp, name, whatsapp, email,
+      orderId, timestamp, name, (whatsapp ? "'" + whatsapp : ""), email,
       business, address, city, state, pincode, orderItems, orderTotal, status
     ]);
     Logger.log('Row written to sheet successfully');
