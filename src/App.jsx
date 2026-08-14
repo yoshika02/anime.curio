@@ -264,6 +264,7 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     categoryId: categoryId || 1,
     categoryName,
     swap_price: swapPrice,
+    combo_image: String(rawProduct?.combo_image || rawProduct?.comboImage || '').trim(),
   };
 }
 
@@ -1505,6 +1506,7 @@ export default function App() {
   }, [inventoryProducts, carouselPaused]);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [quickViewImageIndex, setQuickViewImageIndex] = useState(0);
+  const [selectedComboVariant, setSelectedComboVariant] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const collectionScrollRef = useRef(null);
 
@@ -1724,6 +1726,7 @@ export default function App() {
   const openQuickView = (product) => {
     setQuickViewProduct(product);
     setQuickViewImageIndex(0);
+    setSelectedComboVariant(null);
     setProductReviews([]);
     setReviewsLoading(true);
     fetch(`${D1_API}/reviews?productId=${product.id}`)
@@ -1744,6 +1747,7 @@ export default function App() {
 
   const closeQuickView = () => {
     setQuickViewProduct(null);
+    setSelectedComboVariant(null);
     setNewReviewText('');
     setNewReviewRating(5);
   };
@@ -2148,8 +2152,8 @@ export default function App() {
             <div className="product-modal-grid">
               <div className="product-modal-left" style={{ position: 'relative' }}>
                 <ImageWithFallback
-                  src={quickViewProduct.galleryImages?.[quickViewImageIndex]?.url || quickViewProduct.image}
-                  alt={quickViewProduct.title}
+                  src={selectedComboVariant ? (selectedComboVariant.combo_image || selectedComboVariant.image) : (quickViewProduct.galleryImages?.[quickViewImageIndex]?.url || quickViewProduct.image)}
+                  alt={selectedComboVariant ? selectedComboVariant.title : quickViewProduct.title}
                   className="product-modal-main-img"
                 />
                 <button 
@@ -2269,18 +2273,31 @@ export default function App() {
                             Choose any character you want in this combo:
                           </p>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
-                            {figureOptions.map(fig => (
-                              <div
-                                key={fig.id}
-                                onClick={() => openQuickView(fig)}
-                                style={{ background: '#fff', border: '2px solid #fce7eb', borderRadius: '10px', padding: '0.35rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s ease' }}
-                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.transform = 'scale(1.05)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#fce7eb'; e.currentTarget.style.transform = 'scale(1)'; }}
-                              >
-                                <ImageWithFallback src={fig.image} alt={fig.title} style={{ width: '100%', height: '55px', objectFit: 'contain', borderRadius: '6px' }} />
-                                <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fig.title}</div>
-                              </div>
-                            ))}
+                            {figureOptions.map(fig => {
+                              const isSelected = selectedComboVariant?.id === fig.id;
+                              return (
+                                <div
+                                  key={fig.id}
+                                  onClick={() => setSelectedComboVariant(fig)}
+                                  style={{ 
+                                    background: isSelected ? '#fff1f2' : '#fff', 
+                                    border: isSelected ? '2px solid var(--maroon)' : '2px solid #fce7eb', 
+                                    borderRadius: '10px', 
+                                    padding: '0.35rem', 
+                                    cursor: 'pointer', 
+                                    textAlign: 'center', 
+                                    transition: 'all 0.2s ease',
+                                    transform: isSelected ? 'scale(1.03)' : 'scale(1)',
+                                    boxShadow: isSelected ? '0 4px 12px rgba(194,72,91,0.15)' : 'none'
+                                  }}
+                                  onMouseEnter={e => { if(!isSelected) { e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.transform = 'scale(1.05)'; } }}
+                                  onMouseLeave={e => { if(!isSelected) { e.currentTarget.style.borderColor = '#fce7eb'; e.currentTarget.style.transform = 'scale(1)'; } }}
+                                >
+                                  <ImageWithFallback src={fig.image} alt={fig.title} style={{ width: '100%', height: '55px', objectFit: 'contain', borderRadius: '6px' }} />
+                                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fig.title}</div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -2317,7 +2334,16 @@ export default function App() {
                     type="button"
                     className="btn-primary"
                     onClick={() => {
-                      handleAdd(quickViewProduct);
+                      if (quickViewProduct.categoryId == 13 && selectedComboVariant) {
+                        handleAdd({
+                          ...quickViewProduct,
+                          title: `${quickViewProduct.title} (${selectedComboVariant.title})`,
+                          id: `${quickViewProduct.id}-${selectedComboVariant.id}`,
+                          image: selectedComboVariant.combo_image || selectedComboVariant.image
+                        });
+                      } else {
+                        handleAdd(quickViewProduct);
+                      }
                       closeQuickView();
                     }}
                     disabled={!quickViewProduct.inStock}
@@ -2329,7 +2355,16 @@ export default function App() {
                     className="btn-secondary btn-buy-now"
                     onClick={() => {
                       if (!quickViewProduct.inStock) return;
-                      handleAdd(quickViewProduct);
+                      if (quickViewProduct.categoryId == 13 && selectedComboVariant) {
+                        handleAdd({
+                          ...quickViewProduct,
+                          title: `${quickViewProduct.title} (${selectedComboVariant.title})`,
+                          id: `${quickViewProduct.id}-${selectedComboVariant.id}`,
+                          image: selectedComboVariant.combo_image || selectedComboVariant.image
+                        });
+                      } else {
+                        handleAdd(quickViewProduct);
+                      }
                       closeQuickView();
                       setCartOpen(true);
                     }}
