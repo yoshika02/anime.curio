@@ -1019,8 +1019,16 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
   // ─── Handle Sign Up via D1 ────────────────────────────────────────────────
   const handleSignUp = async (e) => {
     e.preventDefault();
+    setLoginError('');
     const cleanPhone = regPhone.replace(/\D/g, '').slice(-10);
-    if (!regName || !regEmail || !regPassword || cleanPhone.length < 10) return;
+    if (!regName || !regEmail || !regPassword) {
+      setLoginError('Please fill in all required fields.');
+      return;
+    }
+    if (cleanPhone.length < 10) {
+      setLoginError('Please enter a valid 10-digit phone number.');
+      return;
+    }
     setAuthLoading(true);
 
     const newUser = {
@@ -1218,6 +1226,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
           </div>
         ) : authMode === 'signup' ? (
           <div className="account-modal-body">
+            {loginError && <div className="auth-error-badge">{loginError}</div>}
             <form onSubmit={handleSignUp} className="account-form">
               <div className="form-group">
                 <label>Full Name *</label>
