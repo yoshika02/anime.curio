@@ -58,7 +58,7 @@ function testEmail() {
 // ─── GET: Serve Inventory Data ────────────────────────────────────────────────
 function doGet(e) {
   try {
-    var ss    = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1_ZqBEwoE9pcMV_rSDOj3LN-wf_A_ZDxltpeCFO6ckxI/edit');
+    var ss    = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1qDKhzlsTcQw-wmiK9i9aGzhZFbzA0w_rwQ-95pl1tRM/edit');
     // Look for inventory sheet — NOT the orders sheet
     var sheet = ss.getSheetByName('anime inventory')
              || ss.getSheetByName('Inventory')
@@ -126,7 +126,7 @@ function doGet(e) {
 // ─── POST: Record Order + Send Emails ────────────────────────────────────────
 function doPost(e) {
   try {
-    var ss    = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1_ZqBEwoE9pcMV_rSDOj3LN-wf_A_ZDxltpeCFO6ckxI/edit');
+    var ss    = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1qDKhzlsTcQw-wmiK9i9aGzhZFbzA0w_rwQ-95pl1tRM/edit');
     var sheet = ss.getSheetByName(ORDER_SHEET_NAME);
 
     // Create the orders sheet if it doesn't exist
@@ -310,7 +310,7 @@ function onEdit(e) {
 }
 
 function updateInventory(orderItemsStr) {
-  var ss = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1_ZqBEwoE9pcMV_rSDOj3LN-wf_A_ZDxltpeCFO6ckxI/edit');
+  var ss = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1qDKhzlsTcQw-wmiK9i9aGzhZFbzA0w_rwQ-95pl1tRM/edit');
   // Read from 'anime inventory' or the very first sheet
   var invSheet = ss.getSheetByName('anime inventory') || ss.getSheets()[0];
   if (!invSheet) return;

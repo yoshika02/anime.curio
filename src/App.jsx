@@ -391,13 +391,14 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
   let discountLabel = '';
 
   if (appliedCoupon) {
-    if (appliedCoupon.type === 'shipping') {
+    const cType = String(appliedCoupon.type).toLowerCase();
+    if (cType === 'shipping') {
       isFreeShipping = true;
       discountLabel = `Free Shipping Code: ${appliedCoupon.code}`;
-    } else if (appliedCoupon.type === 'percentage') {
+    } else if (cType === 'percentage') {
       discountAmount = Math.round(subtotal * (Number(appliedCoupon.value) / 100));
       discountLabel = `${appliedCoupon.value}% Off (${appliedCoupon.code})`;
-    } else if (appliedCoupon.type === 'fixed') {
+    } else if (cType === 'fixed') {
       discountAmount = Number(appliedCoupon.value);
       discountLabel = `₹${appliedCoupon.value} Off (${appliedCoupon.code})`;
     }
@@ -486,7 +487,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       `📦 *Items:* \n${itemsSummaryFormatted}\n\n` +
       `💵 *Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
       (appliedCoupon ? `🎟️ *Coupon (${appliedCoupon.code}):* -₹${discountAmount.toLocaleString('en-IN')}\n` : '') +
-      `🚚 *Shipping Charges:* ${isFreeShipping ? (appliedCoupon?.type === 'shipping' ? 'FREE (Coupon)' : 'FREE (Orders ₹999+)') : '₹79'}\n` +
+      `🚚 *Shipping Charges:* ${isFreeShipping ? (appliedCoupon && String(appliedCoupon.type).toLowerCase() === 'shipping' ? 'FREE (Coupon)' : 'FREE (Orders ₹999+)') : '₹79'}\n` +
       `💰 *Total Amount:* ₹${grandTotal.toLocaleString('en-IN')}`;
 
     const newOrder = {
@@ -679,7 +680,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                   {couponError && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{couponError}</span>}
                 </div>
 
-                {appliedCoupon && appliedCoupon.type !== 'shipping' && (
+                {appliedCoupon && String(appliedCoupon.type).toLowerCase() !== 'shipping' && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontWeight: 600 }}>
                     <span>Coupon Discount</span>
                     <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
@@ -884,7 +885,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                   {couponError && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{couponError}</span>}
                 </div>
 
-                {appliedCoupon && appliedCoupon.type !== 'shipping' && (
+                {appliedCoupon && String(appliedCoupon.type).toLowerCase() !== 'shipping' && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontWeight: 600 }}>
                     <span>Coupon Discount</span>
                     <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
