@@ -383,6 +383,21 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
     }
   }, [user]);
 
+  // Compute user orders for FIRST10 coupon logic
+  const userEmailLower = (user?.email || '').trim().toLowerCase();
+  const userOrders = React.useMemo(() => {
+    if (!userEmailLower) return [];
+    try {
+      const stored = JSON.parse(localStorage.getItem(`animecurio_orders_${userEmailLower}`) || '[]');
+      if (stored.length > 0) return stored;
+    } catch (e) {}
+    try {
+      const allStored = JSON.parse(localStorage.getItem('animecurio_orders') || '[]');
+      return allStored.filter(o => (o.email || '').trim().toLowerCase() === userEmailLower);
+    } catch (e) {}
+    return [];
+  }, [userEmailLower]);
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const FREE_SHIPPING_THRESHOLD = 999;
   
@@ -390,17 +405,31 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
   let isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   let discountLabel = '';
 
-  if (appliedCoupon) {
-    const cType = String(appliedCoupon.type).toLowerCase();
+  let activeCoupon = appliedCoupon;
+  let dynamicCouponError = '';
+
+  if (activeCoupon) {
+    const code = String(activeCoupon.code).toUpperCase();
+    if (code === 'HMELFREESHIP' && !address.toLowerCase().includes('hmel')) {
+      activeCoupon = null;
+      dynamicCouponError = 'HMELFREESHIP requires "HMEL" in shipping address.';
+    } else if (code === 'FIRST10' && userOrders.length > 0) {
+      activeCoupon = null;
+      dynamicCouponError = 'FIRST10 is only valid for your first order.';
+    }
+  }
+
+  if (activeCoupon) {
+    const cType = String(activeCoupon.type).toLowerCase();
     if (cType === 'shipping') {
       isFreeShipping = true;
-      discountLabel = `Free Shipping Code: ${appliedCoupon.code}`;
+      discountLabel = `Free Shipping Code: ${activeCoupon.code}`;
     } else if (cType === 'percentage') {
-      discountAmount = Math.round(subtotal * (Number(appliedCoupon.value) / 100));
-      discountLabel = `${appliedCoupon.value}% Off (${appliedCoupon.code})`;
+      discountAmount = Math.round(subtotal * (Number(activeCoupon.value) / 100));
+      discountLabel = `${activeCoupon.value}% Off (${activeCoupon.code})`;
     } else if (cType === 'fixed') {
-      discountAmount = Number(appliedCoupon.value);
-      discountLabel = `₹${appliedCoupon.value} Off (${appliedCoupon.code})`;
+      discountAmount = Number(activeCoupon.value);
+      discountLabel = `₹${activeCoupon.value} Off (${activeCoupon.code})`;
     }
   }
 
@@ -412,7 +441,17 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
     setCouponError('');
     if (!couponCodeInput.trim()) return;
     const match = availableCoupons.find(c => String(c.code).toLowerCase() === couponCodeInput.trim().toLowerCase());
+    
     if (match) {
+      const code = String(match.code).toUpperCase();
+      if (code === 'HMELFREESHIP' && !address.toLowerCase().includes('hmel')) {
+        setCouponError('Please enter your HMEL shipping address first before applying this coupon.');
+        return;
+      }
+      if (code === 'FIRST10' && userOrders.length > 0) {
+        setCouponError('This coupon is only valid for your first order.');
+        return;
+      }
       setAppliedCoupon(match);
       setCouponCodeInput('');
     } else {
@@ -486,8 +525,8 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${formattedPhone})\n\n` +
       `📦 *Items:* \n${itemsSummaryFormatted}\n\n` +
       `💵 *Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
-      (appliedCoupon ? `🎟️ *Coupon (${appliedCoupon.code}):* -₹${discountAmount.toLocaleString('en-IN')}\n` : '') +
-      `🚚 *Shipping Charges:* ${isFreeShipping ? (appliedCoupon && String(appliedCoupon.type).toLowerCase() === 'shipping' ? 'FREE (Coupon)' : 'FREE (Orders ₹999+)') : '₹79'}\n` +
+      (activeCoupon ? `🎟️ *Coupon (${activeCoupon.code}):* -₹${discountAmount.toLocaleString('en-IN')}\n` : '') +
+      `🚚 *Shipping Charges:* ${isFreeShipping ? (activeCoupon && String(activeCoupon.type).toLowerCase() === 'shipping' ? 'FREE (Coupon)' : 'FREE (Orders ₹999+)') : '₹79'}\n` +
       `💰 *Total Amount:* ₹${grandTotal.toLocaleString('en-IN')}`;
 
     const newOrder = {
@@ -680,7 +719,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                   {couponError && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{couponError}</span>}
                 </div>
 
-                {appliedCoupon && String(appliedCoupon.type).toLowerCase() !== 'shipping' && (
+                {activeCoupon && String(activeCoupon.type).toLowerCase() !== 'shipping' && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontWeight: 600 }}>
                     <span>Coupon Discount</span>
                     <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
@@ -885,7 +924,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                   {couponError && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{couponError}</span>}
                 </div>
 
-                {appliedCoupon && String(appliedCoupon.type).toLowerCase() !== 'shipping' && (
+                {activeCoupon && String(activeCoupon.type).toLowerCase() !== 'shipping' && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontWeight: 600 }}>
                     <span>Coupon Discount</span>
                     <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
