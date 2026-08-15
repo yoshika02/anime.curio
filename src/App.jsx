@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search } from 'lucide-react';
+import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search, Eye, EyeOff } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
@@ -18,6 +18,7 @@ export const CATEGORIES = [
   { key: 'magnets', label: 'Magnets', backend: '11. magnets' },
   { key: 'mystery-collection', label: 'Mystery Collection', backend: '12. mystry collection' },
   { key: 'combos', label: 'Combos', backend: '13. combos' },
+  { key: 'adult-figures', label: 'Adult Figures', backend: '14. adult figures' },
 ];
 
 const EMPTY_PRODUCTS = CATEGORIES.reduce((acc, cat) => {
@@ -25,7 +26,7 @@ const EMPTY_PRODUCTS = CATEGORIES.reduce((acc, cat) => {
   return acc;
 }, {});
 
-const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxu4FUgd5vYzqhhdJH7s-0anQ6pHyfysrRFm3hC_NsSFHmYLlSfJkLLo-e_k1-zOrakwA/exec';
+const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbzr_k0r8j3Me8v2CXiYl1vNFN5Sx29QSXWMMNEBO9nmQeFUPLYjcLRQLo-f47Dp53GuIg/exec';
 
 // Cloudflare D1 API (Pages Functions — relative URL works in production + preview)
 const D1_API = '/api';
@@ -343,7 +344,7 @@ function WishlistSidebar({ wishlist, onClose, onAdd, onToggleWishlist }) {
 }
 
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
-function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user, setUser, onOpenAccount }) {
+function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user, setUser, onOpenAccount, availableCoupons = [] }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
   const [customNote, setCustomNote] = useState('');
   const [country, setCountry] = useState('India');
@@ -360,6 +361,10 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
   const [saveInfo, setSaveInfo] = useState(true);
   const [textOffers, setTextOffers] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState('');
+
+  const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
 
   // Auto-fill from user profile when logged in
   useEffect(() => {
@@ -380,10 +385,39 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const FREE_SHIPPING_THRESHOLD = 999;
-  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  
+  let discountAmount = 0;
+  let isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  let discountLabel = '';
+
+  if (appliedCoupon) {
+    if (appliedCoupon.type === 'shipping') {
+      isFreeShipping = true;
+      discountLabel = `Free Shipping Code: ${appliedCoupon.code}`;
+    } else if (appliedCoupon.type === 'percentage') {
+      discountAmount = Math.round(subtotal * (Number(appliedCoupon.value) / 100));
+      discountLabel = `${appliedCoupon.value}% Off (${appliedCoupon.code})`;
+    } else if (appliedCoupon.type === 'fixed') {
+      discountAmount = Number(appliedCoupon.value);
+      discountLabel = `₹${appliedCoupon.value} Off (${appliedCoupon.code})`;
+    }
+  }
+
   const shippingFee = isFreeShipping ? 0 : 79;
-  const grandTotal = subtotal + shippingFee;
+  const grandTotal = Math.max(0, subtotal - discountAmount) + shippingFee;
   const amountForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+
+  const handleApplyCoupon = () => {
+    setCouponError('');
+    if (!couponCodeInput.trim()) return;
+    const match = availableCoupons.find(c => String(c.code).toLowerCase() === couponCodeInput.trim().toLowerCase());
+    if (match) {
+      setAppliedCoupon(match);
+      setCouponCodeInput('');
+    } else {
+      setCouponError('Invalid or expired coupon code.');
+    }
+  };
 
   const handleSubmitOrder = (e) => {
     e.preventDefault();
@@ -451,7 +485,8 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
       `💳 *Payment:* Send Payment QR Code to Gmail (${email}) & WhatsApp (${formattedPhone})\n\n` +
       `📦 *Items:* \n${itemsSummaryFormatted}\n\n` +
       `💵 *Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
-      `🚚 *Shipping Charges:* ${isFreeShipping ? 'FREE (Orders ₹999+)' : '₹79'}\n` +
+      (appliedCoupon ? `🎟️ *Coupon (${appliedCoupon.code}):* -₹${discountAmount.toLocaleString('en-IN')}\n` : '') +
+      `🚚 *Shipping Charges:* ${isFreeShipping ? (appliedCoupon?.type === 'shipping' ? 'FREE (Coupon)' : 'FREE (Orders ₹999+)') : '₹79'}\n` +
       `💰 *Total Amount:* ₹${grandTotal.toLocaleString('en-IN')}`;
 
     const newOrder = {
@@ -504,7 +539,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
             pincode: pincode,
             orderItems: itemsSummary,
             customNote: customNote.trim() || '',
-            orderTotal: `₹${grandTotal.toLocaleString('en-IN')} (${isFreeShipping ? 'FREE Shipping' : 'incl. ₹79 shipping'})`,
+            orderTotal: `₹${grandTotal.toLocaleString('en-IN')} (${isFreeShipping ? 'FREE Shipping' : 'incl. ₹79 shipping'}${appliedCoupon ? `, Coupon: ${appliedCoupon.code}` : ''})`,
             status: 'Payment Pending (QR Sent)'
           })
         }).catch(err => console.log('Google Sheets Order sync note:', err));
@@ -516,7 +551,7 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
     // Delay WhatsApp redirect to ensure network requests dispatch first
     setTimeout(() => {
       try {
-        window.open(`https://wa.me/918360048865?text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://api.whatsapp.com/send?phone=918360048865&text=${encodeURIComponent(msg)}`, '_blank');
       } catch (err) {}
     }, 600);
   };
@@ -614,6 +649,43 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                   <span>Subtotal</span>
                   <span>₹{subtotal.toLocaleString('en-IN')}</span>
                 </div>
+                
+                {/* Coupon Input Area */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.25rem' }}>
+                  {appliedCoupon ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ecfdf5', border: '1px dashed #10b981', padding: '0.4rem 0.6rem', borderRadius: '8px' }}>
+                      <span style={{ color: '#047857', fontWeight: 600, fontSize: '0.8rem' }}>
+                        ✓ {discountLabel}
+                      </span>
+                      <button onClick={() => { setAppliedCoupon(null); setCouponError(''); }} style={{ background: 'none', border: 'none', color: '#047857', cursor: 'pointer' }}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <input 
+                        type="text" 
+                        value={couponCodeInput} 
+                        onChange={e => setCouponCodeInput(e.target.value.toUpperCase())} 
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleApplyCoupon(); } }}
+                        placeholder="Enter Coupon Code" 
+                        style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--bg3)', fontSize: '0.85rem' }} 
+                      />
+                      <button onClick={handleApplyCoupon} style={{ background: 'var(--bg3)', border: 'none', borderRadius: '8px', padding: '0 0.8rem', fontWeight: 600, cursor: 'pointer', color: 'var(--text)' }}>
+                        Apply
+                      </button>
+                    </div>
+                  )}
+                  {couponError && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{couponError}</span>}
+                </div>
+
+                {appliedCoupon && appliedCoupon.type !== 'shipping' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontWeight: 600 }}>
+                    <span>Coupon Discount</span>
+                    <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                   <span>Shipping Charges</span>
                   <span style={{ color: isFreeShipping ? '#16a34a' : 'var(--text)', fontWeight: isFreeShipping ? 600 : 'normal' }}>
@@ -783,6 +855,41 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                   <span>Subtotal</span>
                   <span>₹{subtotal.toLocaleString('en-IN')}</span>
                 </div>
+                
+                {/* Coupon Input Area */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.25rem' }}>
+                  {appliedCoupon ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ecfdf5', border: '1px dashed #10b981', padding: '0.4rem 0.6rem', borderRadius: '8px' }}>
+                      <span style={{ color: '#047857', fontWeight: 600, fontSize: '0.8rem' }}>
+                        ✓ {discountLabel}
+                      </span>
+                      <button onClick={() => { setAppliedCoupon(null); setCouponError(''); }} style={{ background: 'none', border: 'none', color: '#047857', cursor: 'pointer' }}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <input 
+                        type="text" 
+                        value={couponCodeInput} 
+                        onChange={e => setCouponCodeInput(e.target.value.toUpperCase())} 
+                        placeholder="Enter Coupon Code" 
+                        style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--bg3)', fontSize: '0.85rem' }} 
+                      />
+                      <button type="button" onClick={handleApplyCoupon} style={{ background: 'var(--bg3)', border: 'none', borderRadius: '8px', padding: '0 0.8rem', fontWeight: 600, cursor: 'pointer', color: 'var(--text)' }}>
+                        Apply
+                      </button>
+                    </div>
+                  )}
+                  {couponError && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{couponError}</span>}
+                </div>
+
+                {appliedCoupon && appliedCoupon.type !== 'shipping' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontWeight: 600 }}>
+                    <span>Coupon Discount</span>
+                    <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                   <span>Shipping Charges</span>
                   <span style={{ color: isFreeShipping ? '#16a34a' : 'var(--text)', fontWeight: isFreeShipping ? 600 : 'normal' }}>
@@ -812,6 +919,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [copiedTracking, setCopiedTracking] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Login State
   const [loginEmail, setLoginEmail] = useState('');
@@ -1027,18 +1135,24 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                   required
                   value={loginEmail}
                   onChange={e => setLoginEmail(e.target.value)}
-                  placeholder="e.g. yoshika@gmail.com"
+                  placeholder="e.g. animecurio@gmail.com"
                 />
               </div>
               <div className="form-group">
                 <label>Password *</label>
-                <input
-                  type="password"
-                  required
-                  value={loginPassword}
-                  onChange={e => setLoginPassword(e.target.value)}
-                  placeholder="Enter your password"
-                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={loginPassword}
+                    onChange={e => setLoginPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    style={{ width: '100%', paddingRight: '40px' }}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div style={{ textAlign: 'right', marginTop: '-0.25rem', marginBottom: '0.75rem' }}>
                 <button type="button" className="auth-forgot-link" onClick={() => setAuthMode('forgot')}>
@@ -1086,7 +1200,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                     required
                     value={forgotEmail}
                     onChange={e => setForgotEmail(e.target.value)}
-                    placeholder="e.g. yoshika@gmail.com"
+                    placeholder="e.g. animecurio@gmail.com"
                   />
                 </div>
                 <button type="submit" className="btn-primary full-width" style={{ marginTop: '0.5rem' }}>
@@ -1111,7 +1225,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                   required
                   value={regName}
                   onChange={e => setRegName(e.target.value)}
-                  placeholder="e.g. Yoshika"
+                  placeholder="e.g. AnimeCurio"
                 />
               </div>
               <div className="form-group">
@@ -1121,7 +1235,7 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
                   required
                   value={regEmail}
                   onChange={e => setRegEmail(e.target.value)}
-                  placeholder="e.g. yoshika@gmail.com"
+                  placeholder="e.g. animecurio@gmail.com"
                 />
               </div>
               <div className="form-group">
@@ -1143,13 +1257,19 @@ function AccountModal({ onClose, user, setUser, orders = [] }) {
               </div>
               <div className="form-group">
                 <label>Create Password *</label>
-                <input
-                  type="password"
-                  required
-                  value={regPassword}
-                  onChange={e => setRegPassword(e.target.value)}
-                  placeholder="Create a secure password"
-                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={regPassword}
+                    onChange={e => setRegPassword(e.target.value)}
+                    placeholder="Create a secure password"
+                    style={{ width: '100%', paddingRight: '40px' }}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div className="form-group">
                 <label>Shipping Address (optional)</label>
@@ -1479,6 +1599,7 @@ function FeaturesSection() {
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [cart, setCart] = useState([]);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -1552,7 +1673,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const sheetsApiUrl = 'https://script.google.com/macros/s/AKfycbxjh2XHXRmN51lCyEkE72ei6Vgnfc4TwZC4mobv7bxC37ZH-S-D_UCVnSyYknt8oCh7mg/exec';
+    const sheetsApiUrl = 'https://script.google.com/macros/s/AKfycbzr_k0r8j3Me8v2CXiYl1vNFN5Sx29QSXWMMNEBO9nmQeFUPLYjcLRQLo-f47Dp53GuIg/exec';
 
     let isMounted = true;
 
@@ -1582,6 +1703,7 @@ export default function App() {
 
         if (isMounted) {
           setInventoryProducts(loadedProducts);
+          if (payload.coupons) setAvailableCoupons(payload.coupons);
         }
       } catch (error) {
         console.error('Failed to load inventory from Google Sheets:', error);
@@ -1940,6 +2062,7 @@ export default function App() {
           user={user}
           setUser={setUser}
           onOpenAccount={() => setAccountOpen(true)}
+          availableCoupons={availableCoupons}
         />
       )}
 
@@ -2152,8 +2275,8 @@ export default function App() {
             <div className="product-modal-grid">
               <div className="product-modal-left" style={{ position: 'relative' }}>
                 <ImageWithFallback
-                  src={selectedComboVariant ? (selectedComboVariant.combo_image || selectedComboVariant.image) : (quickViewProduct.galleryImages?.[quickViewImageIndex]?.url || quickViewProduct.image)}
-                  alt={selectedComboVariant ? selectedComboVariant.title : quickViewProduct.title}
+                  src={(selectedComboVariant && quickViewImageIndex === 0) ? (selectedComboVariant.combo_image || selectedComboVariant.image) : (quickViewProduct.galleryImages?.[quickViewImageIndex]?.url || quickViewProduct.image)}
+                  alt={selectedComboVariant && quickViewImageIndex === 0 ? selectedComboVariant.title : quickViewProduct.title}
                   className="product-modal-main-img"
                 />
                 <button 
@@ -2278,7 +2401,7 @@ export default function App() {
                               return (
                                 <div
                                   key={fig.id}
-                                  onClick={() => setSelectedComboVariant(fig)}
+                                  onClick={() => { setSelectedComboVariant(fig); setQuickViewImageIndex(0); }}
                                   style={{ 
                                     background: isSelected ? '#fff1f2' : '#fff', 
                                     border: isSelected ? '2px solid var(--maroon)' : '2px solid #fce7eb', 
@@ -2326,6 +2449,40 @@ export default function App() {
                         </div>
                       )}
                     </>
+                  );
+                })()}
+
+                {/* ── Make it a Combo (For Single Products) ── */}
+                {quickViewProduct.categoryId != 13 && (() => {
+                  const allProducts = Object.values(inventoryProducts).flat();
+                  const availableCombos = allProducts.filter(p => p.categoryId == 13 && p.inStock && p.swap_price == quickViewProduct.price);
+                  
+                  if (availableCombos.length === 0) return null;
+
+                  return (
+                    <div style={{ marginTop: '0.8rem', padding: '0.8rem', background: '#fdf2f4', borderRadius: '12px', border: '1px solid #fce7eb' }}>
+                      <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--maroon)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Sparkles size={16} /> Make it a Combo & Save!
+                      </h4>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
+                        Get this character at a discount when you buy one of these combos:
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.5rem', maxHeight: '160px', overflowY: 'auto' }}>
+                        {availableCombos.map(c => (
+                          <div
+                            key={c.id}
+                            onClick={() => openQuickView(c)}
+                            style={{ background: '#fff', border: '2px solid #fce7eb', borderRadius: '10px', padding: '0.35rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s ease' }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.transform = 'scale(1.05)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#fce7eb'; e.currentTarget.style.transform = 'scale(1)'; }}
+                          >
+                            <ImageWithFallback src={c.image} alt={c.title} style={{ width: '100%', height: '55px', objectFit: 'contain', borderRadius: '6px' }} />
+                            <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</div>
+                            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--maroon)' }}>₹{c.price}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   );
                 })()}
 

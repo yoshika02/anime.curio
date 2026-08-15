@@ -17,9 +17,9 @@ var STORE_PHONE    = '+91 83600 48865';
 var STORE_NAME     = 'AnimeCurio';
 var STORE_TAGLINE  = 'Exclusive Anime Merchandise & Figurines';
 var STORE_WEBSITE  = 'https://animecurio.com';
-var PAYMENT_QR_URL = 'https://lh3.googleusercontent.com/d/1BFBF4fsq-jw2YG3HEg24dpuDSn-Qq5Ty=s600';
+var PAYMENT_QR_URL = 'https://drive.google.com/uc?export=view&id=1BFBF4fsq-jw2YG3HEg24dpuDSn-Qq5Ty';
 var PAYMENT_LINK   = 'https://drive.google.com/file/d/1BFBF4fsq-jw2YG3HEg24dpuDSn-Qq5Ty/view?usp=drive_link';
-var UPI_ID         = 'singhmandeep1722@oksbi';
+var UPI_ID         = 'YOSHIKAVERMA815@OKSBI';
 var ORDER_SHEET_NAME = 'order sheet anime curio';  // ← your exact sheet tab name
 
 // ─── TEST: Select "testEmail" in dropdown → click ▶ Run to authorize Gmail ───
@@ -58,7 +58,7 @@ function testEmail() {
 // ─── GET: Serve Inventory Data ────────────────────────────────────────────────
 function doGet(e) {
   try {
-    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var ss    = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1_ZqBEwoE9pcMV_rSDOj3LN-wf_A_ZDxltpeCFO6ckxI/edit');
     // Look for inventory sheet — NOT the orders sheet
     var sheet = ss.getSheetByName('anime inventory')
              || ss.getSheetByName('Inventory')
@@ -99,16 +99,34 @@ function doGet(e) {
         return obj;
       });
 
-    return jsonResponse({ products: products, total: products.length, updatedAt: new Date().toISOString() });
+    // Read Coupons if the sheet exists
+    var coupons = [];
+    var couponsSheet = ss.getSheetByName('Coupons') || ss.getSheetByName('coupons');
+    if (couponsSheet) {
+      var cData = couponsSheet.getDataRange().getValues();
+      if (cData.length > 1) {
+        var cHeaders = cData[0].map(function(h) { return String(h).trim().toLowerCase(); });
+        coupons = cData.slice(1).map(function(row) {
+          var obj = {};
+          cHeaders.forEach(function(header, i) {
+            obj[header] = String(row[i]).trim();
+          });
+          if (obj.value) obj.value = Number(obj.value) || 0;
+          return obj;
+        }).filter(function(c) { return c.code; });
+      }
+    }
+
+    return jsonResponse({ products: products, coupons: coupons, total: products.length, updatedAt: new Date().toISOString() });
   } catch (err) {
-    return jsonResponse({ products: [], error: err.message });
+    return jsonResponse({ products: [], coupons: [], error: err.message });
   }
 }
 
 // ─── POST: Record Order + Send Emails ────────────────────────────────────────
 function doPost(e) {
   try {
-    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var ss    = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1_ZqBEwoE9pcMV_rSDOj3LN-wf_A_ZDxltpeCFO6ckxI/edit');
     var sheet = ss.getSheetByName(ORDER_SHEET_NAME);
 
     // Create the orders sheet if it doesn't exist
@@ -262,4 +280,80 @@ function jsonResponse(data) {
   var output = ContentService.createTextOutput(JSON.stringify(data));
   output.setMimeType(ContentService.MimeType.JSON);
   return output;
+}
+
+// ─── ON EDIT TRIGGER: Automatically Deduct Inventory on Payment ───────────────
+function onEdit(e) {
+  if (!e || !e.range) return;
+  var sheet = e.source.getActiveSheet();
+  
+  // Only trigger on the Orders sheet
+  if (sheet.getName() !== ORDER_SHEET_NAME) return;
+
+  var row = e.range.getRow();
+  var col = e.range.getColumn();
+  
+  // Status is Column M (13)
+  if (col === 13 && row > 1) {
+    var status = e.range.getValue().toString().toLowerCase().trim();
+    
+    // Check if status is marked as 'paid'
+    if (status === 'paid') {
+      var orderItemsStr = sheet.getRange(row, 11).getValue().toString(); // Column K (11) is Order Items
+      if (orderItemsStr) {
+        updateInventory(orderItemsStr);
+        // Mark it to prevent double deduction
+        sheet.getRange(row, 13).setValue('Paid (Inventory Deducted)');
+      }
+    }
+  }
+}
+
+function updateInventory(orderItemsStr) {
+  var ss = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1_ZqBEwoE9pcMV_rSDOj3LN-wf_A_ZDxltpeCFO6ckxI/edit');
+  // Read from 'anime inventory' or the very first sheet
+  var invSheet = ss.getSheetByName('anime inventory') || ss.getSheets()[0];
+  if (!invSheet) return;
+  
+  var data = invSheet.getDataRange().getValues();
+  if (data.length <= 1) return;
+  
+  var headers = data[0].map(function(h) { return h.toString().toLowerCase().trim(); });
+  var titleIdx = headers.indexOf('title') !== -1 ? headers.indexOf('title') : headers.indexOf('name');
+  var qtyIdx = headers.indexOf('stock quantity') !== -1 ? headers.indexOf('stock quantity') : 
+               (headers.indexOf('stock') !== -1 ? headers.indexOf('stock') : headers.indexOf('quantity'));
+  
+  if (titleIdx === -1 || qtyIdx === -1) return;
+  
+  // Items string looks like: "1. Demon Slayer Combo (Tanjiro) x 1 - ₹399; 2. Naruto x 2 - ₹199"
+  var items = orderItemsStr.split(';');
+  
+  items.forEach(function(itemLine) {
+    // Regex matches: "1. Title x 2 - ₹"
+    var match = itemLine.match(/\d+\.\s+(.+?)\s+x\s+(\d+)\s+-/);
+    if (match) {
+      var itemName = match[1].trim();
+      var qtyToDeduct = parseInt(match[2], 10);
+      
+      // If it's a combo variant, the title might be "Combos (Tanjiro)"
+      // So we also want to extract just the base name "Combos" as a fallback
+      var baseName = itemName;
+      if (baseName.indexOf(' (') > 0) {
+        baseName = baseName.substring(0, baseName.indexOf(' (')).trim();
+      }
+      
+      // Find row in inventory and update
+      for (var i = 1; i < data.length; i++) {
+        var invTitle = data[i][titleIdx].toString().trim();
+        
+        if (invTitle.toLowerCase() === itemName.toLowerCase() || invTitle.toLowerCase() === baseName.toLowerCase()) {
+          var currentQty = parseInt(data[i][qtyIdx], 10) || 0;
+          var newQty = Math.max(0, currentQty - qtyToDeduct); // Don't drop below 0
+          
+          invSheet.getRange(i + 1, qtyIdx + 1).setValue(newQty);
+          break; // Stop looking once we found and deducted it
+        }
+      }
+    }
+  });
 }
