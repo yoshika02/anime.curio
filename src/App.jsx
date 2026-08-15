@@ -238,8 +238,10 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
   const categoryKey = matchedCategory ? matchedCategory.key : 'anime-figures';
   const categoryName = matchedCategory ? matchedCategory.label : 'Anime Figures';
 
-  // Carry swap_price from inventory (used by combos to find swappable figures)
+  // Carry swap_price and swap_ids from inventory (used by combos to find swappable figures)
   const swapPrice = Number(rawProduct?.swap_price || rawProduct?.swapPrice || 0);
+  const swapIdsRaw = String(rawProduct?.swap_ids || rawProduct?.swapIds || '');
+  const swapIds = swapIdsRaw.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
 
   return {
     id: Number(rawProduct?.id) || fallbackIndex + 1,
@@ -265,6 +267,7 @@ function normalizeProduct(rawProduct, fallbackIndex = 0) {
     categoryId: categoryId || 1,
     categoryName,
     swap_price: swapPrice,
+    swapIds,
     combo_image: String(rawProduct?.combo_image || rawProduct?.comboImage || '').trim(),
   };
 }
@@ -2422,10 +2425,13 @@ export default function App() {
                   const swapPrice = quickViewProduct.swap_price > 0 ? quickViewProduct.swap_price : 0;
                   const allProducts = Object.values(inventoryProducts).flat();
 
-                  // Figures at the swap_price so customer can pick which character
-                  const figureOptions = swapPrice > 0
-                    ? allProducts.filter(p => p.categoryId == 1 && p.price === swapPrice && p.inStock)
-                    : [];
+                  // Figures at the swap_price or specified by swap_ids so customer can pick which character
+                  const figureOptions = [];
+                  if (quickViewProduct.swapIds && quickViewProduct.swapIds.length > 0) {
+                    figureOptions.push(...allProducts.filter(p => quickViewProduct.swapIds.includes(p.id) && p.inStock));
+                  } else if (swapPrice > 0) {
+                    figureOptions.push(...allProducts.filter(p => p.categoryId == 1 && p.price === swapPrice && p.inStock));
+                  }
 
                   // Other combos (so customer can browse between combos)
                   const otherCombos = allProducts
@@ -2504,7 +2510,11 @@ export default function App() {
                 {/* ── Make it a Combo (For Single Products) ── */}
                 {quickViewProduct.categoryId != 13 && (() => {
                   const allProducts = Object.values(inventoryProducts).flat();
-                  const availableCombos = allProducts.filter(p => p.categoryId == 13 && p.inStock && p.swap_price == quickViewProduct.price);
+                  const availableCombos = allProducts.filter(p => {
+                    if (p.categoryId != 13 || !p.inStock) return false;
+                    if (p.swapIds && p.swapIds.length > 0) return p.swapIds.includes(quickViewProduct.id);
+                    return p.swap_price == quickViewProduct.price;
+                  });
                   
                   if (availableCombos.length === 0) return null;
 
