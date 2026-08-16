@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search, Eye, EyeOff } from 'lucide-react';
+import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search, Eye, EyeOff, Share2 } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
@@ -1658,7 +1658,7 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchResult, setSearchResult] = useState([]);
-  const [page, setPage] = useState(window.location.hash === '#collection' ? 'collection' : 'home');
+  const [page, setPage] = useState(window.location.hash.startsWith('#collection') ? 'collection' : 'home');
   const [scrolled, setScrolled] = useState(false);
   const [inventoryProducts, setInventoryProducts] = useState(EMPTY_PRODUCTS);
   const [carouselPaused, setCarouselPaused] = useState(false);
@@ -1712,7 +1712,7 @@ export default function App() {
 
   useEffect(() => {
     const onHashChange = () => {
-      setPage(window.location.hash === '#collection' ? 'collection' : 'home');
+      setPage(window.location.hash.startsWith('#collection') ? 'collection' : 'home');
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
@@ -1903,6 +1903,10 @@ export default function App() {
     setSelectedComboVariant(null);
     setProductReviews([]);
     setReviewsLoading(true);
+    
+    // Update URL hash for sharing
+    window.history.pushState(null, '', `#product-${product.id}`);
+
     fetch(`${D1_API}/reviews?productId=${product.id}`)
       .then(res => res.json())
       .then(data => {
@@ -1924,7 +1928,37 @@ export default function App() {
     setSelectedComboVariant(null);
     setNewReviewText('');
     setNewReviewRating(5);
+    
+    // Clear the product hash, revert to collection if applicable
+    if (window.location.hash.startsWith('#product-')) {
+      window.history.pushState(null, '', page === 'collection' ? '#collection' : window.location.pathname);
+    }
   };
+
+  const handleShareProduct = (product) => {
+    const url = `${window.location.origin}${window.location.pathname}#product-${product.id}`;
+    if (navigator.share) {
+      navigator.share({
+        title: product.title,
+        text: `Check out ${product.title} on AnimeCurio!`,
+        url: url
+      }).catch(() => {
+        navigator.clipboard.writeText(url);
+        alert('Product link copied to clipboard!');
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      alert('Product link copied to clipboard!');
+    }
+  };
+
+  useEffect(() => {
+    if (Object.keys(inventoryProducts).length > 0 && window.location.hash.startsWith('#product-')) {
+      const pid = parseInt(window.location.hash.replace('#product-', ''));
+      const p = Object.values(inventoryProducts).flat().find(x => x.id === pid);
+      if (p) openQuickView(p);
+    }
+  }, [inventoryProducts]);
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
@@ -2269,6 +2303,43 @@ export default function App() {
 
 
           </div>
+          
+          {/* Shop by Category */}
+          <div className="collection-page" style={{ paddingTop: '1rem', paddingBottom: '2rem' }}>
+            <div className="collection-page-header">
+              <h2 className="collection-title" style={{ textAlign: 'center', marginBottom: '1.5rem', width: '100%' }}>Shop by Category</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'center', padding: '0 1rem' }}>
+                {CATEGORIES.map(cat => (
+                  <button 
+                    key={cat.key}
+                    onClick={() => {
+                      // Note: We use window.location.hash logic
+                      navigate('collection');
+                      // CollectionPage sets initialCategory on mount, but we don't have a global state for it right now,
+                      // so we will just pass hash params or use activeCategory
+                      window.location.hash = '#collection-' + cat.key;
+                    }}
+                    style={{
+                      background: '#fff',
+                      border: '2px solid var(--bg3)',
+                      padding: '0.6rem 1.2rem',
+                      borderRadius: '12px',
+                      fontWeight: '700',
+                      fontSize: '0.9rem',
+                      color: 'var(--text)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.color = 'var(--maroon)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg3)'; e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Features */}
           <FeaturesSection />
@@ -2282,10 +2353,11 @@ export default function App() {
           cart={cart}
           onBack={() => navigate('home')}
           onView={openQuickView}
-          initialCategory={collectionCategory}
+          initialCategory={window.location.hash.includes('-') ? window.location.hash.split('-')[1] : 'all'}
           recentlyViewed={recentlyViewed}
           wishlist={wishlist}
           onToggleWishlist={handleToggleWishlist}
+          onShare={handleShareProduct}
         />
       )}
 
@@ -2342,6 +2414,14 @@ export default function App() {
                         fill={wishlist.find(p => p.id === quickViewProduct.id) ? "#ef4444" : "#ffe4e6"} 
                         color={wishlist.find(p => p.id === quickViewProduct.id) ? "#ef4444" : "#c2485b"} 
                     />
+                </button>
+                <button 
+                    className="wishlist-btn"
+                    style={{ position: 'absolute', top: '1rem', right: '3.5rem', zIndex: 10 }}
+                    onClick={(e) => { e.stopPropagation(); handleShareProduct(quickViewProduct); }}
+                    title="Share Product"
+                >
+                    <Share2 size={18} color="#64748b" />
                 </button>
                 {quickViewProduct.galleryImages?.length > 1 && (
                   <>

@@ -4,7 +4,7 @@ import ProductCard from './ProductCard';
 import ImageWithFallback from './imageUtils';
 import { CATEGORIES } from './App';
 
-export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all', recentlyViewed = [], wishlist = [], onToggleWishlist }) {
+export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all', recentlyViewed = [], wishlist = [], onToggleWishlist, onShare }) {
     const scrollRef = useRef(null);
     const recentScrollRef = useRef(null);
     const featured = (inventoryProducts?.['anime-figures'] || []).slice(0, 4);
@@ -20,7 +20,6 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
 
     const categories = [
         { key: 'all', label: 'All Products' },
-        { key: 'new', label: '✨ New Arrivals' },
         ...CATEGORIES
     ];
 
@@ -54,81 +53,7 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
 
     return (
         <main className="collection-page">
-            <div className="collection-page-header">
-                <div>
-                    <h2 className="collection-title">
-                        {activeCategory === 'all' ? '🔥 New Arrivals & Top Collectibles' : 'Top Collectibles'}
-                    </h2>
-                    <p className="collection-copy">
-                        Discover newly landed anime figures and trending merchandise front and center.
-                    </p>
-                </div>
-                <div className="collection-carousel-wrap">
-                    <button type="button" className="carousel-arrow left" onClick={() => scrollCarousel(-1)}>
-                        ‹
-                    </button>
-                    <div 
-                        className="collection-carousel" 
-                        ref={scrollRef}
-                        onMouseEnter={() => setPaused(true)}
-                        onMouseLeave={() => setPaused(false)}
-                    >
-                        {featured.map((item, idx) => (
-                            <div 
-                                key={item.id} 
-                                className="card-animate" 
-                                style={{ 
-                                    flex: '0 0 min(320px, 100%)', 
-                                    scrollSnapAlign: 'center',
-                                    padding: '4px'
-                                }}
-                            >
-                                <div className="card-glow-wrap">
-                                    <div
-                                        className={`carousel-card carousel-card-color-${(idx % 5) + 1}`}
-                                        onClick={() => onView?.(item)}
-                                        style={{ cursor: 'pointer', position: 'relative', border: 'none' }}
-                                    >
-                                        <button 
-                                            className={`wishlist-btn ${wishlist.find(p => p.id === item.id) ? 'active' : ''}`}
-                                            style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', zIndex: 10 }}
-                                            onClick={(e) => { e.stopPropagation(); onToggleWishlist(item); }}
-                                            title="Toggle Wishlist"
-                                        >
-                                            <Heart 
-                                                size={18} 
-                                                fill={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#ffe4e6"} 
-                                                color={wishlist.find(p => p.id === item.id) ? "#ef4444" : "#c2485b"} 
-                                            />
-                                        </button>
-                                        <ImageWithFallback
-                                            src={item.image}
-                                            alt={item.title}
-                                            className="carousel-image"
-                                        />
-                                        <div className="carousel-meta">
-                                            <span className="carousel-name">{item.title}</span>
-                                            <div className="carousel-price-group">
-                                                <span className="carousel-price"><span className="currency-symbol">₹</span>{item.price.toLocaleString('en-IN')}</span>
-                                                {item.actualPrice > item.price && (
-                                                    <span className="carousel-mrp-group">
-                                                        <span className="carousel-mrp-label">M.R.P:</span>
-                                                        <span className="carousel-price-old">₹{item.actualPrice.toLocaleString('en-IN')}</span>
-                                                        {item.discountPercent > 0 && <span className="carousel-discount">({item.discountPercent}% off)</span>}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <button type="button" className="carousel-arrow right" onClick={() => scrollCarousel(1)}>
-                        ›
-                    </button>
-                </div>
-            </div>
+
 
             {/* Recently Viewed Products Section */}
             {recentlyViewed.length > 0 && (
@@ -184,6 +109,7 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
                                     onView={onView} 
                                     wishlist={wishlist}
                                     onToggleWishlist={onToggleWishlist}
+                                    onShare={onShare}
                                 />
                             </div>
                         </div>

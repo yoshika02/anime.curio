@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, Eye, Star, ChevronLeft, ChevronRight, Info, Heart } from 'lucide-react';
+import { ShoppingCart, Eye, Star, ChevronLeft, ChevronRight, Info, Heart, Share2 } from 'lucide-react';
 import ImageWithFallback from './imageUtils';
 
 function Stars({ rating }) {
@@ -18,7 +18,7 @@ function Stars({ rating }) {
     );
 }
 
-export default function ProductCard({ product, onAdd, onView, currentQty = 0, wishlist = [], onToggleWishlist }) {
+export default function ProductCard({ product, onAdd, onView, currentQty = 0, wishlist = [], onToggleWishlist, onShare }) {
     const fallbackImage = '/placeholder.svg';
     const [added, setAdded] = useState(false);
     const [liked, setLiked] = useState(false);
@@ -76,6 +76,18 @@ export default function ProductCard({ product, onAdd, onView, currentQty = 0, wi
                             fill={wishlist.find(p => p.id === product.id) ? "#ef4444" : "#ffe4e6"} 
                             color={wishlist.find(p => p.id === product.id) ? "#ef4444" : "#c2485b"} 
                         />
+                    </button>
+                )}
+
+                {/* Share Button */}
+                {onShare && (
+                    <button 
+                        className="wishlist-btn"
+                        style={{ position: 'absolute', top: '0.6rem', right: '2.5rem', zIndex: 10 }}
+                        onClick={(e) => { e.stopPropagation(); onShare(product); }}
+                        title="Share Product"
+                    >
+                        <Share2 size={16} color="#64748b" />
                     </button>
                 )}
 
