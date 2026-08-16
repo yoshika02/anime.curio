@@ -1,24 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search, Eye, EyeOff, Share2 } from 'lucide-react';
+import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search, Eye, EyeOff, Share2, MousePointerSquare, PenTool, Shirt, BookOpen, Briefcase, Coffee, Smartphone, Magnet, Gift, Layers, Palette, LayoutGrid } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
 
 export const CATEGORIES = [
-  { key: 'anime-figures', label: 'Anime Figures', backend: '1. anime figures' },
-  { key: 'key-chains', label: 'Key Chains', backend: '2. key chains' },
-  { key: 'mouse-pads', label: 'Mouse Pads', backend: '3. mouse pads' },
-  { key: 'stationary', label: 'Stationary', backend: '4. stationary' },
-  { key: 'cosplay-accessories', label: 'Cosplay Accessories', backend: '5. cosplay accessories' },
-  { key: 'apparel', label: 'Apparel', backend: '6. appearl' },
-  { key: 'manga', label: 'Manga', backend: '7. manga' },
-  { key: 'bagpacks', label: 'Bagpacks', backend: '8. bagpacks' },
-  { key: 'cups', label: 'Cups', backend: '9. cups' },
-  { key: 'phone-cases', label: 'Phone Cases', backend: '10. phone cases' },
-  { key: 'magnets', label: 'Magnets', backend: '11. magnets' },
-  { key: 'mystery-collection', label: 'Mystery Collection', backend: '12. mystry collection' },
-  { key: 'combos', label: 'Combos', backend: '13. combos' },
-  { key: 'adult-figures', label: 'Adult Figures', backend: '14. adult figures' },
+  { key: 'anime-figures', label: 'Anime Figures', backend: '1. anime figures', icon: User },
+  { key: 'key-chains', label: 'Key Chains', backend: '2. key chains', icon: KeyRound },
+  { key: 'mouse-pads', label: 'Mouse Pads', backend: '3. mouse pads', icon: MousePointerSquare },
+  { key: 'stationary', label: 'Stationary', backend: '4. stationary', icon: PenTool },
+  { key: 'cosplay-accessories', label: 'Cosplay Accessories', backend: '5. cosplay accessories', icon: Sparkles },
+  { key: 'apparel', label: 'Apparel', backend: '6. appearl', icon: Shirt },
+  { key: 'manga', label: 'Manga', backend: '7. manga', icon: BookOpen },
+  { key: 'bagpacks', label: 'Bagpacks', backend: '8. bagpacks', icon: Briefcase },
+  { key: 'cups', label: 'Cups', backend: '9. cups', icon: Coffee },
+  { key: 'phone-cases', label: 'Phone Cases', backend: '10. phone cases', icon: Smartphone },
+  { key: 'magnets', label: 'Magnets', backend: '11. magnets', icon: Magnet },
+  { key: 'mystery-collection', label: 'Mystery Collection', backend: '12. mystry collection', icon: Gift },
+  { key: 'combos', label: 'Combos', backend: '13. combos', icon: Layers },
+  { key: 'adult-figures', label: 'Adult Figures', backend: '14. adult figures', icon: EyeOff },
+  { key: 'doodle', label: 'Doodle', backend: '15. doodle', icon: Palette },
 ];
 
 const EMPTY_PRODUCTS = CATEGORIES.reduce((acc, cat) => {
@@ -2309,34 +2310,64 @@ export default function App() {
             <div className="collection-page-header">
               <h2 className="collection-title" style={{ textAlign: 'center', marginBottom: '1.5rem', width: '100%' }}>Shop by Category</h2>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'center', padding: '0 1rem' }}>
-                {CATEGORIES.map(cat => (
-                  <button 
-                    key={cat.key}
-                    onClick={() => {
-                      // Note: We use window.location.hash logic
-                      navigate('collection');
-                      // CollectionPage sets initialCategory on mount, but we don't have a global state for it right now,
-                      // so we will just pass hash params or use activeCategory
-                      window.location.hash = '#collection-' + cat.key;
-                    }}
-                    style={{
-                      background: '#fff',
-                      border: '2px solid var(--bg3)',
-                      padding: '0.6rem 1.2rem',
-                      borderRadius: '12px',
-                      fontWeight: '700',
-                      fontSize: '0.9rem',
-                      color: 'var(--text)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.color = 'var(--maroon)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg3)'; e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
+                {[{ key: 'all', label: 'All Products', icon: LayoutGrid }, ...CATEGORIES].map(cat => {
+                  const Icon = cat.icon;
+                  return (
+                    <button 
+                      key={cat.key}
+                      onClick={() => {
+                        navigate('collection');
+                        window.location.hash = '#collection-' + cat.key;
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        width: '80px',
+                      }}
+                      onMouseEnter={e => { 
+                        e.currentTarget.querySelector('.cat-icon-circle').style.borderColor = 'var(--maroon)'; 
+                        e.currentTarget.querySelector('.cat-icon-circle').style.color = 'var(--maroon)'; 
+                        e.currentTarget.querySelector('.cat-label').style.color = 'var(--maroon)'; 
+                      }}
+                      onMouseLeave={e => { 
+                        e.currentTarget.querySelector('.cat-icon-circle').style.borderColor = '#e2e8f0'; 
+                        e.currentTarget.querySelector('.cat-icon-circle').style.color = '#64748b'; 
+                        e.currentTarget.querySelector('.cat-label').style.color = 'var(--text-muted)'; 
+                      }}
+                    >
+                      <div className="cat-icon-circle" style={{
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        border: '1px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#64748b',
+                        transition: 'all 0.2s ease',
+                        background: '#fff'
+                      }}>
+                        {Icon && <Icon size={24} strokeWidth={1.5} />}
+                      </div>
+                      <span className="cat-label" style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        color: 'var(--text-muted)',
+                        textAlign: 'center',
+                        lineHeight: '1.2',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        {cat.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
