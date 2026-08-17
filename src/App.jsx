@@ -2373,7 +2373,6 @@ export default function App() {
 
           </div>
           
-          </div>
 
           {/* Features */}
           <FeaturesSection />
