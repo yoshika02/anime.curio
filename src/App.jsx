@@ -2202,30 +2202,22 @@ export default function App() {
       {page === 'home' ? (
         <>
           {/* Hero */}
-          <section className="hero">
-            <div className="hero-bg" />
-            <div className="hero-glow glow-pink" />
-            <div className="hero-glow glow-cyan" />
-            <div className="hero-content">
-              <h1 className="hero-title">
-                Elevate Your <span className="hero-accent">Anime Collection</span>
-              </h1>
-              <p className="hero-desc">
-                Discover highly detailed figurines, curated combo boxes, and rare mystery gacha balls.
-                Premium merchandise crafted for true enthusiasts.
-              </p>
-              <div className="hero-actions">
-                <button className="btn-primary" onClick={() => navigate('collection')}>
-                  <Zap size={16} /> Shop Now!
-                </button>
-                <button className="btn-secondary" onClick={() => setAccountOpen(true)} style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.4)', color: 'white' }}>
-                  <KeyRound size={16} /> Login / Sign Up
-                </button>
-              </div>
-            </div>
-            <button className="scroll-hint" onClick={() => scrollTo('figurines')}>
-              <ChevronDown size={24} />
-            </button>
+          <section 
+            onClick={() => navigate('collection')}
+            style={{ 
+              width: '100%', 
+              cursor: 'pointer', 
+              display: 'block'
+            }}
+          >
+            <picture style={{ width: '100%', display: 'block' }}>
+              <source media="(max-width: 768px)" srcSet="/banner_phone.png" />
+              <img 
+                src="/banner_web.png" 
+                alt="Shop Now" 
+                style={{ width: '100%', display: 'block', objectFit: 'cover' }} 
+              />
+            </picture>
           </section>
 
           <StatsBar />
