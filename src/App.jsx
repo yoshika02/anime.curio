@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search, Eye, EyeOff, Share2, MousePointerSquare, PenTool, Shirt, BookOpen, Briefcase, Coffee, Smartphone, Magnet, Gift, Layers, Palette, LayoutGrid } from 'lucide-react';
+import { ShoppingCart, X, Star, Zap, Package, Sparkles, ChevronDown, ChevronLeft, ChevronRight, KeyRound, ShieldCheck, Truck, Gem, Medal, Users, User, LogOut, Globe, Heart, Home, Search, Eye, EyeOff, Share2, Mouse, PenTool, Shirt, BookOpen, Briefcase, Coffee, Smartphone, Magnet, Gift, Layers, Palette, LayoutGrid } from 'lucide-react';
 import CollectionPage from './CollectionPage';
 import ProductCard from './ProductCard';
 import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
@@ -7,7 +7,7 @@ import ImageWithFallback, { getPrimaryImageUrl } from './imageUtils';
 export const CATEGORIES = [
   { key: 'anime-figures', label: 'Anime Figures', backend: '1. anime figures', icon: User },
   { key: 'key-chains', label: 'Key Chains', backend: '2. key chains', icon: KeyRound },
-  { key: 'mouse-pads', label: 'Mouse Pads', backend: '3. mouse pads', icon: MousePointerSquare },
+  { key: 'mouse-pads', label: 'Mouse Pads', backend: '3. mouse pads', icon: Mouse },
   { key: 'stationary', label: 'Stationary', backend: '4. stationary', icon: PenTool },
   { key: 'cosplay-accessories', label: 'Cosplay Accessories', backend: '5. cosplay accessories', icon: Sparkles },
   { key: 'apparel', label: 'Apparel', backend: '6. appearl', icon: Shirt },
