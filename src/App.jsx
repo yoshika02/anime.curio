@@ -2216,7 +2216,7 @@ export default function App() {
               </p>
               <div className="hero-actions">
                 <button className="btn-primary" onClick={() => navigate('collection')}>
-                  <Zap size={16} /> Start Collecting
+                  <Zap size={16} /> Shop Now!
                 </button>
                 <button className="btn-secondary" onClick={() => setAccountOpen(true)} style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.4)', color: 'white' }}>
                   <KeyRound size={16} /> Login / Sign Up
