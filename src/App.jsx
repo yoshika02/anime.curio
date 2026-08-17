@@ -22,6 +22,76 @@ export const CATEGORIES = [
   { key: 'doodle', label: 'Doodle', backend: '15. doodle', icon: Palette },
 ];
 
+export function ShopByCategory({ onSelectCategory, activeCategory, hideTitle }) {
+  return (
+    <div className="collection-page" style={{ paddingTop: '1rem', paddingBottom: '2rem' }}>
+      <div className="collection-page-header">
+        {!hideTitle && <h2 className="collection-title" style={{ textAlign: 'center', marginBottom: '1.5rem', width: '100%' }}>Shop by Category</h2>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'center', padding: '0 1rem' }}>
+          {[{ key: 'all', label: 'All Products', icon: LayoutGrid }, ...CATEGORIES].map(cat => {
+            const Icon = cat.icon;
+            const isActive = activeCategory === cat.key;
+            return (
+              <button 
+                key={cat.key}
+                onClick={() => onSelectCategory(cat.key)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.6rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  width: '80px',
+                }}
+                onMouseEnter={e => { 
+                  if (isActive) return;
+                  e.currentTarget.querySelector('.cat-icon-circle').style.borderColor = 'var(--maroon)'; 
+                  e.currentTarget.querySelector('.cat-icon-circle').style.color = 'var(--maroon)'; 
+                  e.currentTarget.querySelector('.cat-label').style.color = 'var(--maroon)'; 
+                }}
+                onMouseLeave={e => { 
+                  if (isActive) return;
+                  e.currentTarget.querySelector('.cat-icon-circle').style.borderColor = '#e2e8f0'; 
+                  e.currentTarget.querySelector('.cat-icon-circle').style.color = '#64748b'; 
+                  e.currentTarget.querySelector('.cat-label').style.color = 'var(--text-muted)'; 
+                }}
+              >
+                <div className="cat-icon-circle" style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  border: isActive ? '1px solid var(--maroon)' : '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: isActive ? 'var(--maroon)' : '#64748b',
+                  transition: 'all 0.2s ease',
+                  background: isActive ? 'var(--maroon-pale)' : '#fff'
+                }}>
+                  {Icon && <Icon size={24} strokeWidth={1.5} />}
+                </div>
+                <span className="cat-label" style={{
+                  fontSize: '0.75rem',
+                  fontWeight: isActive ? '700' : '600',
+                  color: isActive ? 'var(--maroon)' : 'var(--text-muted)',
+                  textAlign: 'center',
+                  lineHeight: '1.2',
+                  transition: 'all 0.2s ease'
+                }}>
+                  {cat.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const EMPTY_PRODUCTS = CATEGORIES.reduce((acc, cat) => {
   acc[cat.key] = [];
   return acc;
@@ -2222,6 +2292,12 @@ export default function App() {
 
           <StatsBar />
 
+          {/* Shop by Category (moved above Top Collectibles) */}
+          <ShopByCategory onSelectCategory={(key) => {
+            navigate('collection');
+            window.location.hash = '#collection-' + key;
+          }} />
+
           {/* Features moved down below collection */}
 
           {/* Collection preview (carousel + pills) on Home */}
@@ -2297,71 +2373,6 @@ export default function App() {
 
           </div>
           
-          {/* Shop by Category */}
-          <div className="collection-page" style={{ paddingTop: '1rem', paddingBottom: '2rem' }}>
-            <div className="collection-page-header">
-              <h2 className="collection-title" style={{ textAlign: 'center', marginBottom: '1.5rem', width: '100%' }}>Shop by Category</h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'center', padding: '0 1rem' }}>
-                {[{ key: 'all', label: 'All Products', icon: LayoutGrid }, ...CATEGORIES].map(cat => {
-                  const Icon = cat.icon;
-                  return (
-                    <button 
-                      key={cat.key}
-                      onClick={() => {
-                        navigate('collection');
-                        window.location.hash = '#collection-' + cat.key;
-                      }}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        width: '80px',
-                      }}
-                      onMouseEnter={e => { 
-                        e.currentTarget.querySelector('.cat-icon-circle').style.borderColor = 'var(--maroon)'; 
-                        e.currentTarget.querySelector('.cat-icon-circle').style.color = 'var(--maroon)'; 
-                        e.currentTarget.querySelector('.cat-label').style.color = 'var(--maroon)'; 
-                      }}
-                      onMouseLeave={e => { 
-                        e.currentTarget.querySelector('.cat-icon-circle').style.borderColor = '#e2e8f0'; 
-                        e.currentTarget.querySelector('.cat-icon-circle').style.color = '#64748b'; 
-                        e.currentTarget.querySelector('.cat-label').style.color = 'var(--text-muted)'; 
-                      }}
-                    >
-                      <div className="cat-icon-circle" style={{
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '50%',
-                        border: '1px solid #e2e8f0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#64748b',
-                        transition: 'all 0.2s ease',
-                        background: '#fff'
-                      }}>
-                        {Icon && <Icon size={24} strokeWidth={1.5} />}
-                      </div>
-                      <span className="cat-label" style={{
-                        fontSize: '0.75rem',
-                        fontWeight: '600',
-                        color: 'var(--text-muted)',
-                        textAlign: 'center',
-                        lineHeight: '1.2',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        {cat.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           {/* Features */}

@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import ProductCard from './ProductCard';
 import ImageWithFallback from './imageUtils';
-import { CATEGORIES } from './App';
+import { CATEGORIES, ShopByCategory } from './App';
 
 export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all', recentlyViewed = [], wishlist = [], onToggleWishlist, onShare }) {
     const scrollRef = useRef(null);
@@ -82,19 +82,8 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
 
             <section className="collection-all-products">
                 <div className="collection-all-header">
-                    <div className="pill-nav">
-                        {categories.map(cat => (
-                            <button
-                                key={cat.key}
-                                type="button"
-                                className={`pill ${activeCategory === cat.key ? 'active' : ''}`}
-                                onClick={() => setActiveCategory(cat.key)}
-                            >
-                                {cat.label}
-                            </button>
-                        ))}
-                    </div>
-                    <h3>All Products</h3>
+                    <ShopByCategory onSelectCategory={setActiveCategory} activeCategory={activeCategory} hideTitle={true} />
+                    <h3 style={{ marginTop: '1rem' }}>All Products</h3>
                 </div>
                 <div className="product-grid collection-products-grid">
                     {visibleProducts.length === 0 ? (
