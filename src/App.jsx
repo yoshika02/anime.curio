@@ -2294,8 +2294,7 @@ export default function App() {
 
           {/* Shop by Category (moved above Top Collectibles) */}
           <ShopByCategory onSelectCategory={(key) => {
-            navigate('collection');
-            window.location.hash = '#collection-' + key;
+            navigateToCollection(key);
           }} />
 
           {/* Features moved down below collection */}
@@ -2386,7 +2385,7 @@ export default function App() {
           cart={cart}
           onBack={() => navigate('home')}
           onView={openQuickView}
-          initialCategory={window.location.hash.includes('-') ? window.location.hash.split('-')[1] : 'all'}
+          initialCategory={collectionCategory}
           recentlyViewed={recentlyViewed}
           wishlist={wishlist}
           onToggleWishlist={handleToggleWishlist}

@@ -7,6 +7,7 @@ import { CATEGORIES, ShopByCategory } from './App';
 export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack, onView, initialCategory = 'all', recentlyViewed = [], wishlist = [], onToggleWishlist, onShare }) {
     const scrollRef = useRef(null);
     const recentScrollRef = useRef(null);
+    const productsRef = useRef(null);
     const featured = (inventoryProducts?.['anime-figures'] || []).slice(0, 4);
     const [activeCategory, setActiveCategory] = useState(initialCategory);
 
@@ -15,6 +16,14 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
             setActiveCategory(initialCategory);
         }
     }, [initialCategory]);
+
+    const handleSelectCategory = (key) => {
+        setActiveCategory(key);
+        // Scroll to products grid after a short delay to allow re-render
+        setTimeout(() => {
+            productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    };
 
     const allProducts = Object.values(inventoryProducts || {}).flat();
 
@@ -82,8 +91,8 @@ export default function CollectionPage({ inventoryProducts, onAdd, cart, onBack,
 
             <section className="collection-all-products">
                 <div className="collection-all-header">
-                    <ShopByCategory onSelectCategory={setActiveCategory} activeCategory={activeCategory} hideTitle={true} />
-                    <h3 style={{ marginTop: '1rem' }}>All Products</h3>
+                <ShopByCategory onSelectCategory={handleSelectCategory} activeCategory={activeCategory} hideTitle={true} />
+                    <h3 ref={productsRef} style={{ marginTop: '1rem' }}>All Products</h3>
                 </div>
                 <div className="product-grid collection-products-grid">
                     {visibleProducts.length === 0 ? (
