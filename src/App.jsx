@@ -418,6 +418,33 @@ function WishlistSidebar({ wishlist, onClose, onAdd, onToggleWishlist }) {
 }
 
 // ─── Cart Sidebar & Checkout ──────────────────────────────────────────────────
+
+const evaluateCouponCondition = (coupon, currentAddress, currentUserOrders) => {
+  if (!coupon || !coupon.condition) return { valid: true };
+  const conditionStr = String(coupon.condition).toLowerCase().trim();
+  
+  if (conditionStr.includes('address:') || conditionStr.includes('address_contains:')) {
+    const parts = conditionStr.split(':');
+    const keyword = (parts[1] || '').trim().toLowerCase();
+    if (keyword) {
+      if (!currentAddress || !currentAddress.trim()) {
+        return { valid: false, error: `Please enter your shipping address in Checkout first (requires "${keyword.toUpperCase()}").` };
+      }
+      if (!currentAddress.toLowerCase().includes(keyword)) {
+        return { valid: false, error: `This coupon requires "${keyword.toUpperCase()}" in your shipping address.` };
+      }
+    }
+  }
+  
+  if (conditionStr.includes('first_order') || conditionStr === 'firstorder') {
+    if (currentUserOrders && currentUserOrders.length > 0) {
+      return { valid: false, error: 'This coupon is only valid for your first order.' };
+    }
+  }
+  
+  return { valid: true };
+};
+
 function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user, setUser, onOpenAccount, availableCoupons = [] }) {
   const [step, setStep] = useState('cart'); // 'cart' | 'checkout' | 'success'
   const [customNote, setCustomNote] = useState('');
@@ -483,13 +510,20 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
   let dynamicCouponError = '';
 
   if (activeCoupon) {
-    const code = String(activeCoupon.code).toUpperCase();
-    if (code === 'HMELFREESHIP' && !address.toLowerCase().includes('hmel')) {
+    const evalResult = evaluateCouponCondition(activeCoupon, address, userOrders);
+    if (!evalResult.valid) {
       activeCoupon = null;
-      dynamicCouponError = 'HMELFREESHIP requires "HMEL" in shipping address.';
-    } else if (code === 'FIRST10' && userOrders.length > 0) {
-      activeCoupon = null;
-      dynamicCouponError = 'FIRST10 is only valid for your first order.';
+      dynamicCouponError = evalResult.error;
+    } else {
+      // Fallback for hardcoded coupons just in case they don't have the 'condition' column yet
+      const code = String(activeCoupon.code).toUpperCase();
+      if (code === 'HMELFREESHIP' && !address.toLowerCase().includes('hmel') && !activeCoupon.condition) {
+        activeCoupon = null;
+        dynamicCouponError = 'HMELFREESHIP requires "HMEL" in shipping address.';
+      } else if (code === 'FIRST10' && userOrders.length > 0 && !activeCoupon.condition) {
+        activeCoupon = null;
+        dynamicCouponError = 'FIRST10 is only valid for your first order.';
+      }
     }
   }
 
@@ -517,15 +551,23 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
     const match = availableCoupons.find(c => String(c.code).toLowerCase() === couponCodeInput.trim().toLowerCase());
     
     if (match) {
+      const evalResult = evaluateCouponCondition(match, address, userOrders);
+      if (!evalResult.valid) {
+        setCouponError(evalResult.error);
+        return;
+      }
+      
+      // Fallback for hardcoded ones
       const code = String(match.code).toUpperCase();
-      if (code === 'HMELFREESHIP' && !address.toLowerCase().includes('hmel')) {
+      if (code === 'HMELFREESHIP' && !address.toLowerCase().includes('hmel') && !match.condition) {
         setCouponError('Please enter your HMEL shipping address first before applying this coupon.');
         return;
       }
-      if (code === 'FIRST10' && userOrders.length > 0) {
+      if (code === 'FIRST10' && userOrders.length > 0 && !match.condition) {
         setCouponError('This coupon is only valid for your first order.');
         return;
       }
+      
       setAppliedCoupon(match);
       setCouponCodeInput('');
     } else {
@@ -790,7 +832,11 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                       </button>
                     </div>
                   )}
-                  {couponError && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{couponError}</span>}
+                  {(couponError || dynamicCouponError) && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>
+                      {couponError || dynamicCouponError}
+                    </span>
+                  )}
                 </div>
 
                 {activeCoupon && String(activeCoupon.type).toLowerCase() !== 'shipping' && (
@@ -995,7 +1041,11 @@ function CartSidebar({ cart, onClose, onRemove, onUpdateQty, onPlaceOrder, user,
                       </button>
                     </div>
                   )}
-                  {couponError && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{couponError}</span>}
+                  {(couponError || dynamicCouponError) && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>
+                      {couponError || dynamicCouponError}
+                    </span>
+                  )}
                 </div>
 
                 {activeCoupon && String(activeCoupon.type).toLowerCase() !== 'shipping' && (
