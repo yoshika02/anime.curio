@@ -3029,3 +3029,20 @@ body {
 .profile-tab.tab-signout:hover {
   background: rgba(239, 68, 68, 0.1);
 }
+
+/* ── Filter & Sort Bar ─────────────────────────────────────────────────── */
+.filter-bar-mobile {
+  display: none;
+}
+.filter-bar-desktop {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .filter-bar-mobile {
+    display: block;
+  }
+  .filter-bar-desktop {
+    display: none;
+  }
+}
